@@ -1,4 +1,4 @@
-# AURA — Architecture Decision Records (ADRs)
+﻿# AURA — Architecture Decision Records (ADRs)
 
 > Every significant technical or product decision is documented here.
 > Format: ADR-{number} | Date | Status | Decision | Rationale | Consequences
@@ -370,7 +370,77 @@ Flutter is the single codebase for all current and future platforms.
 - Native Android code (Accessibility Service for floating button, BroadcastReceiver for DND)
   will be in a thin platform channel layer, keeping core logic in Dart
 
+
+## ADR-012 — No emojis. Lucide Icons as the single icon system.
+
+**Date:** 2026-07-24
+**Status:** Accepted
+
+### Decision
+
+AURA uses zero emojis anywhere in the UI.
+All icons throughout the app use **Lucide Icons** as the single, uniform icon set.
+
+### Context
+
+Emojis are OS-rendered glyphs. They look different on every device, every Android version, every OEM skin (Samsung, OnePlus, stock Android all render emojis differently). They carry an inherently casual, consumer-app personality that conflicts with AURA's sharp, premium, neubrutalist identity.
+
+We need one icon set that:
+- Looks identical on every device
+- Matches the visual weight of neubrutalism's 2px borders
+- Has consistent stroke width across all icons (no mixing filled + outline + rounded + flat)
+- Covers every use case in AURA without needing a second icon set
+
+### Options Considered
+
+| Option | Stroke | Consistency | Flutter package | Notes |
+|--------|--------|-------------|-----------------|-------|
+| **Lucide Icons** | 2px, consistent | Excellent | lucide_icons | Geometric, modern, 1500+ icons |
+| Phosphor Icons | Variable weights | Good | phosphor_flutter | Multiple weight options — good but overkill |
+| Material Icons | Variable | Moderate | built-in Flutter | Mix of filled/outlined styles |
+| Material Symbols | Variable | Moderate | material_symbols_icons | Better than Material Icons, still not neubrutalist |
+| Heroicons | 1.5px / 2px | Good | manual TTF | Tailwind-adjacent feel |
+| Feather Icons | 2px | Good | eather_icons | Fewer icons, older |
+
+### Rationale
+
+- **Lucide Icons wins** because its 2px uniform stroke width is the exact visual weight of AURA's neubrutalist 2px white borders — the icons feel like part of the same visual language, not pasted on top.
+- 1500+ icons covers everything AURA needs without ever reaching for a second set.
+- lucide_icons Flutter package is actively maintained, null-safe, and works as standard Flutter Icon widgets.
+- Fully vector — renders crisply at every size and pixel density.
+- Zero emoji anywhere, ever. Not in UI. Not in empty states. Not in onboarding. Not in notifications.
+
+### Icon Usage Spec
+
+All icons in AURA:
+- Color: white (#FFFFFF) for primary, gba(255,255,255,0.6) for secondary
+- Size: 20dp standard UI, 24dp app bar / nav bar, 16dp inline / labels, 32dp empty states
+- Stroke: always rendered as lucide_icons provides — do not scale icon weight artificially
+- Never mix with emojis or other icon sets
+- Workspace identifiers: use Lucide icons (not emojis). Map:
+    - VIT / College         → LucideIcons.graduationCap
+    - GATE Prep             → LucideIcons.target
+    - Internship            → LucideIcons.briefcase
+    - Personal              → LucideIcons.user
+    - Health                → LucideIcons.heart
+    - Finance               → LucideIcons.creditCard
+    - Projects              → LucideIcons.layoutGrid
+    - Custom (user-created) → LucideIcons.folder
+
+### Consequences
+
+- All wireframe docs that use emojis (📚🎯💼👤❤️📋📅🔔🗂️) must be treated as semantic placeholders — replace with Lucide equivalents during Phase 8 implementation.
+- design_system.md updated with full icon system spec.
+- The AURA-ux-designer skill updated with this rule.
+- No visual impact on design language — Lucide stroke style is a natural extension of the neubrutalist border system.
+
+### Related ADRs
+
+- ADR-006: Tech stack — Flutter confirmed (Lucide package is Flutter-native)
+- ADR-011: Flutter cross-platform — Lucide renders identically on all Flutter platforms
+
 ---
 
 *Created: 2026-07-23*
 *Living document — add new ADRs as decisions are made*
+

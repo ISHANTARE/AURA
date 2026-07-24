@@ -1,4 +1,4 @@
-# AURA — Project Context & Background
+﻿# AURA — Project Context & Background
 
 > This document captures the full backstory, conversations, decisions, and context
 > that led to AURA. It is the "memory" of the project — read this before anything else
@@ -259,3 +259,4 @@ AURA/
 *Created: 2026-07-23*
 *Last Updated: 2026-07-23*
 *Status: Living document — update after every significant conversation or decision*
+

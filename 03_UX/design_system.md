@@ -1,4 +1,4 @@
-﻿# AURA — Design System
+# AURA — Design System
 
 > **Version:** 1.0
 > **Status:** Final (confirmed 2026-07-24)
@@ -300,9 +300,141 @@ Success:      brief #39FF88 fill flash (200ms)
 - ❌ Generic light sans-serif at regular weight
 - ❌ Muted, earthy, or pastel color palettes
 - ❌ **Glow on anything except the orb** — most critical rule
+- ❌ **Emojis anywhere in the UI** — use Lucide Icons exclusively (ADR-012)
 
 ---
 
-*Design System v1.0 — finalized 2026-07-24*
-*Source: PRD F-17 + design review session*
+## Icon System — Lucide Icons (ADR-012)
+
+**Package:** `lucide_icons` (Flutter pub.dev)
+**Why Lucide:** 2px consistent stroke width — the exact visual weight of AURA's neubrutalist borders. Every icon in the set shares the same geometric construction grid. Zero visual inconsistency.
+
+### Icon Usage Rules
+
+1. **No emojis. Ever.** Not in UI, not in empty states, not in onboarding, not in notifications, not in workspace labels.
+2. **One icon set only.** Never mix Lucide with Material Icons, Heroicons, or any other set.
+3. **Never use filled variants** unless explicitly specified — always use the stroke (outline) variant.
+4. **Color follows text color rules:**
+   - Primary UI icons: `#FFFFFF`
+   - Secondary / inactive icons: `rgba(255,255,255,0.6)`
+   - Destructive actions: `#FF3B3B`
+   - Success: `#39FF88`
+   - Active / selected: `#C8FF00` (lime)
+5. **Size is contextual:**
+
+| Context | Size |
+|---------|------|
+| Inline with body text | 16dp |
+| List item icons | 20dp |
+| App bar / nav bar | 24dp |
+| Empty state illustrations | 32–40dp |
+| Large feature icons | 48dp |
+
+### Workspace Icons (canonical mapping)
+
+| Workspace | Lucide Icon | Constant |
+|-----------|-------------|----------|
+| College / VIT | Graduation cap | `LucideIcons.graduationCap` |
+| GATE Prep / IIT | Target / crosshair | `LucideIcons.target` |
+| Internship / Work | Briefcase | `LucideIcons.briefcase` |
+| Personal | User | `LucideIcons.user` |
+| Health | Heart | `LucideIcons.heart` |
+| Finance | Credit card | `LucideIcons.creditCard` |
+| Projects | Layout grid | `LucideIcons.layoutGrid` |
+| Placements | Award | `LucideIcons.award` |
+| Research | Flask | `LucideIcons.flask` |
+| Custom (user-created) | Folder | `LucideIcons.folder` |
+
+### UI Element Icons (canonical mapping)
+
+| Element | Lucide Icon |
+|---------|-------------|
+| Task | `LucideIcons.checkSquare` |
+| Event / Calendar | `LucideIcons.calendarDays` |
+| Reminder / Bell | `LucideIcons.bell` |
+| Search | `LucideIcons.search` |
+| Settings | `LucideIcons.settings` |
+| Add / Create | `LucideIcons.plus` |
+| Edit | `LucideIcons.pencil` |
+| Delete | `LucideIcons.trash2` |
+| Archive | `LucideIcons.archive` |
+| Close / Cancel | `LucideIcons.x` |
+| Back | `LucideIcons.chevronLeft` |
+| Forward / Next | `LucideIcons.chevronRight` |
+| More options (⋮) | `LucideIcons.ellipsisVertical` |
+| Voice / Mic | `LucideIcons.mic` |
+| Attach / Share | `LucideIcons.share2` |
+| Link | `LucideIcons.link` |
+| Image / Screenshot | `LucideIcons.image` |
+| Document | `LucideIcons.fileText` |
+| Note | `LucideIcons.stickyNote` |
+| Priority HIGH | `LucideIcons.chevronDoubleUp` |
+| Priority MEDIUM | `LucideIcons.minus` |
+| Priority LOW | `LucideIcons.chevronDown` |
+| Recurring | `LucideIcons.refreshCw` |
+| Completed / Done | `LucideIcons.circleCheck` |
+| Overdue / Urgent | `LucideIcons.triangleAlert` |
+| Snooze | `LucideIcons.alarmClock` |
+| DND | `LucideIcons.bellOff` |
+| Offline | `LucideIcons.wifiOff` |
+| AI / Processing | `LucideIcons.sparkles` |
+| User / Profile | `LucideIcons.circleUser` |
+| Home | `LucideIcons.house` |
+| Workspaces | `LucideIcons.layoutDashboard` |
+| Subtask | `LucideIcons.cornerDownRight` |
+| Move | `LucideIcons.arrowRightLeft` |
+| Drag handle | `LucideIcons.gripVertical` |
+| Morning briefing | `LucideIcons.sunrise` |
+| Section | `LucideIcons.folderOpen` |
+| Filter | `LucideIcons.listFilter` |
+| Sort | `LucideIcons.arrowUpDown` |
+| Export | `LucideIcons.download` |
+| Privacy / Lock | `LucideIcons.lock` |
+| Source: Voice | `LucideIcons.mic` |
+| Source: Text | `LucideIcons.keyboard` |
+| Source: Share | `LucideIcons.share` |
+
+### Flutter Usage
+
+```dart
+// Import
+import 'package:lucide_icons/lucide_icons.dart';
+
+// Standard usage
+Icon(
+  LucideIcons.checkSquare,
+  size: 20,
+  color: Colors.white,
+)
+
+// Secondary / inactive
+Icon(
+  LucideIcons.bell,
+  size: 20,
+  color: Colors.white.withOpacity(0.6),
+)
+
+// Active / selected (lime)
+Icon(
+  LucideIcons.house,
+  size: 24,
+  color: Color(0xFFC8FF00),
+)
+
+// Destructive
+Icon(
+  LucideIcons.trash2,
+  size: 20,
+  color: Color(0xFFFF3B3B),
+)
+```
+
+### Note on Wireframe Documents
+
+All wireframes in `03_UX/wireframes/` use emoji as **semantic placeholders** in ASCII diagrams (e.g., 📋 = task, 📅 = deadline). These are documentation shorthand only. During Phase 8 implementation, replace every emoji placeholder with the corresponding Lucide icon from the table above.
+
+---
+
+*Design System v1.1 — updated 2026-07-24 (ADR-012: Lucide Icons + no emojis)*
+*Source: PRD F-17 + design review session + ADR-012*
 *Do not modify without updating PRD F-17 and creating an ADR*

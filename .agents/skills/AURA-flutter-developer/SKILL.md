@@ -1,4 +1,4 @@
-﻿---
+---
 name: AURA-flutter-developer
 description: >
   Expert Flutter/Dart developer for the AURA app. Use this skill when: writing Flutter code,
@@ -27,6 +27,7 @@ before you write code. If they don't exist, tell the user to document first.
 | OCR | Google ML Kit Text Recognition |
 | Notifications | flutter_local_notifications |
 | Platform channels | MethodChannel for Android-specific features |
+| **Icons** | **`lucide_icons` — ONLY icon set. No emojis. No Material Icons. (ADR-012)** |
 
 ## Architecture Pattern
 

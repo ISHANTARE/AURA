@@ -1,4 +1,4 @@
-﻿---
+---
 name: AURA-ux-designer
 description: >
   UX and design system specialist for AURA. Use this skill when: designing screens, creating user flows,
@@ -18,6 +18,8 @@ AURA must feel like it costs $20/month from day one. Premium feel is non-negotia
 
 - **Voice is primary.** Every screen should be reachable in one tap from the floating button.
 - **Dark mode is default.** Light mode is available but dark is the identity.
+- **No emojis. Ever. (ADR-012)** — Not in UI, empty states, onboarding, notifications, or labels. Use Lucide Icons exclusively.
+- **One icon set: Lucide Icons.** `lucide_icons` Flutter package. 2px stroke, geometric, consistent. Never mix with Material Icons or any other set.
 - **Workspaces are colorful.** Each workspace has a distinct color that bleeds into the UI.
 - **AI is visible but not in the way.** AI features are prominent but never blocking.
 - **Animations are purposeful.** Every animation communicates state, not just decoration.
