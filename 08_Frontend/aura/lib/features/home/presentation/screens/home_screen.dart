@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/constants/icons.dart';
+import '../../../../database/daos/task_dao.dart';
+import '../providers/home_providers.dart';
 import '../widgets/home_bento_cells.dart';
 import '../../../capture/presentation/widgets/voice_capture_overlay.dart';
 
-/// Home Screen — Sprint 2.
-/// Bento Grid layout matching wireframe 01_home_screen.md.
-/// Uses static sample data while Drift DAOs are wired in Sprint 3.
+/// Home Screen — Sprint 4b.
+/// Bento Grid layout connected reactively to Drift DB.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -25,37 +25,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
   late final AnimationController _staggerCtrl;
   final List<Animation<double>> _cellAnims = [];
-
-  // ── Sample data (replaced by Riverpod providers in Sprint 3) ──────────────
-  final _urgentItems = [
-    {'title': 'ML Assignment', 'deadline': 'Due tonight 11:59 PM', 'isOverdue': false},
-    {'title': 'DBMS Quiz', 'deadline': 'Due today 2:00 PM', 'isOverdue': false},
-  ];
-
-  final _focusItems = [
-    {'title': 'Complete feature engineering', 'estimatedTime': '~2 hrs', 'taskId': '1'},
-    {'title': 'Review GATE Algorithms PYQs', 'estimatedTime': '~1 hr', 'taskId': '2'},
-    {'title': 'Submit patent draft', 'estimatedTime': '~30 min', 'taskId': '3'},
-  ];
-
-  final _nextUpItems = [
-    {'title': 'Internship standup', 'subtitle': 'Thu · 10:00 AM', 'isEvent': true},
-    {'title': 'Patent submission', 'subtitle': '4 days left', 'isEvent': false},
-    {'title': 'Lab Report', 'subtitle': '2 days left', 'isEvent': false},
-  ];
-
-  final _habitItems = [
-    {'title': 'DSA Practice', 'status': 'missed'},
-    {'title': 'Exercise', 'status': 'done'},
-    {'title': 'Reading', 'status': 'pending'},
-  ];
-
-  final _workspaces = [
-    {'name': 'VIT', 'taskCount': 8, 'color': 0xFFB57BFF, 'icon': LucideIcons.graduationCap},
-    {'name': 'GATE', 'taskCount': 3, 'color': 0xFFF59E0B, 'icon': LucideIcons.target},
-    {'name': 'Intern', 'taskCount': 2, 'color': 0xFF39FF88, 'icon': LucideIcons.briefcase},
-    {'name': 'Personal', 'taskCount': 5, 'color': 0xFF4DFFFF, 'icon': LucideIcons.user},
-  ];
 
   @override
   void initState() {
@@ -93,6 +62,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final dateStr = DateFormat('EEEE, MMMM d').format(now);
     final mediaQuery = MediaQuery.of(context);
 
+    // Watch real streams from Drift DB via Riverpod
+    final urgentAsync = ref.watch(urgentTasksProvider);
+    final focusAsync = ref.watch(focusTasksProvider);
+    final habitsAsync = ref.watch(habitsProvider);
+    final workspacesAsync = ref.watch(homeWorkspacesProvider);
+
+    // Map tasks to widget item maps
+    final List<Map<String, dynamic>> urgentItems = urgentAsync.when(
+      data: (tasks) => tasks.map((t) => <String, dynamic>{
+        'title': t.name,
+        'deadline': t.deadline != null
+            ? DateFormat('EEE · h:mm a').format(DateTime.fromMillisecondsSinceEpoch(t.deadline!))
+            : 'No deadline',
+        'isOverdue': t.deadline != null && t.deadline! < now.millisecondsSinceEpoch,
+      }).toList(),
+      loading: () => <Map<String, dynamic>>[],
+      error: (_, __) => <Map<String, dynamic>>[],
+    );
+
+    final List<Map<String, dynamic>> focusItems = focusAsync.when(
+      data: (tasks) => tasks.map((t) => <String, dynamic>{
+        'title': t.name,
+        'estimatedTime': t.priority.toUpperCase(),
+        'taskId': t.id,
+      }).toList(),
+      loading: () => <Map<String, dynamic>>[],
+      error: (_, __) => <Map<String, dynamic>>[],
+    );
+
+    final List<Map<String, dynamic>> nextUpItems = focusAsync.when(
+      data: (tasks) => tasks.map((t) => <String, dynamic>{
+        'title': t.name,
+        'subtitle': t.deadline != null
+            ? DateFormat('EEE · h:mm a').format(DateTime.fromMillisecondsSinceEpoch(t.deadline!))
+            : 'Active Task',
+        'isEvent': false,
+      }).toList(),
+      loading: () => <Map<String, dynamic>>[],
+      error: (_, __) => <Map<String, dynamic>>[],
+    );
+
+    final List<Map<String, dynamic>> habitItems = habitsAsync.when(
+      data: (tasks) => tasks.map((t) => <String, dynamic>{
+        'id': t.id,
+        'title': t.name,
+        'status': t.status == 'done' ? 'done' : 'pending',
+      }).toList(),
+      loading: () => <Map<String, dynamic>>[],
+      error: (_, __) => <Map<String, dynamic>>[],
+    );
+
+    final List<Map<String, dynamic>> workspaceItems = workspacesAsync.when(
+      data: (workspaces) => workspaces.map((w) {
+        final countAsync = ref.watch(workspaceTaskCountProvider(w.id));
+        final count = countAsync.value ?? 0;
+        return <String, dynamic>{
+          'name': w.name,
+          'taskCount': count,
+          'color': int.tryParse(w.colorHex.replaceFirst('#', '0xFF')) ?? 0xFFB57BFF,
+          'icon': Icons.folder,
+        };
+      }).toList(),
+      loading: () => <Map<String, dynamic>>[
+        {'name': 'General', 'taskCount': 0, 'color': 0xFFB57BFF, 'icon': Icons.folder},
+      ],
+      error: (_, __) => <Map<String, dynamic>>[],
+    );
+
     return Scaffold(
       backgroundColor: AuraColors.bgBase,
       body: SafeArea(
@@ -122,7 +159,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               Expanded(
                                 flex: 60,
                                 child: UrgentCell(
-                                  items: _urgentItems,
+                                  items: urgentItems,
                                   onTap: () => _onUrgentTap(),
                                 ),
                               ),
@@ -144,7 +181,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       _StaggerCell(
                         animation: _cellAnims[1],
                         child: FocusCell(
-                          items: _focusItems,
+                          items: focusItems,
                           onItemTap: (taskId) => _onTaskTap(taskId),
                         ),
                       ),
@@ -161,15 +198,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             children: [
                               Expanded(
                                 child: NextUpCell(
-                                  items: _nextUpItems,
+                                  items: nextUpItems,
                                   onTap: () => _onNextUpTap(),
                                 ),
                               ),
                               const SizedBox(width: AuraSpacing.sm),
                               Expanded(
                                 child: HabitsCell(
-                                  habits: List<Map<String, dynamic>>.from(_habitItems),
-                                  onHabitToggle: (idx) => _toggleHabit(idx),
+                                  habits: habitItems,
+                                  onHabitToggle: (idx) {
+                                    if (idx < habitItems.length) {
+                                      final habit = habitItems[idx];
+                                      final habitId = habit['id'] as String?;
+                                      final currentStatus = habit['status'] as String?;
+                                      if (habitId != null) {
+                                        _toggleHabitInDb(habitId, currentStatus == 'done');
+                                      }
+                                    }
+                                  },
                                   onTap: () => _onHabitsTap(),
                                 ),
                               ),
@@ -184,7 +230,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       _StaggerCell(
                         animation: _cellAnims[3],
                         child: WorkspacesCell(
-                          workspaces: _workspaces,
+                          workspaces: workspaceItems,
                           onWorkspaceTap: (name) => _onWorkspaceTap(name),
                           onAddTap: () => _onAddWorkspace(),
                         ),
@@ -244,7 +290,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _onUrgentTap() {
     HapticFeedback.lightImpact();
-    // Sprint 3: navigate to urgent tasks filter
   }
 
   void _onOrbTap() {
@@ -253,48 +298,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _onTaskTap(String taskId) {
-    // Sprint 3: navigate to task detail
+    HapticFeedback.lightImpact();
   }
 
   void _onNextUpTap() {
     HapticFeedback.lightImpact();
-    // Sprint 5: navigate to calendar
   }
 
-  void _toggleHabit(int idx) {
-    setState(() {
-      final current = _habitItems[idx]['status'] as String;
-      _habitItems[idx]['status'] =
-          current == 'done' ? 'pending' : 'done';
-    });
+  Future<void> _toggleHabitInDb(String taskId, bool currentlyDone) async {
+    HapticFeedback.mediumImpact();
+    final taskDao = ref.read(taskDaoProvider);
+    if (currentlyDone) {
+      await taskDao.markTodo(taskId);
+    } else {
+      await taskDao.markDone(taskId);
+    }
   }
 
   void _onHabitsTap() {
-    // Sprint 3: navigate to recurring tasks
+    HapticFeedback.lightImpact();
   }
 
   void _onWorkspaceTap(String name) {
-    // Sprint 3: navigate to workspace detail
+    HapticFeedback.lightImpact();
   }
 
   void _onAddWorkspace() {
-    // Sprint 3: show create workspace sheet
-    _showCaptureSnack(msg: 'Create workspace — coming in Sprint 3');
+    _showCaptureSnack(msg: 'Create workspace — coming in Sprint 5');
   }
 
   void _onSearchTap() {
-    // Sprint 6: search overlay
+    _showCaptureSnack(msg: 'Search — coming in Sprint 7');
   }
 
   void _onProfileTap() {
-    // Sprint 7: profile / settings
+    _showCaptureSnack(msg: 'Settings — coming in Sprint 10');
   }
 
-  void _showCaptureSnack({String? msg}) {
+  void _showCaptureSnack({required String msg}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          msg ?? 'Voice capture — coming in Sprint 4',
+          msg,
           style: AuraTypography.bodyPrimary.copyWith(fontSize: 13),
         ),
         backgroundColor: AuraColors.bgCard,

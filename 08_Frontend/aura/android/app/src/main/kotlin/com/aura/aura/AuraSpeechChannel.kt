@@ -90,6 +90,13 @@ class AuraSpeechChannel(
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                 putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                // Give the user more time between words — default ~1.5s is too aggressive.
+                // Complete silence before stopping: 2.5 seconds
+                putExtra("android.speech.extra.SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS", 2500L)
+                // "Possibly done?" threshold: 1.5 seconds
+                putExtra("android.speech.extra.SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS", 1500L)
+                // Minimum session before auto-stop: 6 seconds
+                putExtra("android.speech.extra.SPEECH_INPUT_MINIMUM_LENGTH_MILLIS", 6000L)
             }
 
             speechRecognizer?.startListening(intent)

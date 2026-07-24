@@ -1,4 +1,4 @@
-﻿import 'package:drift/drift.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_database.dart';
@@ -18,6 +18,17 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
             ..where((w) => w.deletedAt.isNull())
             ..orderBy([(w) => OrderingTerm(expression: w.sortOrder)]))
           .watch();
+
+  /// Get count of active tasks for a workspace
+  Stream<int> watchTaskCount(String workspaceId) {
+    final countExpr = db.tasks.id.count();
+    final query = selectOnly(db.tasks)
+      ..addColumns([countExpr])
+      ..where(db.tasks.workspaceId.equals(workspaceId))
+      ..where(db.tasks.status.isNotIn(const ['done', 'cancelled']))
+      ..where(db.tasks.deletedAt.isNull());
+    return query.map((row) => row.read(countExpr) ?? 0).watchSingle();
+  }
 
   /// Watch sections for a workspace.
   Stream<List<WorkspaceSection>> watchSections(String workspaceId) =>

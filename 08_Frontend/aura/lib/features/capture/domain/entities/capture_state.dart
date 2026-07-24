@@ -1,3 +1,6 @@
+import 'intent_result.dart';
+import 'workspace_match_result.dart';
+
 enum CaptureStatus {
   idle,
   starting,
@@ -5,11 +8,21 @@ enum CaptureStatus {
   autoStopped,
   processing,
   confirming,
+  savedSuccess,
   error,
   textInput,
 }
 
 class CaptureState {
+  final CaptureStatus status;
+  final String transcript;
+  final double audioLevel;
+  final String? errorMessage;
+  final String? detectedContext;
+  final IntentResult? intentResult;
+  final WorkspaceMatchResult? workspaceMatch;
+  final bool isOfflineSaved;
+  final bool isSaving;
 
   const CaptureState({
     this.status = CaptureStatus.idle,
@@ -17,12 +30,11 @@ class CaptureState {
     this.audioLevel = 0.0,
     this.errorMessage,
     this.detectedContext,
+    this.intentResult,
+    this.workspaceMatch,
+    this.isOfflineSaved = false,
+    this.isSaving = false,
   });
-  final CaptureStatus status;
-  final String transcript;
-  final double audioLevel;
-  final String? errorMessage;
-  final String? detectedContext;
 
   CaptureState copyWith({
     CaptureStatus? status,
@@ -30,6 +42,10 @@ class CaptureState {
     double? audioLevel,
     String? errorMessage,
     String? detectedContext,
+    IntentResult? intentResult,
+    WorkspaceMatchResult? workspaceMatch,
+    bool? isOfflineSaved,
+    bool? isSaving,
   }) {
     return CaptureState(
       status: status ?? this.status,
@@ -37,6 +53,10 @@ class CaptureState {
       audioLevel: audioLevel ?? this.audioLevel,
       errorMessage: errorMessage ?? this.errorMessage,
       detectedContext: detectedContext ?? this.detectedContext,
+      intentResult: intentResult ?? this.intentResult,
+      workspaceMatch: workspaceMatch ?? this.workspaceMatch,
+      isOfflineSaved: isOfflineSaved ?? this.isOfflineSaved,
+      isSaving: isSaving ?? this.isSaving,
     );
   }
 }

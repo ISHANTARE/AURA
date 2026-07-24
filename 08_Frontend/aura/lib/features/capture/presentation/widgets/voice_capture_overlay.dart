@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../domain/entities/capture_state.dart';
 import '../providers/capture_provider.dart';
+import 'confirmation_box.dart';
 import 'waveform_widget.dart';
 
 /// Compact bottom overlay modal (~35% height) for voice capture.
@@ -86,26 +88,81 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
           ),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
-        padding: const EdgeInsets.all(AuraSpacing.md),
+        padding: const EdgeInsets.all(AuraSpacing.sm),
         child: SafeArea(
           top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Top Row (Mini Orb + Label + Waveform + Close) ────────────
-              _buildTopRow(captureState),
+          child: Builder(
+            builder: (context) {
+              if (captureState.status == CaptureStatus.confirming) {
+                return ConfirmationBox(state: captureState);
+              }
 
-              const SizedBox(height: AuraSpacing.md),
+              if (captureState.status == CaptureStatus.savedSuccess) {
+                return Padding(
+                  padding: const EdgeInsets.all(AuraSpacing.lg),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(
+                          color: AuraColors.accentGreen,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(LucideIcons.check, size: 28, color: Colors.black),
+                      ),
+                      const SizedBox(height: AuraSpacing.sm),
+                      Text(
+                        captureState.isOfflineSaved
+                            ? 'Saved as Offline Draft'
+                            : 'Task Created Successfully',
+                        style: AuraTypography.cardTitle.copyWith(color: AuraColors.accentLime),
+                      ),
+                      const SizedBox(height: AuraSpacing.xs),
+                      Text(
+                        captureState.isOfflineSaved
+                            ? 'Will process automatically when online.'
+                            : 'Saved to your database and workspace.',
+                        style: AuraTypography.body,
+                      ),
+                      const SizedBox(height: AuraSpacing.md),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AuraColors.accentLime,
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size(140, 44),
+                        ),
+                        onPressed: () {
+                          ref.read(captureProvider.notifier).reset();
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('DONE', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
+              }
 
-              // ── Middle Section (Transcript or Processing or Text Input) ──
-              _buildMiddleSection(captureState),
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Top Row (Mini Orb + Label + Waveform + Close) ────────────
+                  _buildTopRow(captureState),
 
-              const SizedBox(height: AuraSpacing.md),
+                  const SizedBox(height: AuraSpacing.md),
 
-              // ── Bottom Action Bar ──────────────────────────────────────────
-              _buildBottomActionBar(captureState),
-            ],
+                  // ── Middle Section (Transcript or Processing or Text Input) ──
+                  _buildMiddleSection(captureState),
+
+                  const SizedBox(height: AuraSpacing.md),
+
+                  // ── Bottom Action Bar ──────────────────────────────────────────
+                  _buildBottomActionBar(captureState),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -292,7 +349,7 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
         if (state.detectedContext != null) ...[
           const SizedBox(height: AuraSpacing.xs),
           Text(
-            'Speaking about: ${state.detectedContext}  🤖',
+            'Detecting context: ${state.detectedContext}',
             style: AuraTypography.label.copyWith(
               color: AuraColors.textSecondary,
               fontSize: 12,
@@ -413,6 +470,8 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
         return 'PROCESSING...';
       case CaptureStatus.confirming:
         return 'CONFIRMING...';
+      case CaptureStatus.savedSuccess:
+        return 'SAVED!';
       case CaptureStatus.error:
         return 'ERROR';
       case CaptureStatus.textInput:

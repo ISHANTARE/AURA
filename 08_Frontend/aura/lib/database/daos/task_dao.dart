@@ -1,4 +1,4 @@
-﻿import 'package:drift/drift.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_database.dart';
@@ -12,6 +12,19 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
   TaskDao(super.db);
 
   // ── Streams (reactive) ──────────────────────────────────────────────────
+
+  /// Watch all active (non-deleted, non-done) tasks across all workspaces.
+  Stream<List<Task>> watchAllActive() =>
+      (select(tasks)
+            ..where((t) => t.status.isNotIn(const ['done', 'cancelled']))
+            ..where((t) => t.deletedAt.isNull())
+            ..orderBy([
+              (t) => OrderingTerm(
+                    expression: t.createdAt,
+                    mode: OrderingMode.desc,
+                  )
+            ]))
+          .watch();
 
   /// Watch all active (non-deleted, non-done) tasks in a workspace, ordered by deadline.
   Stream<List<Task>> watchActiveByWorkspace(String workspaceId) =>
