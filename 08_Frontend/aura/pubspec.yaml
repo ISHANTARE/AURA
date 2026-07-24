@@ -1,0 +1,71 @@
+name: aura
+description: AI-Unified Reality Assistant — voice-first, offline-first life OS
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── State management ──────────────────────────────────────────────────────
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # ── Navigation ────────────────────────────────────────────────────────────
+  go_router: ^14.2.0
+
+  # ── Local database (Drift ORM + SQLite) ───────────────────────────────────
+  drift: ^2.18.0
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.3
+  path: ^1.9.0
+
+  # ── Network / AI ──────────────────────────────────────────────────────────
+  http: ^1.2.1
+  connectivity_plus: ^6.0.3
+
+  # ── Notifications + background ────────────────────────────────────────────
+  flutter_local_notifications: ^17.2.2
+  workmanager: ^0.9.0+3
+
+  # ── Android platform / permissions ───────────────────────────────────────
+  permission_handler: ^11.3.1
+  flutter_secure_storage: ^9.2.2
+
+  # ── Google ML Kit (OCR for share-to-AURA) ────────────────────────────────
+  google_mlkit_text_recognition: ^0.13.0
+
+  # ── Fonts ─────────────────────────────────────────────────────────────────
+  google_fonts: ^6.2.1
+
+  # ── Icons — Lucide ONLY. No emojis. No Material Icons. (ADR-012) ─────────
+  lucide_icons: ^0.257.0
+
+  # ── Utilities ─────────────────────────────────────────────────────────────
+  uuid: ^4.4.0
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  shared_preferences: ^2.2.3
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code generation
+  build_runner: ^2.4.11
+  drift_dev: ^2.18.0
+  riverpod_generator: ^2.4.3
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  custom_lint: ^0.6.4
+  riverpod_lint: ^2.3.13
+
+  # Linting
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
