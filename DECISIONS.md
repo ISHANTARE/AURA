@@ -1,4 +1,4 @@
-﻿# AURA — Architecture Decision Records (ADRs)
+# AURA — Architecture Decision Records (ADRs)
 
 > Every significant technical or product decision is documented here.
 > Format: ADR-{number} | Date | Status | Decision | Rationale | Consequences
@@ -438,6 +438,35 @@ All icons in AURA:
 
 - ADR-006: Tech stack — Flutter confirmed (Lucide package is Flutter-native)
 - ADR-011: Flutter cross-platform — Lucide renders identically on all Flutter platforms
+
+---
+
+## ADR-013 — No preloaded test data in production release
+
+**Date:** 2026-07-25  
+**Status:** Accepted  
+
+### Decision
+
+Production builds of AURA will contain zero preloaded, hardcoded, or mock data.
+Mock tasks, sample workspaces, and example habits are strictly for development/testing phases and MUST be completely excluded from release builds.
+On clean install, AURA starts completely blank with empty states that guide the user to perform their first capture.
+
+### Context
+
+During development and sprint testing, hardcoded sample tasks (e.g. "ML Assignment", "DBMS Quiz", "DSA Practice") were populated into UI screens to test layout, spacing, and animations. The user explicitly requested that all preloaded test data be removed for the actual production application. User name default is set to "Ishan".
+
+### Rationale
+
+- User privacy and ownership: The user's life OS must start as a clean slate reflecting only their real-world data.
+- Testing clarity: Clearly separates dev/test fixtures from real production behavior.
+- Clean onboarding experience: Empty states encourage active engagement (tapping the floating orb to create their first task).
+
+### Consequences
+
+- All sample data in UI widgets must be gated behind development build flags or wired to real Drift database queries.
+- Onboarding flow will handle initial user setup (user name: "Ishan").
+- Production release build (Sprint 12 final) will execute against an empty Drift DB database.
 
 ---
 

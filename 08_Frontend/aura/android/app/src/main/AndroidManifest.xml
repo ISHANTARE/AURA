@@ -73,69 +73,24 @@
             </intent-filter>
         </activity>
 
-        <!-- ── Share Target Activity ────────────────────────────────────────
-             Receives shared images, links, text from other apps (F-09).
-             Implemented in Sprint 9. -->
-        <activity
-            android:name=".AuraShareActivity"
-            android:exported="true"
-            android:theme="@style/LaunchTheme"
-            android:launchMode="singleTop">
-
-            <!-- Handle shared text / links -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
-
-            <!-- Handle shared images (screenshots) -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="image/*" />
-            </intent-filter>
-
-            <!-- Handle shared PDFs / documents -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="application/pdf" />
-            </intent-filter>
-        </activity>
-
-        <!-- ── Overlay (Floating Orb) Foreground Service ────────────────────
-             Keeps the orb visible on top of all other apps.
-             Implemented in Sprint 3. -->
+        <!-- Component declarations for Sprint 3 -->
         <service
             android:name=".AuraOverlayService"
             android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="overlayWindow" />
-        </service>
+            android:foregroundServiceType="specialUse" />
 
-        <!-- ── Boot Receiver ─────────────────────────────────────────────────
-             Restarts the overlay service after device reboot. -->
         <receiver
             android:name=".AuraBootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 
-        <!-- ── DND Broadcast Receiver ────────────────────────────────────────
-             Listens for DND state changes. Triggers DND replay (F-08). -->
-        <receiver
-            android:name=".AuraDNDReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.app.action.INTERRUPTION_FILTER_CHANGED" />
-            </intent-filter>
-        </receiver>
+        <!-- Future sprint components
+        <activity android:name=".AuraShareActivity" android:exported="true" ... />
+        <receiver android:name=".AuraDNDReceiver" android:exported="false" ... />
+        -->
 
         <!-- WorkManager init provider -->
         <provider

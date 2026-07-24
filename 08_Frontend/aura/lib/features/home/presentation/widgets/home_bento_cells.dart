@@ -177,7 +177,7 @@ class _OrbCellState extends State<OrbCell> with SingleTickerProviderStateMixin {
                 Container(
                   width: AuraSpacing.orbSize + 16,
                   height: AuraSpacing.orbSize + 16,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -260,7 +260,7 @@ class FocusCell extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(LucideIcons.sparkles,
+                    const Icon(LucideIcons.sparkles,
                         size: 10, color: AuraColors.accentLime),
                     const SizedBox(width: 3),
                     Text('AI suggested',
@@ -350,7 +350,7 @@ class _FocusItem extends StatelessWidget {
               style: AuraTypography.overline,
             ),
             const SizedBox(width: AuraSpacing.xs),
-            Icon(LucideIcons.chevronRight,
+            const Icon(LucideIcons.chevronRight,
                 size: AuraSpacing.sm + 4,
                 color: AuraColors.textSecondary),
           ],

@@ -9,6 +9,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/constants/icons.dart';
 import '../widgets/home_bento_cells.dart';
+import '../../../capture/presentation/widgets/voice_capture_overlay.dart';
 
 /// Home Screen — Sprint 2.
 /// Bento Grid layout matching wireframe 01_home_screen.md.
@@ -248,8 +249,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _onOrbTap() {
     HapticFeedback.mediumImpact();
-    // Sprint 4: show voice capture overlay
-    _showCaptureSnack();
+    VoiceCaptureOverlay.show(context);
   }
 
   void _onTaskTap(String taskId) {
@@ -310,9 +310,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   String _greeting(int hour) {
-    if (hour < 12) return 'Good morning, Ishant.';
-    if (hour < 17) return 'Good afternoon, Ishant.';
-    return 'Good evening, Ishant.';
+    if (hour < 12) return 'Good morning, Ishan.';
+    if (hour < 17) return 'Good afternoon, Ishan.';
+    return 'Good evening, Ishan.';
   }
 }
 

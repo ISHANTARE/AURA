@@ -86,11 +86,11 @@ abstract final class AppTheme {
 
       // ── Card ──────────────────────────────────────────────────────────────
       // Note: We use custom BentoCard widget — this is for MaterialCard fallbacks
-      cardTheme: CardThemeData(
+      cardTheme: const CardThemeData(
         color: AuraColors.bgCard,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.zero, // CRITICAL: 0 radius
           side: BorderSide(color: AuraColors.border, width: AuraSpacing.borderWidth),
         ),

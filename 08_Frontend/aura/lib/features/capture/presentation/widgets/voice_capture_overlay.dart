@@ -1,0 +1,424 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/constants/colors.dart';
+import '../../../../core/constants/spacing.dart';
+import '../../../../core/constants/typography.dart';
+import '../../domain/entities/capture_state.dart';
+import '../providers/capture_provider.dart';
+import 'waveform_widget.dart';
+
+/// Compact bottom overlay modal (~35% height) for voice capture.
+/// Matches UX wireframe `02_voice_capture.md` exactly.
+class VoiceCaptureOverlay extends ConsumerStatefulWidget {
+  const VoiceCaptureOverlay({super.key});
+
+  /// Helper to display this modal overlay sheet.
+  static Future<void> show(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.4), // Scrim
+      builder: (context) => const VoiceCaptureOverlay(),
+    );
+  }
+
+  @override
+  ConsumerState<VoiceCaptureOverlay> createState() => _VoiceCaptureOverlayState();
+}
+
+class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
+    with SingleTickerProviderStateMixin {
+  late final TextEditingController _textController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+
+    _glowAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    // Auto-start capture on overlay launch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(captureProvider.notifier).startCapture();
+    });
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final captureState = ref.watch(captureProvider);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    // Border color turns red on error state
+    final borderColor = (captureState.status == CaptureStatus.error)
+        ? AuraColors.accentRed
+        : AuraColors.border;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 150),
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AuraColors.bgCard, // #141414
+          border: Border(
+            top: BorderSide(color: borderColor, width: 2),
+            left: BorderSide(color: borderColor, width: 2),
+            right: BorderSide(color: borderColor, width: 2),
+          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        padding: const EdgeInsets.all(AuraSpacing.md),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Top Row (Mini Orb + Label + Waveform + Close) ────────────
+              _buildTopRow(captureState),
+
+              const SizedBox(height: AuraSpacing.md),
+
+              // ── Middle Section (Transcript or Processing or Text Input) ──
+              _buildMiddleSection(captureState),
+
+              const SizedBox(height: AuraSpacing.md),
+
+              // ── Bottom Action Bar ──────────────────────────────────────────
+              _buildBottomActionBar(captureState),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopRow(CaptureState state) {
+    return Row(
+      children: [
+        // Mini Orb with glow
+        AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            return Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AuraColors.accentLime,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: AuraColors.orbGlow
+                        .withValues(alpha: _glowAnimation.value * 0.15),
+                    blurRadius: 16,
+                    spreadRadius: 4,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  'A',
+                  style: AuraTypography.orbLabel.copyWith(fontSize: 14),
+                ),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(width: AuraSpacing.sm),
+
+        // Status Label
+        Expanded(
+          child: Row(
+            children: [
+              Text(
+                _getStatusLabel(state.status),
+                style: AuraTypography.label.copyWith(
+                  color: (state.status == CaptureStatus.error)
+                      ? AuraColors.accentRed
+                      : AuraColors.accentLime,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(width: AuraSpacing.sm),
+              if (state.status == CaptureStatus.listening)
+                WaveformWidget(audioLevel: state.audioLevel),
+            ],
+          ),
+        ),
+
+        // Cancel (✕) button
+        GestureDetector(
+          onTap: () async {
+            HapticFeedback.lightImpact();
+            await ref.read(captureProvider.notifier).cancelCapture();
+            if (mounted) Navigator.of(context).pop();
+          },
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              border: Border.all(color: AuraColors.border, width: 2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Icon(
+              Icons.close,
+              color: AuraColors.textPrimary,
+              size: 18,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiddleSection(CaptureState state) {
+    if (state.status == CaptureStatus.textInput) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AuraColors.bgElevated,
+          border: Border.all(color: AuraColors.border, width: 2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: AuraSpacing.sm),
+        child: TextField(
+          controller: _textController,
+          autofocus: true,
+          style: AuraTypography.bodyPrimary,
+          onChanged: (val) {
+            ref.read(captureProvider.notifier).updateTypedTranscript(val);
+          },
+          onSubmitted: (_) {
+            ref.read(captureProvider.notifier).submitTypedTranscript();
+          },
+          decoration: InputDecoration(
+            hintText: 'Type what you want to capture...',
+            hintStyle: AuraTypography.body,
+            border: InputBorder.none,
+          ),
+        ),
+      );
+    }
+
+    if (state.status == CaptureStatus.processing) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: AuraSpacing.md),
+        alignment: Alignment.center,
+        child: Column(
+          children: [
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AuraColors.accentLime),
+              strokeWidth: 3,
+            ),
+            const SizedBox(height: AuraSpacing.sm),
+            Text(
+              'Thinking...',
+              style: AuraTypography.bodyPrimary.copyWith(
+                color: AuraColors.accentLime,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (state.transcript.isNotEmpty) ...[
+              const SizedBox(height: AuraSpacing.xs),
+              Text(
+                '"${state.transcript}"',
+                style: AuraTypography.body.copyWith(fontStyle: FontStyle.italic),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    if (state.status == CaptureStatus.error) {
+      return Container(
+        padding: const EdgeInsets.all(AuraSpacing.sm),
+        decoration: BoxDecoration(
+          color: AuraColors.accentRed.withValues(alpha: 0.1),
+          border: Border.all(color: AuraColors.accentRed, width: 1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          state.errorMessage ?? 'An error occurred during voice capture',
+          style: AuraTypography.bodyPrimary.copyWith(color: AuraColors.accentRed),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Live Transcript
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48, maxHeight: 90),
+          child: SingleChildScrollView(
+            child: Text(
+              state.transcript.isEmpty
+                  ? 'Listening... speak now'
+                  : '"${state.transcript}"',
+              style: state.transcript.isEmpty
+                  ? AuraTypography.body
+                  : AuraTypography.bodyPrimary.copyWith(
+                      fontStyle: FontStyle.italic,
+                    ),
+            ),
+          ),
+        ),
+
+        if (state.detectedContext != null) ...[
+          const SizedBox(height: AuraSpacing.xs),
+          Text(
+            'Speaking about: ${state.detectedContext}  🤖',
+            style: AuraTypography.label.copyWith(
+              color: AuraColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildBottomActionBar(CaptureState state) {
+    if (state.status == CaptureStatus.error) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(0, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            onPressed: () {
+              ref.read(captureProvider.notifier).switchToTextInput();
+            },
+            child: Text(
+              'Type Manually',
+              style: AuraTypography.label.copyWith(color: AuraColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AuraColors.accentLime,
+              foregroundColor: Colors.black,
+              minimumSize: const Size(0, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            ),
+            onPressed: () {
+              ref.read(captureProvider.notifier).startCapture();
+            },
+            child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // "Type instead" link — constrained to left side
+        if (state.status != CaptureStatus.textInput &&
+            state.status != CaptureStatus.processing)
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              ref.read(captureProvider.notifier).switchToTextInput();
+            },
+            child: Text(
+              'Type instead',
+              style: AuraTypography.label.copyWith(
+                color: AuraColors.textSecondary,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          )
+        else
+          const SizedBox.shrink(),
+
+        // CTA Button — intrinsic size, right-aligned
+        SizedBox(
+          height: 44,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AuraColors.accentLime,
+              foregroundColor: Colors.black,
+              elevation: 4,
+              shadowColor: Colors.black,
+              minimumSize: const Size(0, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+                side: const BorderSide(color: Colors.black, width: 2),
+              ),
+            ),
+            onPressed: (state.status == CaptureStatus.processing)
+                ? null
+                : () {
+                    HapticFeedback.mediumImpact();
+                    if (state.status == CaptureStatus.textInput) {
+                      ref.read(captureProvider.notifier).submitTypedTranscript();
+                    } else {
+                      ref.read(captureProvider.notifier).stopAndProcess();
+                    }
+                  },
+            child: Text(
+              state.status == CaptureStatus.textInput ? 'SUBMIT →' : 'STOP & PROCESS →',
+              style: AuraTypography.label.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getStatusLabel(CaptureStatus status) {
+    switch (status) {
+      case CaptureStatus.starting:
+        return 'STARTING...';
+      case CaptureStatus.listening:
+        return 'LISTENING...';
+      case CaptureStatus.autoStopped:
+        return 'STOPPING...';
+      case CaptureStatus.processing:
+        return 'PROCESSING...';
+      case CaptureStatus.confirming:
+        return 'CONFIRMING...';
+      case CaptureStatus.error:
+        return 'ERROR';
+      case CaptureStatus.textInput:
+        return 'TYPE INPUT';
+      case CaptureStatus.idle:
+        return 'IDLE';
+    }
+  }
+}

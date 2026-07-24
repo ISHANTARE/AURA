@@ -30,7 +30,7 @@ abstract final class AuraIcons {
   static const IconData search      = LucideIcons.search;
   static const IconData share       = LucideIcons.share2;
   static const IconData move        = LucideIcons.arrowRightLeft;
-  static const IconData export_icon = LucideIcons.download;
+  static const IconData exportIcon  = LucideIcons.download;
   static const IconData filter      = LucideIcons.listFilter;
   static const IconData sort        = LucideIcons.arrowUpDown;
   static const IconData dragHandle  = LucideIcons.gripVertical;
