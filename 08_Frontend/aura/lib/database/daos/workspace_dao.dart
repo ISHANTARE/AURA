@@ -19,6 +19,14 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
             ..orderBy([(w) => OrderingTerm(expression: w.sortOrder)]))
           .watch();
 
+  /// Watch all archived (non-deleted) workspaces.
+  Stream<List<Workspace>> watchArchived() =>
+      (select(workspaces)
+            ..where((w) => w.isArchived.equals(true))
+            ..where((w) => w.deletedAt.isNull())
+            ..orderBy([(w) => OrderingTerm(expression: w.sortOrder)]))
+          .watch();
+
   /// Get count of active tasks for a workspace
   Stream<int> watchTaskCount(String workspaceId) {
     final countExpr = db.tasks.id.count();
@@ -27,6 +35,40 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
       ..where(db.tasks.workspaceId.equals(workspaceId))
       ..where(db.tasks.status.isNotIn(const ['done', 'cancelled']))
       ..where(db.tasks.deletedAt.isNull());
+    return query.map((row) => row.read(countExpr) ?? 0).watchSingle();
+  }
+
+  /// Get count of overdue tasks for a workspace
+  Stream<int> watchOverdueTaskCount(String workspaceId) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final countExpr = db.tasks.id.count();
+    final query = selectOnly(db.tasks)
+      ..addColumns([countExpr])
+      ..where(db.tasks.workspaceId.equals(workspaceId))
+      ..where(db.tasks.status.isNotIn(const ['done', 'cancelled']))
+      ..where(db.tasks.deadline.isSmallerThanValue(now))
+      ..where(db.tasks.deletedAt.isNull());
+    return query.map((row) => row.read(countExpr) ?? 0).watchSingle();
+  }
+
+  /// Get count of events for a workspace
+  Stream<int> watchEventCount(String workspaceId) {
+    final countExpr = db.events.id.count();
+    final query = selectOnly(db.events)
+      ..addColumns([countExpr])
+      ..where(db.events.workspaceId.equals(workspaceId))
+      ..where(db.events.deletedAt.isNull());
+    return query.map((row) => row.read(countExpr) ?? 0).watchSingle();
+  }
+
+  /// Get count of sections for a workspace
+  Stream<int> watchSectionCount(String workspaceId) {
+    final countExpr = db.workspaceSections.id.count();
+    final query = selectOnly(db.workspaceSections)
+      ..addColumns([countExpr])
+      ..where(db.workspaceSections.workspaceId.equals(workspaceId))
+      ..where(db.workspaceSections.isArchived.equals(false))
+      ..where(db.workspaceSections.deletedAt.isNull());
     return query.map((row) => row.read(countExpr) ?? 0).watchSingle();
   }
 
@@ -64,6 +106,28 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
     return (update(workspaces)..where((w) => w.id.equals(id))).write(
       WorkspacesCompanion(
         isArchived: const Value(true),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Unarchive a workspace.
+  Future<void> unarchive(String id) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(workspaces)..where((w) => w.id.equals(id))).write(
+      WorkspacesCompanion(
+        isArchived: const Value(false),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Soft delete a workspace.
+  Future<void> softDelete(String id) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(workspaces)..where((w) => w.id.equals(id))).write(
+      WorkspacesCompanion(
+        deletedAt: Value(now),
         updatedAt: Value(now),
       ),
     );

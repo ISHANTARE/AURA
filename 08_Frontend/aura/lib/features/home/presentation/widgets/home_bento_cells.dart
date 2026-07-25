@@ -576,9 +576,9 @@ class WorkspacesCell extends StatelessWidget {
     this.onAddTap,
   });
 
-  /// Each workspace: {name, taskCount, color (int ARGB), icon (IconData)}
+  /// Each workspace: {id, name, taskCount, color (int ARGB), icon (IconData)}
   final List<Map<String, dynamic>> workspaces;
-  final void Function(String name)? onWorkspaceTap;
+  final void Function(String id)? onWorkspaceTap;
   final VoidCallback? onAddTap;
 
   @override
@@ -599,7 +599,7 @@ class WorkspacesCell extends StatelessWidget {
                       child: _WorkspaceChip(
                         workspace: ws,
                         onTap: () =>
-                            onWorkspaceTap?.call(ws['name'] as String? ?? ''),
+                            onWorkspaceTap?.call(ws['id'] as String? ?? ''),
                       ),
                     )),
                 // Add chip

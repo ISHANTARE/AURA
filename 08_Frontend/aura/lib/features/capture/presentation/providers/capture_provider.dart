@@ -6,6 +6,7 @@ import '../../../../platform/speech_channel.dart';
 import '../../data/datasources/llm_api_datasource.dart';
 import '../../domain/entities/capture_state.dart';
 import '../../domain/entities/intent_result.dart';
+import '../../domain/entities/workspace_match_result.dart';
 import '../../domain/usecases/create_task_usecase.dart';
 import '../../domain/usecases/queue_offline_transcript_usecase.dart';
 import '../../domain/usecases/workspace_router_usecase.dart';
@@ -221,6 +222,19 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
   /// Update parsed intent when user manually edits fields in ConfirmationBox
   void updateIntent(IntentResult newIntent) {
     state = state.copyWith(intentResult: newIntent);
+  }
+
+  /// Update workspace match when user manually picks a workspace in ConfirmationBox
+  void updateWorkspaceMatch(WorkspaceMatchResult? match) {
+    state = state.copyWith(workspaceMatch: match);
+  }
+
+  /// Update both intent and workspace match
+  void updateIntentAndWorkspace(IntentResult newIntent, WorkspaceMatchResult? match) {
+    state = state.copyWith(
+      intentResult: newIntent,
+      workspaceMatch: match,
+    );
   }
 
   /// Confirm and save task to SQLite Drift database

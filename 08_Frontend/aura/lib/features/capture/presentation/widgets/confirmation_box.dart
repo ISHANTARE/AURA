@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../../database/app_database.dart';
 import '../../domain/entities/capture_state.dart';
 import '../../domain/entities/intent_result.dart';
 import '../../domain/entities/workspace_match_result.dart';
@@ -78,9 +79,10 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     HapticFeedback.selectionClick();
-                    ref.read(captureProvider.notifier).reset();
+                    await ref.read(captureProvider.notifier).cancelCapture();
+                    if (context.mounted) Navigator.of(context).pop();
                   },
                   child: const Icon(LucideIcons.x, size: 20, color: AuraColors.textSecondary),
                 ),
@@ -259,20 +261,30 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
   }
 
   Widget _buildRemindersRow(IntentResult intent) {
-    return _buildFieldContainer(
-      icon: LucideIcons.bell,
-      label: 'Reminders',
-      content: intent.reminders.isEmpty
-          ? Text('No reminders', style: AuraTypography.body)
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: intent.reminders.map((r) {
-                return Text(
-                  '${r.offsetValue} ${r.offsetUnit} before deadline (${r.type})',
-                  style: AuraTypography.bodyPrimary.copyWith(fontSize: 13),
-                );
-              }).toList(),
+    return GestureDetector(
+      onTap: () => _showReminderPicker(context, intent),
+      child: _buildFieldContainer(
+        icon: LucideIcons.bell,
+        label: 'Reminders',
+        content: Row(
+          children: [
+            Expanded(
+              child: intent.reminders.isEmpty
+                  ? Text('No reminders — tap to set', style: AuraTypography.body.copyWith(fontStyle: FontStyle.italic))
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: intent.reminders.map((r) {
+                        return Text(
+                          '${r.offsetValue} ${r.offsetUnit} before (${r.type})',
+                          style: AuraTypography.bodyPrimary.copyWith(fontSize: 13),
+                        );
+                      }).toList(),
+                    ),
             ),
+            const Icon(LucideIcons.pencil, size: 14, color: AuraColors.textSecondary),
+          ],
+        ),
+      ),
     );
   }
 
@@ -301,33 +313,290 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
       badgeText = 'auto';
     }
 
-    return _buildFieldContainer(
-      icon: LucideIcons.folder,
-      label: 'Workspace',
-      content: Row(
-        children: [
-          Text(nameDisplay, style: AuraTypography.bodyPrimary),
-          if (badgeText.isNotEmpty) ...[
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: 0.15),
-                border: Border.all(color: badgeColor, width: 1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                badgeText,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: badgeColor,
-                ),
+    return GestureDetector(
+      onTap: () => _showWorkspacePicker(context, intent, match),
+      child: _buildFieldContainer(
+        icon: LucideIcons.folder,
+        label: 'Workspace',
+        content: Row(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Text(nameDisplay, style: AuraTypography.bodyPrimary),
+                  if (badgeText.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: badgeColor.withValues(alpha: 0.15),
+                        border: Border.all(color: badgeColor, width: 1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        badgeText,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: badgeColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
+            const Icon(LucideIcons.pencil, size: 14, color: AuraColors.textSecondary),
           ],
-        ],
+        ),
       ),
+    );
+  }
+
+  Future<void> _showWorkspacePicker(
+    BuildContext context,
+    IntentResult intent,
+    WorkspaceMatchResult? match,
+  ) async {
+    HapticFeedback.selectionClick();
+    final db = ref.read(databaseProvider);
+    final workspaces = await db.workspaceDao.getAll();
+
+    if (!context.mounted) return;
+
+    final currentWsId = match?.matchedWorkspace?.id;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AuraColors.bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: AuraColors.border, width: 2),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AuraSpacing.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Select Workspace', style: AuraTypography.cardTitle),
+                    GestureDetector(
+                      onTap: () => Navigator.of(ctx).pop(),
+                      child: const Icon(LucideIcons.x, size: 20, color: AuraColors.textSecondary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AuraSpacing.sm),
+                const Divider(color: AuraColors.borderMuted, height: 1),
+                const SizedBox(height: AuraSpacing.xs),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        ...workspaces.map((ws) {
+                          final isSelected = ws.id == currentWsId;
+                          Color wsColor;
+                          try {
+                            final clean = ws.colorHex.replaceFirst('#', '');
+                            wsColor = Color(int.parse('FF$clean', radix: 16));
+                          } catch (_) {
+                            wsColor = AuraColors.accentLime;
+                          }
+
+                          return ListTile(
+                            dense: true,
+                            leading: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: wsColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            title: Text(
+                              ws.name,
+                              style: AuraTypography.bodyPrimary.copyWith(
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                color: isSelected ? AuraColors.accentLime : AuraColors.textPrimary,
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(LucideIcons.check, size: 18, color: AuraColors.accentLime)
+                                : null,
+                            onTap: () {
+                              Navigator.of(ctx).pop();
+                              final newMatch = WorkspaceMatchResult.exact(ws);
+                              final newIntent = intent.copyWith(workspaceHint: ws.name);
+                              ref.read(captureProvider.notifier).updateIntentAndWorkspace(newIntent, newMatch);
+                            },
+                          );
+                        }),
+                        const Divider(color: AuraColors.borderMuted, height: 1),
+                        ListTile(
+                          dense: true,
+                          leading: const Icon(LucideIcons.plusCircle, size: 18, color: AuraColors.accentLime),
+                          title: Text(
+                            '+ Create custom workspace...',
+                            style: AuraTypography.bodyPrimary.copyWith(color: AuraColors.accentLime),
+                          ),
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            _promptCustomWorkspace(context, intent);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _promptCustomWorkspace(BuildContext context, IntentResult intent) async {
+    final controller = TextEditingController();
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: AuraColors.bgCard,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: AuraColors.border, width: 2),
+          ),
+          title: Text('New Workspace Name', style: AuraTypography.cardTitle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: AuraTypography.bodyPrimary,
+            decoration: const InputDecoration(
+              hintText: 'e.g. Project X',
+              hintStyle: TextStyle(color: AuraColors.textDisabled),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: const Text('CANCEL', style: TextStyle(color: AuraColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AuraColors.accentLime, foregroundColor: Colors.black),
+              onPressed: () => Navigator.of(dialogCtx).pop(controller.text.trim()),
+              child: const Text('SET'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newName != null && newName.isNotEmpty && mounted) {
+      final newMatch = WorkspaceMatchResult.newWorkspace(newName);
+      final newIntent = intent.copyWith(workspaceHint: newName);
+      ref.read(captureProvider.notifier).updateIntentAndWorkspace(newIntent, newMatch);
+    }
+  }
+
+  Future<void> _showReminderPicker(
+    BuildContext context,
+    IntentResult intent,
+  ) async {
+    HapticFeedback.selectionClick();
+
+    final options = [
+      {'label': 'No reminder', 'value': 0, 'unit': 'none'},
+      {'label': '10 minutes before', 'value': 10, 'unit': 'minutes'},
+      {'label': '30 minutes before', 'value': 30, 'unit': 'minutes'},
+      {'label': '1 hour before', 'value': 1, 'unit': 'hours'},
+      {'label': '2 hours before', 'value': 2, 'unit': 'hours'},
+      {'label': '1 day before', 'value': 1, 'unit': 'days'},
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AuraColors.bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: AuraColors.border, width: 2),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AuraSpacing.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Set Reminder', style: AuraTypography.cardTitle),
+                    GestureDetector(
+                      onTap: () => Navigator.of(ctx).pop(),
+                      child: const Icon(LucideIcons.x, size: 20, color: AuraColors.textSecondary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AuraSpacing.sm),
+                const Divider(color: AuraColors.borderMuted, height: 1),
+                const SizedBox(height: AuraSpacing.xs),
+                ...options.map((opt) {
+                  final label = opt['label'] as String;
+                  final val = opt['value'] as int;
+                  final unit = opt['unit'] as String;
+
+                  final isCurrent = (unit == 'none' && intent.reminders.isEmpty) ||
+                      (intent.reminders.isNotEmpty &&
+                          intent.reminders.first.offsetValue == val &&
+                          intent.reminders.first.offsetUnit == unit);
+
+                  return ListTile(
+                    dense: true,
+                    leading: Icon(
+                      unit == 'none' ? LucideIcons.bellOff : LucideIcons.bell,
+                      size: 18,
+                      color: isCurrent ? AuraColors.accentLime : AuraColors.textSecondary,
+                    ),
+                    title: Text(
+                      label,
+                      style: AuraTypography.bodyPrimary.copyWith(
+                        fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                        color: isCurrent ? AuraColors.accentLime : AuraColors.textPrimary,
+                      ),
+                    ),
+                    trailing: isCurrent
+                        ? const Icon(LucideIcons.check, size: 18, color: AuraColors.accentLime)
+                        : null,
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      List<ExtractedReminder> newReminders = [];
+                      if (unit != 'none') {
+                        newReminders = [
+                          ExtractedReminder(
+                            offsetValue: val,
+                            offsetUnit: unit,
+                            type: 'notification',
+                          ),
+                        ];
+                      }
+                      ref.read(captureProvider.notifier).updateIntent(
+                            intent.copyWith(reminders: newReminders),
+                          );
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/colors.dart';
@@ -11,6 +12,7 @@ import '../../../../database/daos/task_dao.dart';
 import '../providers/home_providers.dart';
 import '../widgets/home_bento_cells.dart';
 import '../../../capture/presentation/widgets/voice_capture_overlay.dart';
+import '../../../workspaces/presentation/widgets/create_workspace_modal.dart';
 
 /// Home Screen — Sprint 4b.
 /// Bento Grid layout connected reactively to Drift DB.
@@ -118,6 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         final countAsync = ref.watch(workspaceTaskCountProvider(w.id));
         final count = countAsync.value ?? 0;
         return <String, dynamic>{
+          'id': w.id,
           'name': w.name,
           'taskCount': count,
           'color': int.tryParse(w.colorHex.replaceFirst('#', '0xFF')) ?? 0xFFB57BFF,
@@ -125,7 +128,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         };
       }).toList(),
       loading: () => <Map<String, dynamic>>[
-        {'name': 'General', 'taskCount': 0, 'color': 0xFFB57BFF, 'icon': Icons.folder},
+        {'id': '', 'name': 'General', 'taskCount': 0, 'color': 0xFFB57BFF, 'icon': Icons.folder},
       ],
       error: (_, __) => <Map<String, dynamic>>[],
     );
@@ -319,12 +322,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     HapticFeedback.lightImpact();
   }
 
-  void _onWorkspaceTap(String name) {
+  void _onWorkspaceTap(String id) {
+    if (id.isEmpty) return;
     HapticFeedback.lightImpact();
+    context.push('/workspace/$id');
   }
 
   void _onAddWorkspace() {
-    _showCaptureSnack(msg: 'Create workspace — coming in Sprint 5');
+    HapticFeedback.mediumImpact();
+    CreateWorkspaceModal.show(context);
   }
 
   void _onSearchTap() {

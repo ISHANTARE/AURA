@@ -28,16 +28,19 @@ abstract final class AuraTypography {
   /// Large stats, orb label. 36sp ExtraBold.
   static TextStyle get display => _base(size: 36, weight: FontWeight.w800);
 
-  // ── Section Headers ───────────────────────────────────────────────────────
+  // ── Screen / Section Headers ──────────────────────────────────────────────
   /// Screen titles, section names. 22sp Bold.
   static TextStyle get sectionHeader => _base(size: 22, weight: FontWeight.w700);
+
+  /// Alias for sectionHeader — used in screen app bars.
+  static TextStyle get screenHeader => _base(size: 22, weight: FontWeight.w700);
 
   // ── Card Titles ───────────────────────────────────────────────────────────
   /// Task names, event titles. 17sp SemiBold.
   static TextStyle get cardTitle => _base(size: 17, weight: FontWeight.w600);
 
   // ── Body ──────────────────────────────────────────────────────────────────
-  /// Deadlines, descriptions. 14sp Regular.
+  /// Deadlines, descriptions. 14sp Regular, secondary white.
   static TextStyle get body => _base(
         size: 14,
         weight: FontWeight.w400,
@@ -46,6 +49,16 @@ abstract final class AuraTypography {
 
   /// Body at full white opacity (for primary content in detail screens).
   static TextStyle get bodyPrimary => _base(size: 14, weight: FontWeight.w400);
+
+  /// Body medium — 15sp Regular, full white.
+  static TextStyle get bodyMedium => _base(size: 15, weight: FontWeight.w400);
+
+  /// Body small — 13sp Regular, secondary white.
+  static TextStyle get bodySmall => _base(
+        size: 13,
+        weight: FontWeight.w400,
+        color: const Color(0x99FFFFFF),
+      );
 
   // ── Labels / Tags ─────────────────────────────────────────────────────────
   /// Category labels, badges. 11sp Medium, ALL CAPS, letter-spacing 1.2.
@@ -62,6 +75,21 @@ abstract final class AuraTypography {
         weight: FontWeight.w500,
         color: const Color(0xFFC8FF00),
         letterSpacing: 1.2,
+      );
+
+  /// Badge / meta text — 11sp SemiBold, ALL CAPS, letter-spacing 1.0.
+  static TextStyle get badgeText => _base(
+        size: 11,
+        weight: FontWeight.w600,
+        color: const Color(0x99FFFFFF),
+        letterSpacing: 1.0,
+      );
+
+  /// Bento metric labels (stats bento row). 11sp Bold, ALL CAPS.
+  static TextStyle get bentoMetricLabel => _base(
+        size: 11,
+        weight: FontWeight.w700,
+        letterSpacing: 1.0,
       );
 
   // ── Overline (smaller labels) ─────────────────────────────────────────────
@@ -81,8 +109,16 @@ abstract final class AuraTypography {
         color: const Color(0xFF000000),
       );
 
+  /// Alias for buttonPrimary — used in ElevatedButton child widgets.
+  static TextStyle get buttonText => _base(
+        size: 15,
+        weight: FontWeight.w700,
+        color: const Color(0xFF000000),
+      );
+
   /// Secondary CTA. 15sp SemiBold white.
-  static TextStyle get buttonSecondary => _base(size: 15, weight: FontWeight.w600);
+  static TextStyle get buttonSecondary =>
+      _base(size: 15, weight: FontWeight.w600);
 
   // ── Orb label ─────────────────────────────────────────────────────────────
   /// The "A" on the orb. 24sp ExtraBold black.
