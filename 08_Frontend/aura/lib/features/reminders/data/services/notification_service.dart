@@ -185,7 +185,7 @@ class NotificationService {
 
     if (tzScheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
-    final androidDetails = AndroidNotificationDetails(
+    const androidDetails = AndroidNotificationDetails(
       alarmChannelId,
       alarmChannelName,
       channelDescription: alarmChannelDescription,
@@ -207,7 +207,7 @@ class NotificationService {
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
-    final details = NotificationDetails(
+    const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );

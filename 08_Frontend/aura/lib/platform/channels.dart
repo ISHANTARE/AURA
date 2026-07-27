@@ -4,6 +4,7 @@ abstract class AuraChannels {
   static const String speechMethod = 'aura/speech';
   static const String speechPartialEvent = 'aura/speech/partial';
   static const String speechAudioLevelEvent = 'aura/speech/audioLevel';
-  static const String dndMethod = 'aura/dnd';
+  static const String dndMethod = 'com.aura.aura/dnd';
+  static const String dndEvent = 'com.aura.aura/dnd_events';
   static const String shareMethod = 'aura/share';
 }

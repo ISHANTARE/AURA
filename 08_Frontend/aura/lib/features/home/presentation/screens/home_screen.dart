@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/constants/icons.dart';
 import '../../../../database/daos/task_dao.dart';
 import '../providers/home_providers.dart';
@@ -341,7 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _onSearchTap() {
-    _showCaptureSnack(msg: 'Search — coming in Sprint 7');
+    context.push(Routes.search);
   }
 
   void _onProfileTap() {

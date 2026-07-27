@@ -107,10 +107,28 @@
             </intent-filter>
         </receiver>
 
-        <!-- Future sprint components
-        <activity android:name=".AuraShareActivity" android:exported="true" ... />
-        <receiver android:name=".AuraDNDReceiver" android:exported="false" ... />
-        -->
+        <receiver
+            android:name=".AuraDNDReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.app.action.INTERRUPTION_FILTER_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Share Target Activity (Sprint 9: F-09) -->
+        <activity
+            android:name=".AuraShareActivity"
+            android:exported="true"
+            android:label="Add to AURA"
+            android:theme="@style/LaunchTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity>
 
         <!-- WorkManager init provider -->
         <provider

@@ -4,18 +4,20 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/home/presentation/screens/morning_briefing_screen.dart';
 import '../../features/home/presentation/widgets/floating_orb.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/workspaces/presentation/screens/workspace_list_screen.dart';
 import '../../features/workspaces/presentation/screens/workspace_detail_screen.dart';
 import '../../features/tasks/presentation/screens/task_detail_screen.dart';
+import '../../features/tasks/presentation/screens/search_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/alarms/presentation/screens/alarms_screen.dart';
 import '../../features/notes/presentation/screens/notes_screen.dart';
+import '../../features/capture/presentation/screens/share_receive_screen.dart';
 import '../../features/reminders/data/services/dnd_service.dart';
 import '../../features/capture/domain/services/offline_queue_processor.dart';
 import '../constants/colors.dart';
-import '../constants/spacing.dart';
 import '../constants/typography.dart';
 
 /// Route name constants — use these everywhere instead of string literals.
@@ -107,11 +109,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Deep links ────────────────────────────────────────────────────────
       GoRoute(
         path: Routes.briefing,
-        builder: (context, state) => const _PlaceholderScreen(title: 'Morning Briefing'),
+        builder: (context, state) => const MorningBriefingScreen(),
       ),
       GoRoute(
         path: Routes.search,
-        builder: (context, state) => const _PlaceholderScreen(title: 'Search'),
+        builder: (context, state) => const SearchScreen(),
+      ),
+      GoRoute(
+        path: Routes.share,
+        builder: (context, state) => const ShareReceiveScreen(),
       ),
     ],
     errorBuilder: (context, state) => _ErrorScreen(error: state.error),
@@ -183,33 +189,6 @@ class _MainShellState extends ConsumerState<_MainShell> {
 
   void _onCaptureTap() {
     // Sprint 4: open voice capture overlay
-  }
-}
-
-
-// ── Placeholder screen ─────────────────────────────────────────────────────
-
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AuraColors.bgBase,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(title, style: AuraTypography.sectionHeader),
-              const SizedBox(height: AuraSpacing.sm),
-              Text('Coming soon.', style: AuraTypography.body),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

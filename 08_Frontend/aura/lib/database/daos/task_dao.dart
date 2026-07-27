@@ -119,6 +119,17 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         .get();
   }
 
+  /// Get overdue tasks (past deadline, status = todo).
+  Future<List<Task>> getOverdueTasks() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (select(tasks)
+          ..where((t) => t.deadline.isSmallerOrEqualValue(now))
+          ..where((t) => t.status.equals('todo'))
+          ..where((t) => t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm(expression: t.deadline)]))
+        .get();
+  }
+
   // ── Writes ──────────────────────────────────────────────────────────────
 
   /// Insert a task + its reminders atomically.
@@ -174,6 +185,21 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
       ),
     );
   }
+
+  /// Restore a soft-deleted task.
+  Future<void> restoreSoftDelete(String id) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(tasks)..where((t) => t.id.equals(id))).write(
+      TasksCompanion(
+        deletedAt: const Value.absent(),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Insert a subtask under parent task.
+  Future<void> insertSubtask(TasksCompanion subtask) =>
+      into(tasks).insert(subtask);
 }
 
 // ── Riverpod Provider ─────────────────────────────────────────────────────────
