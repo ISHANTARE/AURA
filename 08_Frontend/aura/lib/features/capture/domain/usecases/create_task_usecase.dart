@@ -2,12 +2,15 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../database/app_database.dart';
 import '../entities/intent_result.dart';
+import '../../../reminders/domain/services/reminder_scheduler.dart';
 
 class CreateTaskUseCase {
   final AppDatabase _db;
+  final ReminderScheduler _reminderScheduler;
   static const Uuid _uuid = Uuid();
 
-  CreateTaskUseCase(this._db);
+  CreateTaskUseCase(this._db)
+      : _reminderScheduler = ReminderScheduler(_db);
 
   /// Executes a database transaction to save the confirmed task, any reminders,
   /// creating a workspace if needed, and logging to ai_actions_log.
@@ -17,7 +20,10 @@ class CreateTaskUseCase {
     String? workspaceNameToCreate,
     required String originalTranscript,
   }) async {
-    return _db.transaction(() async {
+    final List<RemindersCompanion> reminderCompanions = [];
+
+    // Run all DB writes in a single transaction
+    final taskId = await _db.transaction<String>(() async {
       var finalWorkspaceId = workspaceId;
       final nowEpoch = DateTime.now().millisecondsSinceEpoch;
 
@@ -55,7 +61,6 @@ class CreateTaskUseCase {
       );
 
       // 3. Prepare Reminders
-      final reminderCompanions = <RemindersCompanion>[];
       for (final rem in intent.reminders) {
         final remId = _uuid.v4();
         int fireAtEpoch;
@@ -109,5 +114,19 @@ class CreateTaskUseCase {
 
       return taskId;
     });
+
+    // After transaction commits: schedule reminders via NotificationService (F-07)
+    final savedTask = await _db.taskDao.getById(taskId);
+    if (savedTask != null) {
+      await _reminderScheduler.scheduleForTask(
+        savedTask,
+        explicitReminders: reminderCompanions.isNotEmpty
+            ? await _db.reminderDao.watchByTask(taskId).first
+            : null,
+      );
+    }
+
+    return taskId;
   }
 }
+

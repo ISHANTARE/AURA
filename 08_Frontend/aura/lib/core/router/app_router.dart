@@ -10,6 +10,9 @@ import '../../features/workspaces/presentation/screens/workspace_list_screen.dar
 import '../../features/workspaces/presentation/screens/workspace_detail_screen.dart';
 import '../../features/tasks/presentation/screens/task_detail_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/reminders/presentation/screens/reminders_screen.dart';
+import '../../features/reminders/data/services/dnd_service.dart';
+import '../../features/capture/domain/services/offline_queue_processor.dart';
 import '../constants/colors.dart';
 import '../constants/spacing.dart';
 import '../constants/typography.dart';
@@ -20,6 +23,7 @@ abstract final class Routes {
   static const String workspace  = '/workspace/:id';
   static const String task       = '/task/:id';
   static const String calendar   = '/calendar';
+  static const String reminders  = '/reminders';
   static const String search     = '/search';
   static const String settings   = '/settings';
   static const String onboarding = '/onboarding';
@@ -54,6 +58,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/workspaces',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: WorkspaceListScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.reminders,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: RemindersScreen(),
             ),
           ),
           GoRoute(
@@ -118,23 +128,33 @@ Future<String?> _handleRedirect(BuildContext context, GoRouterState state) async
 // ── Main navigation shell ──────────────────────────────────────────────────
 
 /// Bottom navigation shell — wraps all main tabs + floating orb.
-class _MainShell extends StatefulWidget {
+class _MainShell extends ConsumerStatefulWidget {
   const _MainShell({required this.child});
   final Widget child;
 
   @override
-  State<_MainShell> createState() => _MainShellState();
+  ConsumerState<_MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<_MainShell> {
+class _MainShellState extends ConsumerState<_MainShell> {
   int _selectedIndex = 0;
 
   static const _routes = [
     Routes.home,
-    '/calendar',
+    Routes.reminders,
     '/workspaces',
     Routes.settings,
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize background services (DND listener & Offline queue processor)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(dndServiceProvider);
+      ref.read(offlineQueueProcessorProvider);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,6 +181,7 @@ class _MainShellState extends State<_MainShell> {
     // Sprint 4: open voice capture overlay
   }
 }
+
 
 // ── Placeholder screen ─────────────────────────────────────────────────────
 

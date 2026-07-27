@@ -22,6 +22,7 @@ import 'daos/workspace_dao.dart';
 import 'daos/reminder_dao.dart';
 import 'daos/event_dao.dart';
 import 'daos/notification_dao.dart';
+import 'daos/offline_queue_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -51,6 +52,7 @@ part 'app_database.g.dart';
     ReminderDao,
     EventDao,
     NotificationDao,
+    OfflineQueueDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

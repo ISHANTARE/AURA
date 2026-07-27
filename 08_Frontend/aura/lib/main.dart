@@ -4,6 +4,8 @@ import 'package:workmanager/workmanager.dart';
 
 import 'app.dart';
 import 'core/services/notification_service.dart';
+import 'database/app_database.dart';
+import 'features/reminders/domain/services/reminder_scheduler.dart';
 
 /// Background task dispatcher — called by WorkManager in a separate isolate.
 @pragma('vm:entry-point')
@@ -35,8 +37,17 @@ Future<void> main() async {
     callbackDispatcher,
   );
 
-  // Initialize local notifications
+  // Initialize local notifications (channels)
   await NotificationService.initialize();
+
+  // Reschedule any pending reminders (e.g. after device restart)
+  try {
+    final db = AppDatabase();
+    final scheduler = ReminderScheduler(db);
+    await scheduler.initializeAndReschedulePending();
+  } catch (_) {
+    // Non-fatal — app continues normally if scheduling fails on startup
+  }
 
   runApp(
     // ProviderScope is the root of Riverpod state management
@@ -45,3 +56,4 @@ Future<void> main() async {
     ),
   );
 }
+

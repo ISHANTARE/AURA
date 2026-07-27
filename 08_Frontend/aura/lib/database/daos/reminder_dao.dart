@@ -1,4 +1,4 @@
-﻿import 'package:drift/drift.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_database.dart';
@@ -84,6 +84,17 @@ class ReminderDao extends DatabaseAccessor<AppDatabase> with _$ReminderDaoMixin 
     return (update(reminders)..where((r) => r.taskId.equals(taskId))).write(
       RemindersCompanion(
         status: const Value('cancelled'),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Mark a reminder as replayed after DND ended.
+  Future<void> markReplayed(String reminderId, int replayedAtMs) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(reminders)..where((r) => r.id.equals(reminderId))).write(
+      RemindersCompanion(
+        replayedAt: Value(replayedAtMs),
         updatedAt: Value(now),
       ),
     );

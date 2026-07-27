@@ -189,8 +189,8 @@ class AuraBottomNav extends StatelessWidget {
                 onTap: () => onDestinationSelected(0),
               ),
               _NavItem(
-                icon: Icons.calendar_today_outlined,
-                label: 'Calendar',
+                icon: Icons.notifications_outlined,
+                label: 'Reminders',
                 isSelected: selectedIndex == 1,
                 onTap: () => onDestinationSelected(1),
               ),

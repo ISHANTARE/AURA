@@ -11,6 +11,7 @@ import '../../../../core/constants/icons.dart';
 import '../../../../database/daos/task_dao.dart';
 import '../providers/home_providers.dart';
 import '../widgets/home_bento_cells.dart';
+import '../widgets/sync_status_badge.dart';
 import '../../../capture/presentation/widgets/voice_capture_overlay.dart';
 import '../../../workspaces/presentation/widgets/create_workspace_modal.dart';
 
@@ -269,7 +270,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               children: [
                 Text(greeting, style: AuraTypography.sectionHeader),
                 const SizedBox(height: 2),
-                Text(dateStr, style: AuraTypography.overline),
+                Row(
+                  children: [
+                    Text(dateStr, style: AuraTypography.overline),
+                    const SizedBox(width: AuraSpacing.sm),
+                    const SyncStatusBadge(),
+                  ],
+                ),
               ],
             ),
           ),
