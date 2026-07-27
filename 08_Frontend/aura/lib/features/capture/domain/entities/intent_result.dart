@@ -42,6 +42,11 @@ class IntentResult {
   final List<ExtractedReminder> reminders;
   final String? notes;
   final String? contact;
+  final String? targetTaskId;
+  final String? targetWorkspaceId;
+  final String? targetName;
+  final String? workspaceColorHex;
+  final String? workspaceIconKey;
   final double confidence; // 0.0 – 1.0 overall
   final double? titleConf;
   final double? deadlineConf;
@@ -63,6 +68,11 @@ class IntentResult {
     this.reminders = const [],
     this.notes,
     this.contact,
+    this.targetTaskId,
+    this.targetWorkspaceId,
+    this.targetName,
+    this.workspaceColorHex,
+    this.workspaceIconKey,
     this.confidence = 1.0,
     this.titleConf,
     this.deadlineConf,
@@ -104,6 +114,11 @@ class IntentResult {
       reminders: remindersList,
       notes: json['notes'] as String?,
       contact: json['contact'] as String?,
+      targetTaskId: json['target_task_id'] as String?,
+      targetWorkspaceId: json['target_workspace_id'] as String?,
+      targetName: json['target_name'] as String?,
+      workspaceColorHex: json['workspace_color_hex'] as String?,
+      workspaceIconKey: json['workspace_icon_key'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble() ?? 0.8,
       titleConf: (json['title_conf'] as num?)?.toDouble(),
       deadlineConf: (json['deadline_conf'] as num?)?.toDouble(),
@@ -127,6 +142,11 @@ class IntentResult {
     List<ExtractedReminder>? reminders,
     String? notes,
     String? contact,
+    String? targetTaskId,
+    String? targetWorkspaceId,
+    String? targetName,
+    String? workspaceColorHex,
+    String? workspaceIconKey,
     double? confidence,
     double? titleConf,
     double? deadlineConf,
@@ -148,6 +168,11 @@ class IntentResult {
       reminders: reminders ?? this.reminders,
       notes: notes ?? this.notes,
       contact: contact ?? this.contact,
+      targetTaskId: targetTaskId ?? this.targetTaskId,
+      targetWorkspaceId: targetWorkspaceId ?? this.targetWorkspaceId,
+      targetName: targetName ?? this.targetName,
+      workspaceColorHex: workspaceColorHex ?? this.workspaceColorHex,
+      workspaceIconKey: workspaceIconKey ?? this.workspaceIconKey,
       confidence: confidence ?? this.confidence,
       titleConf: titleConf ?? this.titleConf,
       deadlineConf: deadlineConf ?? this.deadlineConf,

@@ -29,33 +29,53 @@ class LlmApiDataSource {
   LlmApiDataSource({http.Client? client}) : _client = client ?? http.Client();
 
   static const String _systemPrompt = '''
-You are AURA's intent extraction engine for an AI life management app.
-Your job is to parse a voice transcript and extract structured task or event data.
+You are AURA's intent extraction & command intelligence engine for an AI life management app.
+Your job is to parse a voice transcript, identify the core action/intent, and extract structured metadata.
 
-RULES:
-1. Return ONLY valid JSON — no markdown backticks, no explanation, no surrounding text.
-2. Never invent data the user did not mention. Set unknown fields to null.
-3. Include a confidence score (0.0 to 1.0) for the overall parse.
-4. Understand Indian English: "toh", "na", "yaar", colloquial date references.
-5. Date references: resolve relative to current_datetime in context.
-   "today" = current date, "tomorrow" = +1 day, "next Friday" = next occurrence of Friday.
-6. Time references without AM/PM: assume context (morning = AM, afternoon/evening = PM).
-7. "remind me before" = set a reminder N time before deadline.
+ACTIONS & INTENTS:
+- "create_task": Task (something to do, title, deadline, priority, workspace, notes).
+- "create_reminder": Timed reminder/deadline to alert before submission.
+- "create_event": Event (meetings, interview, placement talk, with start time, end time, location).
+- "create_alarm": General time-of-day alarm (e.g. "add an alarm for 1.45pm today", "set alarm for 7am").
+- "create_workspace": Requests to create a workspace/folder (e.g. "Create a workspace for Placement Prep").
+- "delete_task": Requests to remove or cancel a task.
+- "delete_workspace": Requests to remove a workspace.
+- "add_note": Pure freeform thoughts or ideas without a task/alarm.
+
+CRITICAL RULES:
+1. Return ONLY valid JSON — no markdown backticks, no text explanations.
+2. NOTES CATCH-ALL RULE: Put any extra details, subtasks, instructions, or descriptions inside "notes".
+3. ALARM RULE: If the user says "add an alarm", "set alarm", or mentions a specific wake-up/alert time without task context, set intent_type to "create_alarm".
+4. Relative dates: Resolve relative to current_datetime in context.
+
+EXAMPLES:
+- "Add an alarm for 1.45pm today"
+  → {"intent_type": "create_alarm", "title": "Alarm 1:45 PM", "deadline_iso": "2026-07-27T13:45:00"}
+
+- "Create a new workspace named IIT Prep with blue color"
+  → {"intent_type": "create_workspace", "title": "IIT Prep", "workspace_color_hex": "#3B82F6"}
+
+- "Remind me tomorrow at 5pm to call doctor and ask about prescription"
+  → {"intent_type": "create_reminder", "title": "Call doctor", "deadline_iso": "<tomorrow 17:00>", "notes": "ask about prescription"}
+
+- "Just note down project submission portal opens on Friday"
+  → {"intent_type": "add_note", "title": "Project submission portal opens on Friday", "notes": "project submission portal opens on Friday"}
 
 OUTPUT SCHEMA:
 {
-  "intent_type": "create_task" | "create_event" | "set_reminder" | "add_note" | "query" | "ambiguous",
-  "title": string | null,
+  "intent_type": "create_task" | "create_reminder" | "create_event" | "create_alarm" | "create_workspace" | "delete_task" | "delete_workspace" | "add_note",
+  "title": string | null,                  // Core task title or workspace name
+  "target_name": string | null,            // Item name to delete/update if intent is delete_task or delete_workspace
   "deadline_iso": string | null,           // ISO 8601 e.g. "2026-08-01T23:59:00"
   "event_start_iso": string | null,
   "event_end_iso": string | null,
   "event_location": string | null,
-  "workspace_hint": string | null,         // Detected workspace keyword
-  "section_hint": string | null,
+  "workspace_hint": string | null,         // Target workspace name
+  "workspace_color_hex": string | null,    // Hex color if creating workspace e.g. "#FF5733"
+  "workspace_icon_key": string | null,     // Icon key if creating workspace e.g. "folder", "book", "code", "briefcase"
   "priority": "high" | "medium" | "low" | null,
   "is_recurring": boolean,
   "recurrence_type": "daily" | "weekly" | "custom" | null,
-  "recurrence_days": [string] | null,
   "reminders": [
     {
       "offset_value": integer,
@@ -63,12 +83,8 @@ OUTPUT SCHEMA:
       "type": "notification" | "alarm"
     }
   ],
-  "notes": string | null,
-  "contact": string | null,
-  "confidence": float,
-  "title_conf": float | null,
-  "deadline_conf": float | null,
-  "workspace_conf": float | null
+  "notes": string | null,                  // ALL extra spoken details, context, or sub-points
+  "confidence": float
 }
 ''';
 

@@ -160,6 +160,10 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
     );
   }
 
+  /// Get all active (non-deleted) tasks.
+  Future<List<Task>> getAll() =>
+      (select(tasks)..where((t) => t.deletedAt.isNull())).get();
+
   /// Soft delete — sets deleted_at, never hard deletes.
   Future<void> softDelete(String id) {
     final now = DateTime.now().millisecondsSinceEpoch;

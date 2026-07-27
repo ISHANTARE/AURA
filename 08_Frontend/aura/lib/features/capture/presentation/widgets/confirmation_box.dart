@@ -11,6 +11,11 @@ import '../../domain/entities/intent_result.dart';
 import '../../domain/entities/workspace_match_result.dart';
 import '../providers/capture_provider.dart';
 
+import 'workspace_confirmation_card.dart';
+import 'delete_confirmation_card.dart';
+import 'note_confirmation_card.dart';
+import 'alarm_confirmation_card.dart';
+
 class ConfirmationBox extends ConsumerStatefulWidget {
   final CaptureState state;
 
@@ -45,6 +50,19 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
     final intent = widget.state.intentResult;
     if (intent == null) return const SizedBox.shrink();
 
+    // Dedicated Card Routing
+    switch (intent.intentType) {
+      case 'create_alarm':
+        return AlarmConfirmationCard(intent: intent);
+      case 'create_workspace':
+        return WorkspaceConfirmationCard(intent: intent);
+      case 'delete_task':
+      case 'delete_workspace':
+        return DeleteConfirmationCard(intent: intent);
+      case 'add_note':
+        return NoteConfirmationCard(intent: intent);
+    }
+
     final workspaceMatch = widget.state.workspaceMatch;
 
     return SingleChildScrollView(
@@ -71,9 +89,9 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                 ),
                 const SizedBox(width: AuraSpacing.xs),
                 Text(
-                  'AURA understood:',
+                  _actionLabel(intent.intentType),
                   style: AuraTypography.label.copyWith(
-                    color: AuraColors.textSecondary,
+                    color: AuraColors.accentLime,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -108,15 +126,24 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
             const SizedBox(height: AuraSpacing.xs),
             _buildRecurringRow(intent),
 
-            if (_isEditingAll) ...[
+            // Notes Section — Always visible if notes present or when editing
+            if ((intent.notes != null && intent.notes!.isNotEmpty) || _isEditingAll) ...[
               const SizedBox(height: AuraSpacing.sm),
-              Text('Notes', style: AuraTypography.overline),
+              Row(
+                children: [
+                  const Icon(LucideIcons.fileText, size: 14, color: AuraColors.textSecondary),
+                  const SizedBox(width: 6),
+                  Text('Notes & Spoken Details', style: AuraTypography.overline),
+                ],
+              ),
               const SizedBox(height: AuraSpacing.xs),
               TextField(
                 controller: _notesController,
+                maxLines: 3,
+                minLines: 2,
                 style: AuraTypography.bodyPrimary,
                 decoration: InputDecoration(
-                  hintText: 'Add notes...',
+                  hintText: 'Add notes or context...',
                   hintStyle: AuraTypography.body,
                   filled: true,
                   fillColor: AuraColors.bgElevated,
@@ -141,6 +168,24 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
         ),
       ),
     );
+  }
+
+  String _actionLabel(String intentType) {
+    switch (intentType) {
+      case 'create_workspace':
+        return 'CREATE WORKSPACE';
+      case 'delete_task':
+        return 'DELETE TASK';
+      case 'delete_workspace':
+        return 'DELETE WORKSPACE';
+      case 'create_event':
+        return 'CREATE EVENT';
+      case 'add_note':
+        return 'ADD NOTE';
+      case 'create_task':
+      default:
+        return 'CREATE TASK';
+    }
   }
 
   Widget _buildTitleRow(IntentResult intent) {

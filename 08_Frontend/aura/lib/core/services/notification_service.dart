@@ -47,7 +47,7 @@ class NotificationService {
     playSound: false,
   );
 
-  /// Initialize notification plugin and create Android channels.
+  /// Initialize notification plugin, create Android channels, and request permissions.
   /// Call once from main() before runApp().
   static Future<void> initialize() async {
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -58,17 +58,25 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
-    // Create channels on Android
     final androidPlugin = _plugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
+
     if (androidPlugin != null) {
+      // 1. Create notification channels
       await androidPlugin.createNotificationChannel(_channelReminders);
       await androidPlugin.createNotificationChannel(_channelBriefing);
       await androidPlugin.createNotificationChannel(_channelNudges);
       await androidPlugin.createNotificationChannel(_channelSystem);
+
+      // 2. Request POST_NOTIFICATIONS permission (Android 13+ / API 33+)
+      await androidPlugin.requestNotificationsPermission();
+
+      // 3. Request SCHEDULE_EXACT_ALARM permission (Android 12+ / API 31+)
+      await androidPlugin.requestExactAlarmsPermission();
     }
   }
+
 
   /// Handle notification tap — navigation happens via deep link in Sprint 6.
   static void _onNotificationTapped(NotificationResponse response) {

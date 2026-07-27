@@ -10,7 +10,8 @@ import '../../features/workspaces/presentation/screens/workspace_list_screen.dar
 import '../../features/workspaces/presentation/screens/workspace_detail_screen.dart';
 import '../../features/tasks/presentation/screens/task_detail_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
-import '../../features/reminders/presentation/screens/reminders_screen.dart';
+import '../../features/alarms/presentation/screens/alarms_screen.dart';
+import '../../features/notes/presentation/screens/notes_screen.dart';
 import '../../features/reminders/data/services/dnd_service.dart';
 import '../../features/capture/domain/services/offline_queue_processor.dart';
 import '../constants/colors.dart';
@@ -24,6 +25,8 @@ abstract final class Routes {
   static const String task       = '/task/:id';
   static const String calendar   = '/calendar';
   static const String reminders  = '/reminders';
+  static const String alarms     = '/alarms';
+  static const String notes      = '/notes';
   static const String search     = '/search';
   static const String settings   = '/settings';
   static const String onboarding = '/onboarding';
@@ -61,15 +64,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: Routes.reminders,
+            path: Routes.alarms,
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: RemindersScreen(),
+              child: AlarmsScreen(),
             ),
           ),
           GoRoute(
-            path: '/calendar',
+            path: Routes.notes,
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: _PlaceholderScreen(title: 'Calendar'),
+              child: NotesScreen(),
             ),
           ),
           GoRoute(
@@ -141,8 +144,9 @@ class _MainShellState extends ConsumerState<_MainShell> {
 
   static const _routes = [
     Routes.home,
-    Routes.reminders,
+    Routes.alarms,
     '/workspaces',
+    Routes.notes,
     Routes.settings,
   ];
 

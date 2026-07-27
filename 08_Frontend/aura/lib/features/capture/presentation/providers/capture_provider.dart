@@ -8,6 +8,7 @@ import '../../domain/entities/capture_state.dart';
 import '../../domain/entities/intent_result.dart';
 import '../../domain/entities/workspace_match_result.dart';
 import '../../domain/usecases/create_task_usecase.dart';
+import '../../domain/usecases/execute_ai_action_usecase.dart';
 import '../../domain/usecases/queue_offline_transcript_usecase.dart';
 import '../../domain/usecases/workspace_router_usecase.dart';
 
@@ -36,12 +37,17 @@ final queueOfflineTranscriptUseCaseProvider =
   return QueueOfflineTranscriptUseCase(db);
 });
 
+final executeAiActionUseCaseProvider = Provider<ExecuteAiActionUseCase>((ref) {
+  final db = ref.watch(databaseProvider);
+  return ExecuteAiActionUseCase(db);
+});
+
 final captureProvider =
     StateNotifierProvider<CaptureNotifier, CaptureState>((ref) {
   final speechChannel = ref.watch(speechChannelProvider);
   final llmDataSource = ref.watch(llmApiDataSourceProvider);
   final workspaceRouter = ref.watch(workspaceRouterUseCaseProvider);
-  final createTaskUseCase = ref.watch(createTaskUseCaseProvider);
+  final executeAiActionUseCase = ref.watch(executeAiActionUseCaseProvider);
   final queueOfflineUseCase = ref.watch(queueOfflineTranscriptUseCaseProvider);
   final db = ref.watch(databaseProvider);
   final isOnline = ref.watch(isOnlineProvider);
@@ -50,7 +56,7 @@ final captureProvider =
     speechChannel: speechChannel,
     llmDataSource: llmDataSource,
     workspaceRouter: workspaceRouter,
-    createTaskUseCase: createTaskUseCase,
+    executeAiActionUseCase: executeAiActionUseCase,
     queueOfflineUseCase: queueOfflineUseCase,
     db: db,
     isOnline: isOnline,
@@ -61,7 +67,7 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
   final SpeechChannel _speechChannel;
   final LlmApiDataSource _llmDataSource;
   final WorkspaceRouterUseCase _workspaceRouter;
-  final CreateTaskUseCase _createTaskUseCase;
+  final ExecuteAiActionUseCase _executeAiActionUseCase;
   final QueueOfflineTranscriptUseCase _queueOfflineUseCase;
   final AppDatabase _db;
   final bool _isOnline;
@@ -77,14 +83,14 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
     required SpeechChannel speechChannel,
     required LlmApiDataSource llmDataSource,
     required WorkspaceRouterUseCase workspaceRouter,
-    required CreateTaskUseCase createTaskUseCase,
+    required ExecuteAiActionUseCase executeAiActionUseCase,
     required QueueOfflineTranscriptUseCase queueOfflineUseCase,
     required AppDatabase db,
     required bool isOnline,
   })  : _speechChannel = speechChannel,
         _llmDataSource = llmDataSource,
         _workspaceRouter = workspaceRouter,
-        _createTaskUseCase = createTaskUseCase,
+        _executeAiActionUseCase = executeAiActionUseCase,
         _queueOfflineUseCase = queueOfflineUseCase,
         _db = db,
         _isOnline = isOnline,
@@ -237,7 +243,7 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
     );
   }
 
-  /// Confirm and save task to SQLite Drift database
+  /// Confirm and save/execute action via ExecuteAiActionUseCase
   Future<void> confirmAndSave() async {
     final intent = state.intentResult;
     if (intent == null) return;
@@ -268,7 +274,7 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
         }
       }
 
-      await _createTaskUseCase.execute(
+      await _executeAiActionUseCase.execute(
         intent: intent,
         workspaceId: wsId,
         workspaceNameToCreate: newWsName,
@@ -282,7 +288,7 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
     } catch (e) {
       state = state.copyWith(
         status: CaptureStatus.error,
-        errorMessage: "Failed to save task: $e",
+        errorMessage: "Failed to execute AI action: $e",
         isSaving: false,
       );
     }
