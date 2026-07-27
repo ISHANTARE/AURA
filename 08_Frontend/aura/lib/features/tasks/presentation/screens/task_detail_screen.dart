@@ -408,25 +408,25 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
                         height: 48,
                         child: ElevatedButton.icon(
                           onPressed: () async {
-                            HapticFeedback.mediumImpact();
+                            HapticFeedback.heavyImpact();
                             final newStatus = isDone ? 'todo' : 'done';
                             await ref.read(taskDetailActionProvider.notifier).updateTask(
-                                  taskId: task.id,
-                                  status: newStatus,
-                                );
+                              taskId: task.id,
+                              status: newStatus,
+                            );
 
                             if (context.mounted && !isDone) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text('Task marked as Done!'),
+                                  content: Text('Task "${task.name}" completed!'),
                                   action: SnackBarAction(
                                     label: 'UNDO',
-                                    textColor: AuraColors.accentLime,
                                     onPressed: () {
+                                      HapticFeedback.mediumImpact();
                                       ref.read(taskDetailActionProvider.notifier).updateTask(
-                                            taskId: task.id,
-                                            status: 'todo',
-                                          );
+                                        taskId: task.id,
+                                        status: 'todo',
+                                      );
                                     },
                                   ),
                                   duration: const Duration(seconds: 5),
@@ -461,6 +461,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
                         height: 48,
                         child: OutlinedButton.icon(
                           onPressed: () {
+                            HapticFeedback.mediumImpact();
                             SnoozeBottomSheet.show(
                               context,
                               reminderId: 'r-${task.id}',

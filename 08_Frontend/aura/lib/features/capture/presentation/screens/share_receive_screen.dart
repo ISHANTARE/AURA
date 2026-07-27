@@ -11,6 +11,8 @@ import 'package:aura/database/daos/shared_content_dao.dart';
 import 'package:aura/platform/share_channel.dart';
 import '../../domain/usecases/process_shared_content_usecase.dart';
 
+import '../widgets/voice_capture_overlay.dart';
+
 final shareChannelProvider = Provider<ShareChannel>((ref) => ShareChannel());
 
 final processSharedContentUseCaseProvider = Provider<ProcessSharedContentUseCase>((ref) {
@@ -45,6 +47,10 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
         setState(() {
           _result = processed;
           _isLoading = false;
+        });
+        // Auto-trigger voice capture modal immediately upon receiving share payload
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) VoiceCaptureOverlay.show(context);
         });
       }
     } else {

@@ -19,6 +19,13 @@ class MainActivity : FlutterActivity() {
     private var dndEventSink: EventChannel.EventSink? = null
     private var dndReceiver: BroadcastReceiver? = null
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.getBooleanExtra("trigger_capture", false)) {
+            AuraOverlayService.methodChannel?.invokeMethod("onOrbTapped", null)
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 

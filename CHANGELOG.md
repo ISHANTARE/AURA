@@ -1,3 +1,21 @@
+## [1.3.0] — 2026-07-28
+
+### Added — Real-Device Testing Fixes & Enhancements
+
+**User Profile & Color Accent Themes**
+- `settings_screen.dart` — Editable Display Name text field with immediate avatar update
+- `theme_provider.dart` — Reactive accent color switcher supporting **Neon Lime** (`#C8FF00`), **Cyber Cyan** (`#00E5FF`), **Electric Purple** (`#B57BFF`), and **Sunset Orange** (`#FF6B00`)
+- `sound_settings` — Added dropdown selectors for Alarm Ringtone and Notification Chime
+
+**System Floating Orb & Background Action Fixes**
+- `AuraOverlayService.kt` & `MainActivity.kt` — Automated native Android `WindowManager` floating orb initialization (`SYSTEM_ALERT_WINDOW`) floating on top of all apps; tapping opens `MainActivity` and triggers voice capture
+- `notification_service.dart` — Registered `@pragma('vm:entry-point')` background action handler so tapping `[Mark Done]` on Android notifications updates Drift DB directly
+- `workspace_dao.dart` — Updated workspace task count query to be 100% reactive (`query.watch().map(...)`) for instant count updates upon soft-deletion
+- `share_receive_screen.dart` — Automatically launches voice capture modal sheet immediately upon opening with shared image/link context
+
+**Verification**
+- Verified with `flutter analyze`: **No issues found!**
+
 ## [1.2.0] — 2026-07-28
 
 ### Added — Phase 8: Sprint 10 (Onboarding + Settings + Recurring Habit Resets)

@@ -15,6 +15,7 @@ import '../widgets/home_bento_cells.dart';
 import '../widgets/sync_status_badge.dart';
 import '../../../capture/presentation/widgets/voice_capture_overlay.dart';
 import '../../../workspaces/presentation/widgets/create_workspace_modal.dart';
+import '../../../../platform/overlay_channel.dart';
 
 /// Home Screen — Sprint 4b.
 /// Bento Grid layout connected reactively to Drift DB.
@@ -50,7 +51,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       );
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _staggerCtrl.forward());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _staggerCtrl.forward();
+
+      // Start native floating orb overlay service if permission is granted
+      final overlay = OverlayChannel();
+      if (await overlay.isPermissionGranted()) {
+        await overlay.startOverlay();
+      }
+
+      // Listen for native overlay orb tap events
+      overlay.onOrbTapped.listen((_) {
+        if (mounted) VoiceCaptureOverlay.show(context);
+      });
+    });
   }
 
   @override

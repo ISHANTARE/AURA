@@ -130,6 +130,17 @@
             </intent-filter>
         </activity>
 
+        <!-- System Floating Orb Overlay Service -->
+        <service
+            android:name=".AuraFloatingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="System Floating Assistant Window" />
+        </service>
+
         <!-- WorkManager init provider -->
         <provider
             android:name="androidx.startup.InitializationProvider"
