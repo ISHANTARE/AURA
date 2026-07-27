@@ -27,9 +27,15 @@ class AlarmsScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AuraSpacing.md),
               child: Row(
                 children: [
-                  const Icon(LucideIcons.alarmClock, color: AuraColors.accentOrange, size: 24),
+                  const Icon(LucideIcons.alarmClock, color: AuraColors.accentLime, size: 24),
                   const SizedBox(width: AuraSpacing.xs),
                   Text('Alarms & Time Alerts', style: AuraTypography.sectionHeader),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(LucideIcons.plus, color: AuraColors.accentLime),
+                    onPressed: () => _showAddAlarmSheet(context, db),
+                    tooltip: 'Add Alarm',
+                  ),
                 ],
               ),
             ),
@@ -56,38 +62,48 @@ class AlarmsScreen extends ConsumerWidget {
                       final dt = DateTime.fromMillisecondsSinceEpoch(item.fireAt);
                       final isPending = item.status == 'pending';
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: AuraSpacing.sm),
-                        padding: const EdgeInsets.all(AuraSpacing.md),
-                        decoration: BoxDecoration(
-                          color: AuraColors.bgCard,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isPending ? AuraColors.accentOrange : AuraColors.borderMuted,
-                            width: 1.5,
+                      return GestureDetector(
+                        onTap: () => _editAlarmTime(context, db, item, dt),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: AuraSpacing.sm),
+                          padding: const EdgeInsets.all(AuraSpacing.md),
+                          decoration: BoxDecoration(
+                            color: AuraColors.bgCard,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isPending ? AuraColors.accentLime : AuraColors.borderMuted,
+                              width: 1.5,
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              _formatTime(dt),
-                              style: AuraTypography.display.copyWith(
-                                fontSize: 26,
-                                color: isPending ? AuraColors.textPrimary : AuraColors.textDisabled,
+                          child: Row(
+                            children: [
+                              Text(
+                                _formatTime(dt),
+                                style: AuraTypography.display.copyWith(
+                                  fontSize: 26,
+                                  color: isPending ? AuraColors.textPrimary : AuraColors.textDisabled,
+                                ),
                               ),
-                            ),
-                            const Spacer(),
-                            Switch(
-                              value: isPending,
-                              activeColor: AuraColors.accentOrange,
-                              onChanged: (val) async {
-                                final newStatus = val ? 'pending' : 'cancelled';
-                                await (db.update(db.reminders)
-                                      ..where((r) => r.id.equals(item.id)))
-                                    .write(RemindersCompanion(status: Value(newStatus)));
-                              },
-                            ),
-                          ],
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(LucideIcons.trash2, size: 18, color: AuraColors.accentRed),
+                                onPressed: () async {
+                                  await (db.delete(db.reminders)..where((r) => r.id.equals(item.id))).go();
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              Switch(
+                                value: isPending,
+                                activeColor: AuraColors.accentLime,
+                                onChanged: (val) async {
+                                  final newStatus = val ? 'pending' : 'cancelled';
+                                  await (db.update(db.reminders)
+                                        ..where((r) => r.id.equals(item.id)))
+                                      .write(RemindersCompanion(status: Value(newStatus)));
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -117,21 +133,73 @@ class AlarmsScreen extends ConsumerWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: AuraColors.accentOrange.withValues(alpha: 0.1),
+              color: AuraColors.accentLime.withValues(alpha: 0.1),
               shape: BoxShape.circle,
-              border: Border.all(color: AuraColors.accentOrange.withValues(alpha: 0.4), width: 1.5),
+              border: Border.all(color: AuraColors.accentLime.withValues(alpha: 0.4), width: 1.5),
             ),
-            child: const Icon(LucideIcons.alarmClock, color: AuraColors.accentOrange, size: 28),
+            child: const Icon(LucideIcons.alarmClock, color: AuraColors.accentLime, size: 28),
           ),
           const SizedBox(height: AuraSpacing.md),
           Text('No alarms set', style: AuraTypography.sectionHeader),
           const SizedBox(height: AuraSpacing.xs),
           Text(
-            'Tap the floating orb and say:\n"Set an alarm for 7 AM tomorrow"',
+            'Tap the + button or floating orb to set an alarm',
             style: AuraTypography.body.copyWith(color: AuraColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAddAlarmSheet(BuildContext context, AppDatabase db) async {
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (selectedTime == null || !context.mounted) return;
+
+    final now = DateTime.now();
+    var fireDt = DateTime(now.year, now.month, now.day, selectedTime.hour, selectedTime.minute);
+    if (fireDt.isBefore(now)) {
+      fireDt = fireDt.add(const Duration(days: 1));
+    }
+
+    final alarmId = DateTime.now().millisecondsSinceEpoch.toString();
+    final nowEpoch = now.millisecondsSinceEpoch;
+
+    await db.into(db.reminders).insert(
+          RemindersCompanion.insert(
+            id: alarmId,
+            fireAt: fireDt.millisecondsSinceEpoch,
+            type: const Value('alarm'),
+            status: const Value('pending'),
+            createdAt: nowEpoch,
+            updatedAt: nowEpoch,
+          ),
+        );
+  }
+
+  void _editAlarmTime(BuildContext context, AppDatabase db, Reminder item, DateTime currentDt) async {
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(currentDt),
+    );
+
+    if (selectedTime == null || !context.mounted) return;
+
+    final now = DateTime.now();
+    var fireDt = DateTime(now.year, now.month, now.day, selectedTime.hour, selectedTime.minute);
+    if (fireDt.isBefore(now)) {
+      fireDt = fireDt.add(const Duration(days: 1));
+    }
+
+    await (db.update(db.reminders)..where((r) => r.id.equals(item.id))).write(
+      RemindersCompanion(
+        fireAt: Value(fireDt.millisecondsSinceEpoch),
+        status: const Value('pending'),
+        updatedAt: Value(now.millisecondsSinceEpoch),
       ),
     );
   }

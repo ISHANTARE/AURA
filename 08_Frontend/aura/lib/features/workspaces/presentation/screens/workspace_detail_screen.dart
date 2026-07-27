@@ -750,6 +750,12 @@ class _WorkspaceDetailScreenState
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      // Manual Add Item button (+)
+                      IconButton(
+                        icon: const Icon(Icons.add, color: AuraColors.accentLime),
+                        tooltip: 'Add Task / Reminder / Event',
+                        onPressed: () => _showManualAddItemSheet(context, workspace),
+                      ),
                       // Options menu
                       IconButton(
                         icon: const Icon(AuraIcons.more,
@@ -999,6 +1005,245 @@ class _WorkspaceDetailScreenState
       label,
       style: AuraTypography.badgeText.copyWith(
         color: isOverdue ? AuraColors.accentRed : AuraColors.textSecondary,
+      ),
+    );
+  }
+
+  void _showManualAddItemSheet(BuildContext context, Workspace workspace) {
+    final nameController = TextEditingController();
+    final notesController = TextEditingController();
+    String selectedType = 'TASK'; // TASK | REMINDER | EVENT
+    String selectedPriority = 'medium';
+    DateTime? selectedDate;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AuraColors.bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: AuraColors.border, width: 2),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateModal) => Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Add to ${workspace.name}', style: AuraTypography.sectionHeader),
+                const SizedBox(height: 12),
+
+                // Type Segmented Switcher
+                Row(
+                  children: ['TASK', 'REMINDER', 'EVENT'].map((type) {
+                    final isSel = selectedType == type;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => setStateModal(() => selectedType = type),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSel ? AuraColors.accentLime : AuraColors.bgElevated,
+                            border: Border.all(
+                              color: isSel ? AuraColors.accentLime : AuraColors.border,
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            type,
+                            textAlign: TextAlign.center,
+                            style: AuraTypography.label.copyWith(
+                              color: isSel ? Colors.black : AuraColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Title Input
+                TextField(
+                  controller: nameController,
+                  style: AuraTypography.cardTitle,
+                  decoration: InputDecoration(
+                    hintText: '$selectedType Name / Title...',
+                    filled: true,
+                    fillColor: AuraColors.bgElevated,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Date Picker Row
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, size: 16, color: AuraColors.textSecondary),
+                    const SizedBox(width: 8),
+                    Text(
+                      selectedDate == null
+                          ? 'No Date Set'
+                          : '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}',
+                      style: AuraTypography.bodySmall,
+                    ),
+                    const Spacer(),
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AuraColors.border),
+                      ),
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: ctx,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (picked != null) {
+                          setStateModal(() => selectedDate = picked);
+                        }
+                      },
+                      child: const Text('PICK DATE'),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Priority Row (for Tasks & Reminders)
+                if (selectedType != 'EVENT') ...[
+                  Row(
+                    children: [
+                      Text('Priority:', style: AuraTypography.bodySmall),
+                      const SizedBox(width: 12),
+                      ...['low', 'medium', 'high'].map((p) {
+                        final isP = selectedPriority == p;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(p.toUpperCase()),
+                            selected: isP,
+                            selectedColor: AuraColors.accentLime,
+                            backgroundColor: AuraColors.bgElevated,
+                            labelStyle: TextStyle(
+                              color: isP ? Colors.black : AuraColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                            onSelected: (_) => setStateModal(() => selectedPriority = p),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Notes / Description Input
+                TextField(
+                  controller: notesController,
+                  maxLines: 3,
+                  minLines: 2,
+                  style: AuraTypography.bodyPrimary,
+                  decoration: InputDecoration(
+                    hintText: 'Notes / Details...',
+                    filled: true,
+                    fillColor: AuraColors.bgElevated,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Submit CTA Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AuraColors.accentLime,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () async {
+                      final title = nameController.text.trim();
+                      if (title.isEmpty) return;
+
+                      final now = DateTime.now().millisecondsSinceEpoch;
+                      final id = now.toString();
+                      final notes = notesController.text.trim();
+
+                      if (selectedType == 'EVENT') {
+                        final startAt = selectedDate?.millisecondsSinceEpoch ?? now;
+                        final endAt = startAt + 3600000; // 1 hour default
+                        await ref.read(databaseProvider).into(ref.read(databaseProvider).events).insert(
+                              EventsCompanion.insert(
+                                id: id,
+                                workspaceId: workspace.id,
+                                title: title,
+                                description: Value(notes.isNotEmpty ? notes : null),
+                                startAt: startAt,
+                                endAt: endAt,
+                                createdAt: now,
+                                updatedAt: now,
+                              ),
+                            );
+                      } else {
+                        // TASK or REMINDER
+                        final deadlineMs = selectedDate?.millisecondsSinceEpoch;
+                        await ref.read(databaseProvider).into(ref.read(databaseProvider).tasks).insert(
+                              TasksCompanion.insert(
+                                id: id,
+                                workspaceId: workspace.id,
+                                name: title,
+                                description: Value(notes.isNotEmpty ? notes : null),
+                                deadline: Value(deadlineMs),
+                                priority: Value(selectedPriority),
+                                createdAt: now,
+                                updatedAt: now,
+                              ),
+                            );
+
+                        if (selectedType == 'REMINDER' && deadlineMs != null) {
+                          await ref.read(databaseProvider).into(ref.read(databaseProvider).reminders).insert(
+                                RemindersCompanion.insert(
+                                  id: 'rem_$id',
+                                  taskId: Value(id),
+                                  fireAt: deadlineMs,
+                                  type: const Value('notification'),
+                                  createdAt: now,
+                                  updatedAt: now,
+                                ),
+                              );
+                        }
+                      }
+
+                      if (ctx.mounted) Navigator.of(ctx).pop();
+                    },
+                    child: Text(
+                      'CREATE $selectedType',
+                      style: AuraTypography.label.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -48,6 +48,7 @@ class ExecuteAiActionUseCase {
             taskId: Value(taskId),
             fireAt: fireTime.millisecondsSinceEpoch,
             type: const Value('alarm'),
+            status: const Value('pending'),
             createdAt: nowEpoch,
             updatedAt: nowEpoch,
           ),

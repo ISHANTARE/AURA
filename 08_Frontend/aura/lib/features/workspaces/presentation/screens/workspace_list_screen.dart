@@ -124,72 +124,15 @@ class _WorkspaceListScreenState extends ConsumerState<WorkspaceListScreen> {
                             crossAxisSpacing: 12.0,
                             mainAxisSpacing: 12.0,
                           ),
-                          itemCount: items.length + 1,
+                          itemCount: items.length,
                           itemBuilder: (context, index) {
-                            if (index < items.length) {
-                              final item = items[index];
-                              return WorkspaceCard(
-                                item: item,
-                                onTap: () => context.push(
-                                    '/workspace/${item.workspace.id}'),
-                                onLongPress: () => WorkspaceOptionsSheet.show(
-                                    context, item.workspace),
-                              );
-                            }
-                            // [+ Add workspace] Card
-                            return GestureDetector(
-                              onTap: () => CreateWorkspaceModal.show(context),
-                              child: Container(
-                                padding: const EdgeInsets.all(16.0),
-                                decoration: BoxDecoration(
-                                  color: AuraColors.bgCard,
-                                  borderRadius: BorderRadius.zero,
-                                  border: Border.all(
-                                    color: AuraColors.borderMuted,
-                                    width: 2.0,
-                                  ),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8.0),
-                                      decoration: BoxDecoration(
-                                        color: AuraColors.accentLime
-                                            .withValues(alpha: 0.1),
-                                        border: Border.all(
-                                          color: AuraColors.accentLime,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        AuraIcons.add,
-                                        size: AuraIcons.sizeStandard,
-                                        color: AuraColors.accentLime,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10.0),
-                                    Text(
-                                      'Add Workspace',
-                                      style:
-                                          AuraTypography.cardTitle.copyWith(
-                                        fontSize: 14.0,
-                                        color: AuraColors.accentLime,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 4.0),
-                                    Text(
-                                      'Tap to create',
-                                      style:
-                                          AuraTypography.bodySmall.copyWith(
-                                        color: AuraColors.textDisabled,
-                                        fontSize: 11.0,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            final item = items[index];
+                            return WorkspaceCard(
+                              item: item,
+                              onTap: () => context.push(
+                                  '/workspace/${item.workspace.id}'),
+                              onLongPress: () => WorkspaceOptionsSheet.show(
+                                  context, item.workspace),
                             );
                           },
                         ),

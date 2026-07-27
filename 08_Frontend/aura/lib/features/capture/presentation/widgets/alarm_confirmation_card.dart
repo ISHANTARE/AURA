@@ -37,7 +37,7 @@ class _AlarmConfirmationCardState extends ConsumerState<AlarmConfirmationCard> {
       decoration: BoxDecoration(
         color: AuraColors.bgCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AuraColors.accentOrange, width: 1.5),
+        border: Border.all(color: AuraColors.accentLime, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,19 +49,19 @@ class _AlarmConfirmationCardState extends ConsumerState<AlarmConfirmationCard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AuraColors.accentOrange.withValues(alpha: 0.15),
+                  color: AuraColors.accentLime.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AuraColors.accentOrange, width: 1),
+                  border: Border.all(color: AuraColors.accentLime, width: 1),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.alarmClock, size: 14, color: AuraColors.accentOrange),
+                    const Icon(LucideIcons.alarmClock, size: 14, color: AuraColors.accentLime),
                     const SizedBox(width: 6),
                     Text(
                       'SET ALARM',
                       style: AuraTypography.label.copyWith(
-                        color: AuraColors.accentOrange,
+                        color: AuraColors.accentLime,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -110,13 +110,13 @@ class _AlarmConfirmationCardState extends ConsumerState<AlarmConfirmationCard> {
                 decoration: BoxDecoration(
                   color: AuraColors.bgElevated,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AuraColors.accentOrange, width: 1),
+                  border: Border.all(color: AuraColors.accentLime, width: 1),
                 ),
                 child: Text(
                   _formatTime(_fireAt),
                   style: AuraTypography.display.copyWith(
                     fontSize: 36,
-                    color: AuraColors.accentOrange,
+                    color: AuraColors.accentLime,
                   ),
                 ),
               ),
@@ -154,8 +154,8 @@ class _AlarmConfirmationCardState extends ConsumerState<AlarmConfirmationCard> {
             height: 48,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AuraColors.accentOrange,
-                foregroundColor: Colors.white,
+                backgroundColor: AuraColors.accentLime,
+                foregroundColor: Colors.black,
                 elevation: 4,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -167,7 +167,7 @@ class _AlarmConfirmationCardState extends ConsumerState<AlarmConfirmationCard> {
               child: Text(
                 'SET ALARM NOW',
                 style: AuraTypography.label.copyWith(
-                  color: Colors.white,
+                  color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
               ),
