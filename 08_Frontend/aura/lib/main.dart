@@ -37,8 +37,10 @@ Future<void> main() async {
     callbackDispatcher,
   );
 
-  // Initialize local notifications (channels)
-  await NotificationService.initialize();
+  // Initialize local notifications (channels + timezone)
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  await notificationService.requestPermissions();
 
   // Reschedule any pending reminders (e.g. after device restart)
   try {

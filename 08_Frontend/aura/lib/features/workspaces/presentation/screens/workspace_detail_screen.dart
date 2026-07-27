@@ -8,6 +8,7 @@ import '../../../../core/constants/icons.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../database/app_database.dart';
 import '../../../../database/daos/task_dao.dart';
+import '../../../reminders/domain/services/reminder_scheduler.dart';
 import '../providers/workspace_providers.dart';
 import '../widgets/workspace_options_sheet.dart';
 
@@ -1215,17 +1216,10 @@ class _WorkspaceDetailScreenState
                               ),
                             );
 
-                        if (selectedType == 'REMINDER' && deadlineMs != null) {
-                          await ref.read(databaseProvider).into(ref.read(databaseProvider).reminders).insert(
-                                RemindersCompanion.insert(
-                                  id: 'rem_$id',
-                                  taskId: Value(id),
-                                  fireAt: deadlineMs,
-                                  type: const Value('notification'),
-                                  createdAt: now,
-                                  updatedAt: now,
-                                ),
-                              );
+                        final createdTask = await ref.read(databaseProvider).taskDao.getById(id);
+                        if (createdTask != null) {
+                          final scheduler = ReminderScheduler(ref.read(databaseProvider));
+                          await scheduler.scheduleForTask(createdTask);
                         }
                       }
 

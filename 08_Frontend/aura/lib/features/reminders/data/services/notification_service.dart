@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -14,10 +15,15 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  static const String channelId = 'aura_reminders';
+  static const String channelId = 'aura_reminders_v2';
   static const String channelName = 'AURA Reminders & Notifications';
   static const String channelDescription =
       'High priority reminders, event alerts, and DND replay summaries.';
+
+  static const String alarmChannelId = 'aura_alarms_v2';
+  static const String alarmChannelName = 'AURA Alarms';
+  static const String alarmChannelDescription =
+      'Ringing time-of-day alarms from AURA.';
 
   static const String actionMarkDone = 'ACTION_MARK_DONE';
   static const String actionSnooze30m = 'ACTION_SNOOZE_30M';
@@ -32,8 +38,14 @@ class NotificationService {
   }) async {
     if (_initialized) return;
 
-    // 1. Initialize timezones
+    // 1. Initialize timezones and set device local timezone
     tz.initializeTimeZones();
+    try {
+      final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+    } catch (_) {
+      // Fallback to UTC if timezone name lookup fails
+    }
 
     // 2. Android settings with app launcher icon
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -57,35 +69,51 @@ class NotificationService {
       onDidReceiveBackgroundNotificationResponse: onBackgroundNotificationAction,
     );
 
-    // 5. Create Android High Importance Notification Channel
-    const androidChannel = AndroidNotificationChannel(
-      channelId,
-      channelName,
-      description: channelDescription,
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-      showBadge: true,
-    );
-
-    await _notificationsPlugin
+    // 5. Create Android High Importance Channels
+    final androidImpl = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(androidChannel);
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidImpl != null) {
+      await androidImpl.createNotificationChannel(
+        const AndroidNotificationChannel(
+          channelId,
+          channelName,
+          description: channelDescription,
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+          showBadge: true,
+        ),
+      );
+
+      await androidImpl.createNotificationChannel(
+        const AndroidNotificationChannel(
+          alarmChannelId,
+          alarmChannelName,
+          description: alarmChannelDescription,
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+    }
 
     _initialized = true;
   }
 
-  /// Request permissions for Android 13+ (POST_NOTIFICATIONS) & iOS
+  /// Request permissions for Android 13+ (POST_NOTIFICATIONS) & Android 12+ (EXACT_ALARM)
   Future<bool> requestPermissions() async {
     final androidImplementation = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
 
-    final grantedAndroid =
-        await androidImplementation?.requestNotificationsPermission() ?? false;
-
-    return grantedAndroid;
+    if (androidImplementation != null) {
+      await androidImplementation.requestNotificationsPermission();
+      await androidImplementation.requestExactAlarmsPermission();
+    }
+    return true;
   }
 
   /// Schedule an exact time notification using local timezone.
@@ -125,6 +153,58 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+    );
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tzScheduledDate,
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: payload,
+    );
+  }
+
+  /// Schedule an exact ALARM notification (loud ringing, fullScreenIntent, alarm audio usage).
+  Future<void> scheduleAlarm({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+    String? payload,
+  }) async {
+    final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
+
+    if (tzScheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
+
+    final androidDetails = AndroidNotificationDetails(
+      alarmChannelId,
+      alarmChannelName,
+      channelDescription: alarmChannelDescription,
+      importance: Importance.max,
+      priority: Priority.max,
+      color: AuraColors.accentLime,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.alarm,
+      visibility: NotificationVisibility.public,
+      ongoing: true,
+      autoCancel: false,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
     final details = NotificationDetails(

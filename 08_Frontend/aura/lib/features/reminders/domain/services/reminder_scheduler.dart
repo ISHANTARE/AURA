@@ -72,7 +72,10 @@ class ReminderScheduler {
       final deadline = DateTime.fromMillisecondsSinceEpoch(deadlineMs);
       final List<DateTime> fireTimes = [];
 
-      // Assignment / Deadline: 1 day before + 6 hours before
+      // 1. EXACT DEADLINE TIME (CRITICAL!)
+      if (deadline.isAfter(now)) fireTimes.add(deadline);
+
+      // 2. Pre-deadline reminders: 1 day before + 6 hours before
       final dayBefore = deadline.subtract(const Duration(days: 1));
       final sixHoursBefore = deadline.subtract(const Duration(hours: 6));
 
@@ -95,13 +98,30 @@ class ReminderScheduler {
 
         await _notificationService.scheduleNotification(
           id: remId.hashCode,
-          title: task.name,
-          body: _buildNotificationBody(task, fireTime),
+          title: '🚨 DEADLINE: ${task.name}',
+          body: fireTime == deadline
+              ? 'Task deadline is NOW!'
+              : _buildNotificationBody(task, fireTime),
           scheduledDate: fireTime,
           payload: '$remId|${task.id}',
         );
       }
     }
+  }
+
+  /// Direct method to schedule an alarm ringing notification.
+  Future<void> scheduleAlarmDirect({
+    required String alarmId,
+    required String title,
+    required DateTime fireAt,
+  }) async {
+    await _notificationService.scheduleAlarm(
+      id: alarmId.hashCode,
+      title: '⏰ ALARM: $title',
+      body: 'Time to wake up or attend to your scheduled alarm!',
+      scheduledDate: fireAt,
+      payload: '$alarmId|alarm',
+    );
   }
 
   /// Snooze a reminder by specific duration.

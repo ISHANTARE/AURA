@@ -7,6 +7,8 @@ import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../database/app_database.dart';
+import '../../../reminders/data/services/notification_service.dart';
+import '../../../reminders/domain/services/reminder_scheduler.dart';
 
 /// Alarms Screen — Dedicated Alarms & Time Alerts tab (Sprint 8)
 class AlarmsScreen extends ConsumerWidget {
@@ -88,6 +90,7 @@ class AlarmsScreen extends ConsumerWidget {
                               IconButton(
                                 icon: const Icon(LucideIcons.trash2, size: 18, color: AuraColors.accentRed),
                                 onPressed: () async {
+                                  await NotificationService().cancel(item.id.hashCode);
                                   await (db.delete(db.reminders)..where((r) => r.id.equals(item.id))).go();
                                 },
                               ),
@@ -100,6 +103,17 @@ class AlarmsScreen extends ConsumerWidget {
                                   await (db.update(db.reminders)
                                         ..where((r) => r.id.equals(item.id)))
                                       .write(RemindersCompanion(status: Value(newStatus)));
+
+                                  if (val) {
+                                    final alarmScheduler = ReminderScheduler(db);
+                                    await alarmScheduler.scheduleAlarmDirect(
+                                      alarmId: item.id,
+                                      title: 'Alarm ${_formatTime(dt)}',
+                                      fireAt: dt,
+                                    );
+                                  } else {
+                                    await NotificationService().cancel(item.id.hashCode);
+                                  }
                                 },
                               ),
                             ],
@@ -179,6 +193,13 @@ class AlarmsScreen extends ConsumerWidget {
             updatedAt: nowEpoch,
           ),
         );
+
+    final alarmScheduler = ReminderScheduler(db);
+    await alarmScheduler.scheduleAlarmDirect(
+      alarmId: alarmId,
+      title: 'Alarm ${_formatTime(fireDt)}',
+      fireAt: fireDt,
+    );
   }
 
   void _editAlarmTime(BuildContext context, AppDatabase db, Reminder item, DateTime currentDt) async {
@@ -201,6 +222,13 @@ class AlarmsScreen extends ConsumerWidget {
         status: const Value('pending'),
         updatedAt: Value(now.millisecondsSinceEpoch),
       ),
+    );
+
+    final alarmScheduler = ReminderScheduler(db);
+    await alarmScheduler.scheduleAlarmDirect(
+      alarmId: item.id,
+      title: 'Alarm ${_formatTime(fireDt)}',
+      fireAt: fireDt,
     );
   }
 }

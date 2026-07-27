@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../database/app_database.dart';
+import '../../../reminders/domain/services/reminder_scheduler.dart';
 import '../entities/intent_result.dart';
 import 'create_task_usecase.dart';
 
@@ -53,6 +54,14 @@ class ExecuteAiActionUseCase {
             updatedAt: nowEpoch,
           ),
         );
+
+        final alarmScheduler = ReminderScheduler(_db);
+        await alarmScheduler.scheduleAlarmDirect(
+          alarmId: alarmId,
+          title: intent.title ?? 'Alarm ${_formatTime(fireTime)}',
+          fireAt: fireTime,
+        );
+
         return 'Set alarm for ${_formatTime(fireTime)}';
       case 'create_workspace':
         final newWsId = _uuid.v4();
