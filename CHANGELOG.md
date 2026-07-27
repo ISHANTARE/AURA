@@ -1,3 +1,18 @@
+## [1.2.0] — 2026-07-28
+
+### Added — Phase 8: Sprint 10 (Onboarding + Settings + Recurring Habit Resets)
+
+**Onboarding & Settings UI**
+- `OnboardingScreen.dart` — 4-screen interactive onboarding sequence matching wireframe `07_onboarding.md` (Welcome, Floating Orb Permission, Mic Test, First Voice Task demo) with `onboarding_complete` persistence flag
+- `SettingsScreen.dart` — Comprehensive settings view matching PRD F-16: Model Target Selector (`z-ai/glm-5.2` on NVIDIA NIM & `gemini-2.0-flash`), Base URL & API Key configuration, Quiet Hours, Archived Workspaces restore, and Database Export / Reset options
+
+**Backend & Daily Habit Tracking**
+- `daily_log_dao.dart` — Drift DAO for logging daily task completions, streaks, and missed habits
+- `recurring_task_reset_service.dart` — Service resetting recurring tasks/habits at midnight and writing daily log records for streak analytics
+
+**Verification**
+- Verified with `flutter analyze`: **No issues found!**
+
 ## [1.1.0] — 2026-07-28
 
 ### Added — Phase 8: Sprint 9 (Share-to-AURA: F-09)
