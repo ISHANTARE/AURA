@@ -111,7 +111,7 @@ abstract final class AppTheme {
             horizontal: AuraSpacing.lg,
             vertical: AuraSpacing.md,
           ),
-          minimumSize: const Size(double.infinity, 52),
+          minimumSize: const Size(0, 52),
         ),
       ),
 
