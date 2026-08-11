@@ -1,34 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../database/app_database.dart';
-import '../../../../database/daos/task_dao.dart';
-import '../../../../database/daos/workspace_dao.dart';
 
-/// Watch urgent/overdue tasks.
-final urgentTasksProvider = StreamProvider.autoDispose<List<Task>>((ref) {
-  final taskDao = ref.watch(taskDaoProvider);
-  return taskDao.watchOverdue();
-});
+import '../../../../core/providers/providers.dart';
+import '../../domain/services/nudge_engine.dart';
 
-/// Watch today's focus tasks (all active tasks).
-final focusTasksProvider = StreamProvider.autoDispose<List<Task>>((ref) {
-  final taskDao = ref.watch(taskDaoProvider);
-  return taskDao.watchAllActive();
-});
+export '../../../../core/providers/providers.dart';
 
-/// Watch habits (recurring tasks).
-final habitsProvider = StreamProvider.autoDispose<List<Task>>((ref) {
-  final taskDao = ref.watch(taskDaoProvider);
-  return taskDao.watchRecurring();
-});
-
-/// Watch workspaces.
-final homeWorkspacesProvider = StreamProvider.autoDispose<List<Workspace>>((ref) {
+/// Watch item count for a workspace.
+final workspaceItemCountProvider =
+    StreamProvider.autoDispose.family<int, String>((ref, workspaceId) {
   final wsDao = ref.watch(workspaceDaoProvider);
-  return wsDao.watchAll();
+  return wsDao.watchItemCount(workspaceId);
 });
 
-/// Watch task count for a workspace.
-final workspaceTaskCountProvider = StreamProvider.autoDispose.family<int, String>((ref, workspaceId) {
-  final wsDao = ref.watch(workspaceDaoProvider);
-  return wsDao.watchTaskCount(workspaceId);
+/// NudgeEngine provider for proactive nudges
+final nudgeEngineProvider = Provider<NudgeEngine>((ref) {
+  final itemDao = ref.watch(itemDaoProvider);
+  return NudgeEngine(itemDao: itemDao);
 });

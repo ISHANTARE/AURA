@@ -3,23 +3,22 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../database/app_database.dart';
 import '../../../../database/daos/daily_log_dao.dart';
-import '../../../../database/daos/task_dao.dart';
 
 class RecurringTaskResetService {
-  final TaskDao _taskDao;
+  final ItemDao _itemDao;
   final DailyLogDao _dailyLogDao;
   static const _uuid = Uuid();
 
   RecurringTaskResetService({
-    required TaskDao taskDao,
+    required ItemDao itemDao,
     required DailyLogDao dailyLogDao,
-  })  : _taskDao = taskDao,
+  })  : _itemDao = itemDao,
         _dailyLogDao = dailyLogDao;
 
-  /// Check all recurring tasks and reset their status for the new day
+  /// Check all recurring items and reset their status for the new day
   Future<int> checkAndResetRecurringTasks() async {
-    final allTasks = await _taskDao.getAll();
-    final recurringTasks = allTasks.where((t) => t.isRecurring).toList();
+    final allItems = await _itemDao.watchAllActive().first;
+    final recurringItems = allItems.where((t) => t.isRecurring).toList();
 
     final now = DateTime.now();
     final todayInt = now.year * 10000 + now.month * 100 + now.day;
@@ -27,15 +26,14 @@ class RecurringTaskResetService {
 
     int resetCount = 0;
 
-    for (final task in recurringTasks) {
-      // Record daily log for yesterday's status
-      final isDone = task.status == 'done';
+    for (final item in recurringItems) {
+      final isDone = item.status == 'completed';
       final logStatus = isDone ? 'done' : 'missed';
 
       await _dailyLogDao.insertLog(
         DailyLogsCompanion(
           id: Value(_uuid.v4()),
-          taskId: Value(task.id),
+          itemId: Value(item.id),
           logDate: Value(todayInt),
           status: Value(logStatus),
           doneAt: Value(isDone ? nowMs : null),
@@ -43,12 +41,11 @@ class RecurringTaskResetService {
         ),
       );
 
-      // Reset task status to 'todo' for the new day
-      if (task.status == 'done') {
-        await _taskDao.updateTask(
-          TasksCompanion(
-            id: Value(task.id),
-            status: const Value('todo'),
+      if (item.status == 'completed') {
+        await _itemDao.updateItem(
+          ItemsCompanion(
+            id: Value(item.id),
+            status: const Value('pending'),
             updatedAt: Value(nowMs),
           ),
         );

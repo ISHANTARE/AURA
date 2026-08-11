@@ -1,8 +1,6 @@
-﻿import 'package:drift/drift.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart';
 
 import '../app_database.dart';
-import '../tables/notification_log_table.dart';
 
 part 'notification_dao.g.dart';
 
@@ -24,6 +22,3 @@ class NotificationDao extends DatabaseAccessor<AppDatabase> with _$NotificationD
   }
 }
 
-final notificationDaoProvider = Provider<NotificationDao>(
-  (ref) => NotificationDao(ref.watch(databaseProvider)),
-);

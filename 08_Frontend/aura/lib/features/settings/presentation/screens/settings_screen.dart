@@ -8,7 +8,7 @@ import 'package:aura/core/constants/colors.dart';
 import 'package:aura/core/constants/typography.dart';
 import 'package:aura/core/router/app_router.dart';
 import 'package:aura/core/theme/theme_provider.dart';
-import 'package:aura/database/daos/workspace_dao.dart';
+import 'package:aura/core/providers/providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});

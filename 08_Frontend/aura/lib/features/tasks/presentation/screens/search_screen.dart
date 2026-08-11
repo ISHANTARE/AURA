@@ -3,20 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:aura/core/constants/colors.dart';
-import 'package:aura/core/constants/typography.dart';
-import 'package:aura/core/router/app_router.dart';
-import 'package:aura/database/daos/task_dao.dart';
-import 'package:aura/database/daos/workspace_dao.dart';
-import 'package:aura/features/tasks/domain/usecases/search_usecase.dart';
+import '../../../../core/constants/colors.dart';
+import '../../../../core/constants/spacing.dart';
+import '../../../../core/constants/typography.dart';
+import '../../../../core/providers/providers.dart';
+import '../../../../core/router/app_router.dart';
 
-final searchUseCaseProvider = Provider<SearchUseCase>((ref) {
-  return SearchUseCase(
-    taskDao: ref.watch(taskDaoProvider),
-    workspaceDao: ref.watch(workspaceDaoProvider),
-  );
-});
+enum SearchFilter { all, tasks, events, notes }
 
+/// Instant Reactive Search Screen for AURA v2 (<200ms query speed)
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -26,9 +21,8 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _query = '';
-  String? _selectedStatus;
-  SearchResultGroup? _results;
+  List<Item> _rawResults = [];
+  SearchFilter _selectedFilter = SearchFilter.all;
   bool _isLoading = false;
 
   @override
@@ -37,28 +31,47 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.dispose();
   }
 
-  void _onSearchChanged(String val) async {
-    setState(() {
-      _query = val;
-      _isLoading = true;
-    });
+  void _onSearchChanged(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _rawResults = [];
+        _isLoading = false;
+      });
+      return;
+    }
 
-    final useCase = ref.read(searchUseCaseProvider);
-    final results = await useCase.execute(
-      query: val,
-      statusFilter: _selectedStatus,
-    );
+    setState(() => _isLoading = true);
+
+    final itemDao = ref.read(itemDaoProvider);
+    final results = await itemDao.search(query.trim());
 
     if (mounted) {
       setState(() {
-        _results = results;
+        _rawResults = results;
         _isLoading = false;
       });
     }
   }
 
+  List<Item> get _filteredResults {
+    switch (_selectedFilter) {
+      case SearchFilter.tasks:
+        return _rawResults.where((i) => i.kind == 'task').toList();
+      case SearchFilter.events:
+        return _rawResults.where((i) => i.kind == 'event').toList();
+      case SearchFilter.notes:
+        return _rawResults
+            .where((i) => i.kind == 'generic' || (i.notes != null && i.notes!.isNotEmpty))
+            .toList();
+      case SearchFilter.all:
+        return _rawResults;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final results = _filteredResults;
+
     return Scaffold(
       backgroundColor: AuraColors.bgBase,
       appBar: AppBar(
@@ -66,26 +79,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, color: AuraColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text('SEARCH', style: AuraTypography.screenHeader),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.all(AuraSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search Input Box
+            // Search Input Field
             TextField(
               controller: _searchController,
               autofocus: true,
               style: AuraTypography.bodyPrimary,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Search tasks, notes, workspaces...',
-                hintStyle: const TextStyle(color: AuraColors.textDisabled),
-                prefixIcon: const Icon(LucideIcons.search, color: AuraColors.accentLime),
-                suffixIcon: _query.isNotEmpty
+                hintText: 'Search items, tasks, notes...',
+                prefixIcon:
+                    const Icon(LucideIcons.search, color: AuraColors.accentLime),
+                suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(LucideIcons.x, color: AuraColors.textSecondary),
                         onPressed: () {
@@ -94,155 +107,131 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         },
                       )
                     : null,
-                filled: true,
-                fillColor: AuraColors.bgCard,
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: AuraColors.border, width: 1.5),
-                  borderRadius: BorderRadius.zero,
-                ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: AuraColors.accentLime, width: 2),
-                  borderRadius: BorderRadius.zero,
-                ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AuraSpacing.sm),
 
-            // Status Filter Chips
+            // Filter Chips Row
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   _FilterChip(
                     label: 'ALL',
-                    isSelected: _selectedStatus == null,
-                    onTap: () {
-                      setState(() => _selectedStatus = null);
-                      _onSearchChanged(_query);
-                    },
+                    isSelected: _selectedFilter == SearchFilter.all,
+                    onTap: () => setState(() => _selectedFilter = SearchFilter.all),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   _FilterChip(
-                    label: 'ACTIVE',
-                    isSelected: _selectedStatus == 'todo',
-                    onTap: () {
-                      setState(() => _selectedStatus = 'todo');
-                      _onSearchChanged(_query);
-                    },
+                    label: 'TASKS',
+                    isSelected: _selectedFilter == SearchFilter.tasks,
+                    onTap: () => setState(() => _selectedFilter = SearchFilter.tasks),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   _FilterChip(
-                    label: 'OVERDUE 🔴',
-                    isSelected: _selectedStatus == 'overdue',
-                    onTap: () {
-                      setState(() => _selectedStatus = 'overdue');
-                      _onSearchChanged(_query);
-                    },
+                    label: 'EVENTS',
+                    isSelected: _selectedFilter == SearchFilter.events,
+                    onTap: () => setState(() => _selectedFilter = SearchFilter.events),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   _FilterChip(
-                    label: 'DONE',
-                    isSelected: _selectedStatus == 'done',
-                    onTap: () {
-                      setState(() => _selectedStatus = 'done');
-                      _onSearchChanged(_query);
-                    },
+                    label: 'NOTES',
+                    isSelected: _selectedFilter == SearchFilter.notes,
+                    onTap: () => setState(() => _selectedFilter = SearchFilter.notes),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
 
-            // Search Results View
+            const SizedBox(height: AuraSpacing.md),
+
+            // Result Header Badge
+            if (_searchController.text.isNotEmpty && !_isLoading) ...[
+              Text(
+                'RESULTS (${results.length})',
+                style: AuraTypography.labelLime,
+              ),
+              const SizedBox(height: AuraSpacing.xs),
+            ],
+
+            // Results List / Loading / Empty State
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AuraColors.accentLime))
-                  : (_query.trim().isEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            AuraColors.accentLime),
+                      ),
+                    )
+                  : (results.isEmpty
                       ? Center(
                           child: Text(
-                            'Type keywords to search AURA...',
-                            style: AuraTypography.bodySmall,
+                            _searchController.text.isEmpty
+                                ? 'Type keywords to search AURA...'
+                                : 'No matching items found.',
+                            style: AuraTypography.body,
                           ),
                         )
-                      : (_results == null || (_results!.tasks.isEmpty && _results!.workspaces.isEmpty)
-                          ? Center(
-                              child: Text(
-                                'No matching tasks or workspaces found',
-                                style: AuraTypography.bodySmall,
-                              ),
-                            )
-                          : ListView(
-                              children: [
-                                // Workspace Results
-                                if (_results!.workspaces.isNotEmpty) ...[
-                                  Text(
-                                    'WORKSPACES',
-                                    style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ..._results!.workspaces.map((ws) => Card(
-                                        color: AuraColors.bgCard,
-                                        margin: const EdgeInsets.only(bottom: 8),
-                                        shape: const RoundedRectangleBorder(
-                                          side: BorderSide(color: AuraColors.borderMuted),
-                                        ),
-                                        child: ListTile(
-                                          leading: const Icon(LucideIcons.folder, color: AuraColors.accentLime),
-                                          title: Text(ws.name, style: AuraTypography.cardTitle),
-                                          trailing: const Icon(LucideIcons.chevronRight, color: AuraColors.textSecondary),
-                                          onTap: () {
-                                            context.push(Routes.workspaceRoute(ws.id));
-                                          },
-                                        ),
-                                      )),
-                                  const SizedBox(height: 16),
-                                ],
-
-                                // Task Results
-                                if (_results!.tasks.isNotEmpty) ...[
-                                  Text(
-                                    'TASKS (${_results!.tasks.length})',
-                                    style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ..._results!.tasks.map((task) => Card(
-                                        color: AuraColors.bgCard,
-                                        margin: const EdgeInsets.only(bottom: 8),
-                                        shape: const RoundedRectangleBorder(
-                                          side: BorderSide(color: AuraColors.border),
-                                        ),
-                                        child: ListTile(
-                                          leading: Icon(
-                                            task.status == 'done'
-                                                ? LucideIcons.checkCircle2
-                                                : LucideIcons.circle,
-                                            color: task.status == 'done'
-                                                ? AuraColors.accentGreen
-                                                : AuraColors.textSecondary,
+                      : ListView.separated(
+                          itemCount: results.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: AuraSpacing.sm),
+                          itemBuilder: (context, index) {
+                            final item = results[index];
+                            return GestureDetector(
+                              onTap: () =>
+                                  context.push(Routes.taskRoute(item.id)),
+                              child: Container(
+                                padding: const EdgeInsets.all(AuraSpacing.md),
+                                decoration: BoxDecoration(
+                                  color: AuraColors.bgCard,
+                                  border: Border.all(
+                                      color: AuraColors.border,
+                                      width: AuraSpacing.borderWidth),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black,
+                                      offset: Offset(4, 4),
+                                      blurRadius: 0,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item.title,
+                                              style: AuraTypography.cardTitle),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${item.category.toUpperCase()} · ${item.kind.toUpperCase()}',
+                                            style: AuraTypography.labelLime,
                                           ),
-                                          title: Text(
-                                            task.name,
-                                            style: AuraTypography.bodyPrimary.copyWith(
-                                              decoration: task.status == 'done' ? TextDecoration.lineThrough : null,
+                                          if (item.notes != null &&
+                                              item.notes!.isNotEmpty) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              item.notes!,
+                                              style: AuraTypography.bodySmall,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                          ),
-                                          subtitle: task.description != null
-                                              ? Text(
-                                                  task.description!,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: AuraTypography.bodySmall,
-                                                )
-                                              : null,
-                                          trailing: const Icon(LucideIcons.chevronRight, color: AuraColors.textSecondary),
-                                          onTap: () {
-                                            context.push(Routes.taskRoute(task.id));
-                                          },
-                                        ),
-                                      )),
-                                ],
-                              ],
-                            ))),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(LucideIcons.chevronRight,
+                                        color: AuraColors.textSecondary,
+                                        size: 18),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        )),
             ),
           ],
         ),
@@ -252,34 +241,32 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 }
 
 class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
   const _FilterChip({
     required this.label,
     required this.isSelected,
     required this.onTap,
   });
 
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? AuraColors.accentLime : AuraColors.bgCard,
-          border: Border.all(
-            color: isSelected ? AuraColors.accentLime : AuraColors.borderMuted,
-            width: 1.5,
-          ),
+          border: Border.all(color: AuraColors.border, width: 1),
         ),
         child: Text(
           label,
-          style: AuraTypography.badgeText.copyWith(
-            color: isSelected ? AuraColors.textOnAccent : AuraColors.textPrimary,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          style: AuraTypography.label.copyWith(
+            color: isSelected ? Colors.black : AuraColors.textPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 10,
           ),
         ),
       ),

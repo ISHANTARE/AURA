@@ -2,61 +2,12 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../database/app_database.dart';
-import '../../../../database/daos/workspace_dao.dart';
-import '../entities/workspace_models.dart';
+import '../../../../core/providers/providers.dart';
 
 class WorkspaceUseCases {
   final WorkspaceDao _workspaceDao;
 
   WorkspaceUseCases(this._workspaceDao);
-
-  /// Streams active workspaces enriched with real-time stats.
-  Stream<List<WorkspaceWithStats>> watchActiveWorkspacesWithStats() {
-    return _workspaceDao.watchAll().asyncMap((workspaces) async {
-      final list = <WorkspaceWithStats>[];
-      for (final w in workspaces) {
-        final tasks = await _workspaceDao.watchTaskCount(w.id).first;
-        final events = await _workspaceDao.watchEventCount(w.id).first;
-        final overdue = await _workspaceDao.watchOverdueTaskCount(w.id).first;
-
-        String? preview;
-        if (overdue > 0) {
-          preview = '$overdue overdue';
-        } else if (tasks > 0) {
-          preview = '$tasks active tasks';
-        } else if (events > 0) {
-          preview = '$events scheduled events';
-        } else {
-          preview = 'Tap to add tasks';
-        }
-
-        list.add(WorkspaceWithStats(
-          workspace: w,
-          activeTaskCount: tasks,
-          eventCount: events,
-          overdueCount: overdue,
-          previewText: preview,
-        ));
-      }
-      return list;
-    });
-  }
-
-  /// Streams single workspace detail stats.
-  Stream<WorkspaceStats> watchWorkspaceStats(String workspaceId) {
-    return _workspaceDao.watchTaskCount(workspaceId).asyncMap((active) async {
-      final overdue = await _workspaceDao.watchOverdueTaskCount(workspaceId).first;
-      final events = await _workspaceDao.watchEventCount(workspaceId).first;
-      final sections = await _workspaceDao.watchSectionCount(workspaceId).first;
-      return WorkspaceStats(
-        activeTasks: active,
-        overdueTasks: overdue,
-        totalEvents: events,
-        totalSections: sections,
-      );
-    });
-  }
 
   /// Create a workspace with custom options.
   Future<String> createWorkspace({

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/providers/connectivity_provider.dart';
-import '../../../../database/app_database.dart';
+import '../../../../core/providers/providers.dart';
 import '../../../../platform/speech_channel.dart';
 import '../../data/datasources/llm_api_datasource.dart';
 import '../../domain/entities/capture_state.dart';
@@ -155,7 +154,7 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
 
   void _resetSilenceTimer() {
     _silenceTimer?.cancel();
-    _silenceTimer = Timer(const Duration(milliseconds: 1500), () {
+    _silenceTimer = Timer(const Duration(milliseconds: 2500), () {
       if (state.status == CaptureStatus.listening &&
           state.transcript.trim().isNotEmpty) {
         stopAndProcess();

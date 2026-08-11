@@ -161,6 +161,18 @@ class _AlarmConfirmationCardState extends ConsumerState<AlarmConfirmationCard> {
               ),
               onPressed: () {
                 HapticFeedback.mediumImpact();
+                // Persist snooze duration as a reminder offset before confirming
+                final intentWithSnooze = widget.intent.copyWith(
+                  deadline: _fireAt,
+                  reminders: [
+                    ExtractedReminder(
+                      offsetValue: _snoozeMinutes,
+                      offsetUnit: 'minutes',
+                      type: 'alarm',
+                    ),
+                  ],
+                );
+                ref.read(captureProvider.notifier).updateIntent(intentWithSnooze);
                 ref.read(captureProvider.notifier).confirmAndSave();
                 Navigator.of(context).pop();
               },

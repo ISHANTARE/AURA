@@ -1,40 +1,53 @@
-import '../../../../database/daos/task_dao.dart';
-import '../../../notifications/services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../database/app_database.dart';
+import '../../data/services/notification_service.dart';
+
+/// Scans active items and fires summary notification for overdue tasks (PRD F-07).
 class OverdueReminderUseCase {
-  final TaskDao _taskDao;
+  final AppDatabase _db;
   final NotificationService _notificationService;
 
   OverdueReminderUseCase({
-    required TaskDao taskDao,
+    required AppDatabase db,
     NotificationService? notificationService,
-  })  : _taskDao = taskDao,
+  })  : _db = db,
         _notificationService = notificationService ?? NotificationService();
 
-  /// Check overdue tasks and send non-spam notification if needed.
   Future<int> execute() async {
-    final overdueTasks = await _taskDao.getOverdueTasks();
-    if (overdueTasks.isEmpty) return 0;
+    final now = DateTime.now();
+    final todayKey = 'overdue_notif_${now.year}_${now.month}_${now.day}';
 
-    final count = overdueTasks.length;
-    final firstTask = overdueTasks.first;
+    // 1/day max guard
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(todayKey) == true) {
+      return 0;
+    }
 
-    final String title = count == 1
-        ? 'Task Overdue 🔴'
-        : '$count Tasks Overdue 🔴';
+    final activeItems = await _db.itemDao.watchAllActive().first;
+    final nowMs = now.millisecondsSinceEpoch;
 
-    final String body = count == 1
-        ? '${firstTask.name} is past deadline. Mark done or update deadline.'
-        : '${firstTask.name} and ${count - 1} other tasks need your attention.';
+    final overdueItems = activeItems.where((t) {
+      if (t.status == 'completed') return false;
+      final deadline = t.deadline ?? t.fireAt;
+      return deadline != null && deadline < nowMs;
+    }).toList();
 
-    await _notificationService.showNotification(
-      id: 'overdue_summary'.hashCode.abs(),
-      title: title,
-      body: body,
-      channelId: NotificationService.channelRemindersId,
-      payload: 'route:/home',
+    if (overdueItems.isEmpty) return 0;
+
+    final count = overdueItems.length;
+    final firstTitle = overdueItems.first.title;
+
+    await _notificationService.showInstantNotification(
+      id: 'overdue_summary_$todayKey'.hashCode.abs(),
+      title: 'Overdue Task Alert ⚠️',
+      body: count == 1
+          ? 'Overdue: "$firstTitle"'
+          : '$count tasks overdue. First up: "$firstTitle"',
+      payload: 'route:/briefing',
     );
 
+    await prefs.setBool(todayKey, true);
     return count;
   }
 }

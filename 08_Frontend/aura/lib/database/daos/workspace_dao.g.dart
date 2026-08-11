@@ -7,4 +7,5 @@ mixin _$WorkspaceDaoMixin on DatabaseAccessor<AppDatabase> {
   $WorkspacesTable get workspaces => attachedDatabase.workspaces;
   $WorkspaceSectionsTable get workspaceSections =>
       attachedDatabase.workspaceSections;
+  $ItemsTable get items => attachedDatabase.items;
 }

@@ -1,26 +1,51 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:aura/core/constants/colors.dart';
-import 'package:aura/core/constants/typography.dart';
-import 'package:aura/core/router/app_router.dart';
-import 'package:aura/database/daos/shared_content_dao.dart';
-import 'package:aura/platform/share_channel.dart';
+import '../../../../core/constants/colors.dart';
+import '../../../../core/constants/spacing.dart';
+import '../../../../core/constants/typography.dart';
+import '../../../../core/providers/providers.dart';
+import '../../../../core/router/app_router.dart';
+import '../../../../database/daos/shared_content_dao.dart';
 import '../../domain/usecases/process_shared_content_usecase.dart';
+import '../../../capture/presentation/providers/capture_provider.dart';
+import '../../../../platform/share_channel.dart';
 
-import '../widgets/voice_capture_overlay.dart';
-
+/// Provider for ShareChannel instance
 final shareChannelProvider = Provider<ShareChannel>((ref) => ShareChannel());
 
-final processSharedContentUseCaseProvider = Provider<ProcessSharedContentUseCase>((ref) {
+/// Provider for ProcessSharedContentUseCase
+final processSharedContentUseCaseProvider =
+    Provider<ProcessSharedContentUseCase>((ref) {
+  final db = ref.watch(databaseProvider);
   return ProcessSharedContentUseCase(
-    sharedContentDao: ref.watch(sharedContentDaoProvider),
+    sharedContentDao: SharedContentDao(db),
   );
 });
 
+/// Async state for the share receive screen
+enum _ShareStatus { loading, ready, processing, done, error }
+
+class _ShareState {
+  final _ShareStatus status;
+  final SharedPayload? payload;
+  final ProcessedShareResult? result;
+  final String? errorMessage;
+
+  const _ShareState({
+    required this.status,
+    this.payload,
+    this.result,
+    this.errorMessage,
+  });
+}
+
+/// Share-to-AURA Receive Screen for v2.
+/// Receives shared content (text/links/images), processes them via
+/// ProcessSharedContentUseCase, and routes to VoiceCaptureOverlay
+/// for intent confirmation.
 class ShareReceiveScreen extends ConsumerStatefulWidget {
   const ShareReceiveScreen({super.key});
 
@@ -29,86 +54,84 @@ class ShareReceiveScreen extends ConsumerStatefulWidget {
 }
 
 class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
-  final TextEditingController _instructionController = TextEditingController();
-  ProcessedShareResult? _result;
-  bool _isLoading = true;
+  _ShareState _state = const _ShareState(status: _ShareStatus.loading);
 
   @override
   void initState() {
     super.initState();
-    _fetchAndProcessPayload();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSharePayload());
   }
 
-  Future<void> _fetchAndProcessPayload() async {
-    final payload = await ref.read(shareChannelProvider).getInitialSharePayload();
-    if (payload != null) {
-      final processed = await ref.read(processSharedContentUseCaseProvider).execute(payload);
-      if (mounted) {
-        setState(() {
-          _result = processed;
-          _isLoading = false;
-        });
-        // Auto-trigger voice capture modal immediately upon receiving share payload
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) VoiceCaptureOverlay.show(context);
-        });
+  Future<void> _loadSharePayload() async {
+    try {
+      final shareChannel = ref.read(shareChannelProvider);
+      final payload = await shareChannel.getInitialSharePayload();
+
+      if (!mounted) return;
+
+      if (payload == null) {
+        setState(() => _state = const _ShareState(
+              status: _ShareStatus.ready,
+              errorMessage: 'No shared content received.',
+            ));
+        return;
       }
-    } else {
+
+      setState(() => _state = _ShareState(
+            status: _ShareStatus.ready,
+            payload: payload,
+          ));
+    } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _state = _ShareState(
+              status: _ShareStatus.error,
+              errorMessage: 'Failed to read shared content: $e',
+            ));
       }
     }
   }
 
-  @override
-  void dispose() {
-    _instructionController.dispose();
-    super.dispose();
+  Future<void> _processAndCapture() async {
+    final payload = _state.payload;
+    if (payload == null) return;
+
+    setState(() => _state = _ShareState(
+          status: _ShareStatus.processing,
+          payload: payload,
+        ));
+
+    try {
+      final useCase = ref.read(processSharedContentUseCaseProvider);
+      final result = await useCase.execute(payload);
+
+      if (!mounted) return;
+
+      setState(() => _state = _ShareState(
+            status: _ShareStatus.done,
+            payload: payload,
+            result: result,
+          ));
+
+      // Pre-fill the capture transcript with the extracted text
+      // and route to home to show voice confirmation
+      ref.read(captureProvider.notifier).updateTypedTranscript(
+            '${result.title}: ${result.extractedText}'.trim(),
+          );
+
+      if (mounted) context.go(Routes.home);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _state = _ShareState(
+              status: _ShareStatus.error,
+              payload: payload,
+              errorMessage: 'Processing failed: $e',
+            ));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AuraColors.bgBase,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(color: AuraColors.accentLime),
-              SizedBox(height: 16),
-              Text('Analyzing shared content...', style: TextStyle(color: AuraColors.textSecondary)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_result == null) {
-      return Scaffold(
-        backgroundColor: AuraColors.bgBase,
-        appBar: AppBar(backgroundColor: AuraColors.bgBase),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(LucideIcons.share2, color: AuraColors.textDisabled, size: 48),
-              const SizedBox(height: 16),
-              Text('No shared payload detected', style: AuraTypography.body),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => context.go(Routes.home),
-                style: ElevatedButton.styleFrom(backgroundColor: AuraColors.accentLime),
-                child: Text('GO TO HOME', style: AuraTypography.buttonText),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final res = _result!;
-
     return Scaffold(
       backgroundColor: AuraColors.bgBase,
       appBar: AppBar(
@@ -122,121 +145,200 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.all(AuraSpacing.md),
+          child: _buildBody(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    switch (_state.status) {
+      case _ShareStatus.loading:
+        return const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AuraColors.accentLime),
+          ),
+        );
+
+      case _ShareStatus.error:
+        return _buildError(_state.errorMessage ?? 'Unknown error');
+
+      case _ShareStatus.processing:
+        return const Center(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Content Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AuraColors.bgCard,
-                  border: Border.all(color: AuraColors.border, width: 2),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          res.imagePath != null
-                              ? LucideIcons.image
-                              : (res.url != null ? LucideIcons.link : LucideIcons.fileText),
-                          color: AuraColors.accentLime,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            res.title,
-                            style: AuraTypography.cardTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Image preview if available
-                    if (res.imagePath != null) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.zero,
-                        child: Image.file(
-                          File(res.imagePath!),
-                          height: 140,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-
-                    // Extracted OCR text or link summary
-                    if (res.extractedText.isNotEmpty) ...[
-                      Text('EXTRACTED CONTENT', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
-                      const SizedBox(height: 4),
-                      Text(
-                        res.extractedText,
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                        style: AuraTypography.bodySmall,
-                      ),
-                    ],
-                  ],
-                ),
+              CircularProgressIndicator(
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AuraColors.accentLime),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: AuraSpacing.md),
+              Text('Processing shared content…',
+                  style: TextStyle(color: AuraColors.textSecondary)),
+            ],
+          ),
+        );
 
-              // Instruction Field
-              Text('WHAT SHOULD AURA DO WITH THIS?', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.accentLime)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _instructionController,
-                autofocus: true,
-                maxLines: 2,
-                style: AuraTypography.bodyPrimary,
-                decoration: const InputDecoration(
-                  hintText: 'e.g. "Remind me to read this paper tomorrow at 10 AM"',
-                  hintStyle: TextStyle(color: AuraColors.textDisabled),
-                  filled: true,
-                  fillColor: AuraColors.bgCard,
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: AuraColors.border, width: 1.5),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: AuraColors.accentLime, width: 2),
-                  ),
-                ),
-              ),
-              const Spacer(),
+      case _ShareStatus.done:
+        return _buildDone();
 
-              // Action CTA Button
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Task created from shared content!')),
-                    );
-                    context.go(Routes.home);
-                  },
-                  icon: const Icon(LucideIcons.check, size: 18, color: AuraColors.textOnAccent),
-                  label: Text('CONFIRM & SAVE TASK', style: AuraTypography.buttonText.copyWith(fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AuraColors.accentLime,
-                    foregroundColor: AuraColors.textOnAccent,
-                    elevation: 0,
-                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                  ),
-                ),
+      case _ShareStatus.ready:
+        final payload = _state.payload;
+        if (payload == null) {
+          return _buildError(_state.errorMessage ?? 'No content received.');
+        }
+        return _buildPreview(payload);
+    }
+  }
+
+  Widget _buildPreview(SharedPayload payload) {
+    final icon = payload.type == 'image'
+        ? LucideIcons.image
+        : (payload.content?.startsWith('http') ?? false)
+            ? LucideIcons.link
+            : LucideIcons.fileText;
+
+    final preview = payload.type == 'image'
+        ? 'Image file: ${payload.filePath ?? 'Unknown path'}'
+        : payload.content ?? 'No content';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Type Badge
+        Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: AuraSpacing.sm, vertical: 4),
+          decoration: BoxDecoration(
+            color: AuraColors.accentLime.withValues(alpha: 0.1),
+            border: Border.all(color: AuraColors.accentLime),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: AuraColors.accentLime),
+              const SizedBox(width: 6),
+              Text(
+                payload.type.toUpperCase(),
+                style: AuraTypography.label.copyWith(color: AuraColors.accentLime),
               ),
             ],
           ),
         ),
-      ),
+
+        const SizedBox(height: AuraSpacing.md),
+
+        // Content Preview
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AuraSpacing.md),
+          decoration: BoxDecoration(
+            color: AuraColors.bgCard,
+            border: Border.all(color: AuraColors.border, width: 2),
+            boxShadow: const [
+              BoxShadow(
+                  color: AuraColors.shadow, offset: Offset(4, 4), blurRadius: 0),
+            ],
+          ),
+          child: Text(
+            preview,
+            style: AuraTypography.body,
+            maxLines: 6,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+
+        const SizedBox(height: AuraSpacing.lg),
+
+        Text(
+          'AURA will extract the key information and create a task, reminder, or note.',
+          style: AuraTypography.overline,
+        ),
+
+        const SizedBox(height: AuraSpacing.md),
+
+        // CTA
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AuraColors.accentLime,
+              foregroundColor: Colors.black,
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              side: const BorderSide(color: AuraColors.border, width: 2),
+              elevation: 0,
+            ),
+            onPressed: _processAndCapture,
+            child: Text(
+              'CAPTURE WITH AURA →',
+              style: AuraTypography.label.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: AuraSpacing.sm),
+
+        // Dismiss
+        TextButton(
+          onPressed: () => context.go(Routes.home),
+          child: Text(
+            'Dismiss',
+            style: AuraTypography.label.copyWith(color: AuraColors.textSecondary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDone() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: const BoxDecoration(
+            color: AuraColors.accentGreen,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(LucideIcons.check, size: 36, color: Colors.black),
+        ),
+        const SizedBox(height: AuraSpacing.md),
+        Text('Content saved!', style: AuraTypography.sectionHeader),
+        const SizedBox(height: AuraSpacing.xs),
+        Text(
+          'Returning to home…',
+          style: AuraTypography.body,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildError(String message) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(LucideIcons.alertCircle, size: 48, color: AuraColors.accentRed),
+        const SizedBox(height: AuraSpacing.md),
+        Text('Something went wrong', style: AuraTypography.cardTitle),
+        const SizedBox(height: AuraSpacing.xs),
+        Text(message, style: AuraTypography.body, textAlign: TextAlign.center),
+        const SizedBox(height: AuraSpacing.lg),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AuraColors.accentLime,
+            foregroundColor: Colors.black,
+          ),
+          onPressed: () => context.go(Routes.home),
+          child: const Text('GO HOME'),
+        ),
+      ],
     );
   }
 }

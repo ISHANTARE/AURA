@@ -1,9 +1,31 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../../../core/constants/colors.dart';
+
+/// Top-level background notification response handler
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse response) async {
+  final actionId = response.actionId;
+  final payload = response.payload;
+  if (payload == null || payload.isEmpty) return;
+
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    if (actionId == NotificationService.actionMarkDone) {
+      await prefs.setString('pending_bg_action', 'MARK_DONE:$payload');
+    } else if (actionId == NotificationService.actionSnooze30m) {
+      await prefs.setString('pending_bg_action', 'SNOOZE_30M:$payload');
+    }
+  } catch (e) {
+    debugPrint('Background notification action error: $e');
+  }
+}
 
 /// Central Notification Service for AURA.
 /// Configures high-importance Android channels, timezone scheduling, and notification action handlers.
@@ -28,6 +50,9 @@ class NotificationService {
   static const String actionMarkDone = 'ACTION_MARK_DONE';
   static const String actionSnooze30m = 'ACTION_SNOOZE_30M';
   static const String actionSnooze1h = 'ACTION_SNOOZE_1H';
+
+  final _selectNotificationSubject = StreamController<String?>.broadcast();
+  Stream<String?> get selectNotificationStream => _selectNotificationSubject.stream;
 
   bool _initialized = false;
 
@@ -65,8 +90,17 @@ class NotificationService {
     // 4. Initialize plugin with tap callbacks
     await _notificationsPlugin.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: onNotificationTap,
-      onDidReceiveBackgroundNotificationResponse: onBackgroundNotificationAction,
+      onDidReceiveNotificationResponse: (response) {
+        if (onNotificationTap != null) {
+          onNotificationTap(response);
+        }
+        final payload = response.payload;
+        if (payload != null && payload.isNotEmpty) {
+          _selectNotificationSubject.add(payload);
+        }
+      },
+      onDidReceiveBackgroundNotificationResponse:
+          onBackgroundNotificationAction ?? notificationTapBackground,
     );
 
     // 5. Create Android High Importance Channels

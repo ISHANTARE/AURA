@@ -1,9 +1,9 @@
-﻿import 'package:drift/drift.dart';
-import 'tasks_table.dart';
+import 'package:drift/drift.dart';
+import 'items_table.dart';
 
 class DailyLogs extends Table {
   TextColumn get id       => text()();
-  TextColumn get taskId   => text().references(Tasks, #id)();
+  TextColumn get itemId   => text().references(Items, #id)();
   IntColumn  get logDate  => integer()();
   TextColumn get status   => text()();
   IntColumn  get doneAt   => integer().nullable()();

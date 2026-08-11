@@ -1,9 +1,9 @@
-﻿import 'package:drift/drift.dart';
-import 'reminders_table.dart';
+import 'package:drift/drift.dart';
+import 'reminders_schedule_table.dart';
 
 class NotificationLogs extends Table {
   TextColumn get id             => text()();
-  TextColumn get reminderId     => text().references(Reminders, #id)();
+  TextColumn get reminderId     => text().references(RemindersSchedule, #id)();
   IntColumn  get scheduledAt    => integer()();
   IntColumn  get firedAt        => integer().nullable()();
   BoolColumn get wasDnd         => boolean().withDefault(const Constant(false))();

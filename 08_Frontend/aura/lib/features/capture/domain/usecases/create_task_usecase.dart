@@ -1,18 +1,21 @@
+import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
+
 import '../../../../database/app_database.dart';
 import '../entities/intent_result.dart';
-import '../../../reminders/domain/services/reminder_scheduler.dart';
 
 class CreateTaskUseCase {
   final AppDatabase _db;
-  final ReminderScheduler _reminderScheduler;
+  final ItemDao _itemDao;
+  final WorkspaceDao _workspaceDao;
   static const Uuid _uuid = Uuid();
 
   CreateTaskUseCase(this._db)
-      : _reminderScheduler = ReminderScheduler(_db);
+      : _itemDao = ItemDao(_db),
+        _workspaceDao = WorkspaceDao(_db);
 
-  /// Executes a database transaction to save the confirmed task, any reminders,
+  /// Executes a database transaction to save the confirmed item/task,
   /// creating a workspace if needed, and logging to ai_actions_log.
   Future<String> execute({
     required IntentResult intent,
@@ -20,17 +23,14 @@ class CreateTaskUseCase {
     String? workspaceNameToCreate,
     required String originalTranscript,
   }) async {
-    final List<RemindersCompanion> reminderCompanions = [];
-
-    // Run all DB writes in a single transaction
-    final taskId = await _db.transaction<String>(() async {
+    return await _db.transaction<String>(() async {
       var finalWorkspaceId = workspaceId;
       final nowEpoch = DateTime.now().millisecondsSinceEpoch;
 
       // 1. If workspace needs auto-creation, create it now
       if (workspaceId == 'NEW' && workspaceNameToCreate != null) {
         final newWsId = _uuid.v4();
-        await _db.workspaceDao.insertWorkspace(
+        await _workspaceDao.insertWorkspace(
           WorkspacesCompanion.insert(
             id: newWsId,
             name: workspaceNameToCreate,
@@ -43,90 +43,54 @@ class CreateTaskUseCase {
         finalWorkspaceId = newWsId;
       }
 
-      // 2. Insert Task
-      final taskId = _uuid.v4();
+      // 2. Insert Item (v2 entity)
+      final itemId = _uuid.v4();
 
-      final taskCompanion = TasksCompanion.insert(
-        id: taskId,
-        workspaceId: finalWorkspaceId,
-        name: intent.title ?? 'Untitled Voice Task',
-        status: const Value('todo'),
-        priority: Value(intent.priority ?? 'medium'),
-        deadline: Value(intent.deadline?.millisecondsSinceEpoch),
-        description: Value(intent.notes),
-        isRecurring: Value(intent.isRecurring),
-        recurrenceType: Value(intent.recurrenceType),
-        createdAt: nowEpoch,
-        updatedAt: nowEpoch,
+      await _itemDao.insertItem(
+        ItemsCompanion.insert(
+          id: itemId,
+          workspaceId: Value(finalWorkspaceId),
+          title: intent.title ?? 'Untitled Voice Task',
+          category: 'reminder',
+          kind: 'task',
+          status: const Value('pending'),
+          priority: Value(intent.priority ?? 'medium'),
+          deadline: Value(intent.deadline?.millisecondsSinceEpoch),
+          notes: Value(intent.notes),
+          isRecurring: Value(intent.isRecurring),
+          recurrenceRule: Value(intent.recurrenceType),
+          createdAt: nowEpoch,
+          updatedAt: nowEpoch,
+        ),
       );
 
-      // 3. Prepare Reminders
-      for (final rem in intent.reminders) {
-        final remId = _uuid.v4();
-        int fireAtEpoch;
-        if (intent.deadline != null) {
-          Duration offset;
-          switch (rem.offsetUnit) {
-            case 'days':
-              offset = Duration(days: rem.offsetValue);
-              break;
-            case 'hours':
-              offset = Duration(hours: rem.offsetValue);
-              break;
-            default:
-              offset = Duration(minutes: rem.offsetValue);
-          }
-          fireAtEpoch = intent.deadline!.subtract(offset).millisecondsSinceEpoch;
-        } else {
-          fireAtEpoch = DateTime.now().add(const Duration(minutes: 30)).millisecondsSinceEpoch;
-        }
-
-        reminderCompanions.add(
-          RemindersCompanion.insert(
-            id: remId,
-            taskId: Value(taskId),
-            fireAt: fireAtEpoch,
-            type: Value(rem.type),
-            status: const Value('pending'),
-            createdAt: nowEpoch,
-            updatedAt: nowEpoch,
-          ),
-        );
-      }
-
-      await _db.taskDao.insertWithReminders(taskCompanion, reminderCompanions);
-
-      // 4. Log AI Action
+      // 3. Log AI Action (store full serialized intent for audit trail)
       final logId = _uuid.v4();
+      final intentJson = jsonEncode({
+        'intent_type': intent.intentType,
+        'title': intent.title,
+        'deadline_iso': intent.deadline?.toIso8601String(),
+        'workspace_hint': intent.workspaceHint,
+        'priority': intent.priority,
+        'is_recurring': intent.isRecurring,
+        'notes': intent.notes,
+        'confidence': intent.confidence,
+      });
       await _db.into(_db.aiActionsLogs).insert(
         AiActionsLogsCompanion.insert(
           id: logId,
           inputText: originalTranscript,
           rawResponse: intent.title ?? '',
-          parsedJson: intent.title ?? '',
+          parsedJson: intentJson,
           confidence: Value(intent.confidence),
           actionTaken: 'task_created',
-          taskId: Value(taskId),
+          itemId: Value(itemId),
           userEdited: const Value(false),
           createdAt: nowEpoch,
         ),
       );
 
-      return taskId;
+      return itemId;
     });
-
-    // After transaction commits: schedule reminders via NotificationService (F-07)
-    final savedTask = await _db.taskDao.getById(taskId);
-    if (savedTask != null) {
-      await _reminderScheduler.scheduleForTask(
-        savedTask,
-        explicitReminders: reminderCompanions.isNotEmpty
-            ? await _db.reminderDao.watchByTask(taskId).first
-            : null,
-      );
-    }
-
-    return taskId;
   }
 }
-

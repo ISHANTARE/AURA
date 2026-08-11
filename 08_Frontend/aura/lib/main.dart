@@ -1,55 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workmanager/workmanager.dart';
 
 import 'app.dart';
 import 'core/services/notification_service.dart';
-import 'database/app_database.dart';
-import 'features/reminders/domain/services/reminder_scheduler.dart';
-
-/// Background task dispatcher — called by WorkManager in a separate isolate.
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    switch (task) {
-      case 'recurringReset':
-        // Midnight reset for recurring tasks (Sprint 8)
-        break;
-      case 'morningBriefing':
-        // Morning briefing generation (Sprint 8)
-        break;
-      case 'processOfflineQueue':
-        // Process queued offline captures (Sprint 4)
-        break;
-      case 'nudgeCheck':
-        // Proactive nudge evaluation (Sprint 8)
-        break;
-    }
-    return Future.value(true);
-  });
-}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize WorkManager for background tasks
-  await Workmanager().initialize(
-    callbackDispatcher,
-  );
+  // Load environment variables from .env file
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // If .env is missing, app runs using fallback or defaults
+  }
 
   // Initialize local notifications (channels + timezone)
   final notificationService = NotificationService();
   await notificationService.initialize();
   await notificationService.requestPermissions();
-
-  // Reschedule any pending reminders (e.g. after device restart)
-  try {
-    final db = AppDatabase();
-    final scheduler = ReminderScheduler(db);
-    await scheduler.initializeAndReschedulePending();
-  } catch (_) {
-    // Non-fatal — app continues normally if scheduling fails on startup
-  }
 
   runApp(
     // ProviderScope is the root of Riverpod state management
@@ -58,4 +27,3 @@ Future<void> main() async {
     ),
   );
 }
-

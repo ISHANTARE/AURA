@@ -2,25 +2,22 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../database/app_database.dart';
-import '../../../reminders/domain/services/reminder_scheduler.dart';
 import '../entities/intent_result.dart';
 import 'create_task_usecase.dart';
 
-/// Single Action Dispatcher Engine for AURA (Sprint 8).
+/// Single Action Dispatcher Engine for AURA.
 /// Executes confirmed actions based on intentType:
-///   • create_task
-///   • create_workspace
-///   • delete_task
-///   • delete_workspace
-///   • create_event
-///   • add_note
+///   • create_task / create_alarm / create_workspace / delete_task / delete_workspace
 class ExecuteAiActionUseCase {
-  final AppDatabase _db;
+  final ItemDao _itemDao;
+  final WorkspaceDao _workspaceDao;
   final CreateTaskUseCase _createTaskUseCase;
   static const Uuid _uuid = Uuid();
 
-  ExecuteAiActionUseCase(this._db)
-      : _createTaskUseCase = CreateTaskUseCase(_db);
+  ExecuteAiActionUseCase(AppDatabase db)
+      : _itemDao = ItemDao(db),
+        _workspaceDao = WorkspaceDao(db),
+        _createTaskUseCase = CreateTaskUseCase(db);
 
   Future<String> execute({
     required IntentResult intent,
@@ -35,41 +32,28 @@ class ExecuteAiActionUseCase {
         final fireTime = intent.deadline ?? DateTime.now().add(const Duration(minutes: 30));
         final alarmId = _uuid.v4();
 
-        // Create dummy parent task for alarm reference
-        final taskId = await _createTaskUseCase.execute(
-          intent: intent.copyWith(title: intent.title ?? 'Alarm ${fireTime.hour}:${fireTime.minute}'),
-          workspaceId: workspaceId,
-          workspaceNameToCreate: workspaceNameToCreate,
-          originalTranscript: originalTranscript,
-        );
-
-        await _db.into(_db.reminders).insert(
-          RemindersCompanion.insert(
+        await _itemDao.insertItem(
+          ItemsCompanion.insert(
             id: alarmId,
-            taskId: Value(taskId),
-            fireAt: fireTime.millisecondsSinceEpoch,
-            type: const Value('alarm'),
+            title: intent.title ?? 'Alarm ${_formatTime(fireTime)}',
+            category: 'alarm',
+            kind: 'generic',
             status: const Value('pending'),
+            fireAt: Value(fireTime.millisecondsSinceEpoch),
             createdAt: nowEpoch,
             updatedAt: nowEpoch,
           ),
         );
 
-        final alarmScheduler = ReminderScheduler(_db);
-        await alarmScheduler.scheduleAlarmDirect(
-          alarmId: alarmId,
-          title: intent.title ?? 'Alarm ${_formatTime(fireTime)}',
-          fireAt: fireTime,
-        );
-
         return 'Set alarm for ${_formatTime(fireTime)}';
+
       case 'create_workspace':
         final newWsId = _uuid.v4();
         final wsName = intent.title ?? workspaceNameToCreate ?? 'New Workspace';
         final colorHex = intent.workspaceColorHex ?? '#C8FF00';
         final iconKey = intent.workspaceIconKey ?? 'folder';
 
-        await _db.workspaceDao.insertWorkspace(
+        await _workspaceDao.insertWorkspace(
           WorkspacesCompanion.insert(
             id: newWsId,
             name: wsName,
@@ -85,32 +69,28 @@ class ExecuteAiActionUseCase {
         final searchTerm = intent.targetName ?? intent.title ?? '';
         if (searchTerm.isEmpty) return 'No task specified for deletion';
 
-        final allTasks = await _db.taskDao.getAll();
-        final matches = allTasks.where((t) =>
-            t.name.toLowerCase().contains(searchTerm.toLowerCase()) &&
-            t.deletedAt == null);
-
+        final matches = await _itemDao.search(searchTerm);
         int count = 0;
         for (final t in matches) {
-          await _db.taskDao.softDelete(t.id);
+          await _itemDao.softDelete(t.id);
           count++;
         }
         return count > 0
-            ? 'Deleted $count task(s) matching "$searchTerm"'
-            : 'No active task found matching "$searchTerm"';
+            ? 'Deleted $count item(s) matching "$searchTerm"'
+            : 'No active item found matching "$searchTerm"';
 
       case 'delete_workspace':
         final searchTerm = intent.targetName ?? intent.title ?? '';
         if (searchTerm.isEmpty) return 'No workspace specified for deletion';
 
-        final allWorkspaces = await _db.workspaceDao.getAll();
+        final allWorkspaces = await _workspaceDao.getAll();
         final matches = allWorkspaces.where((w) =>
             w.name.toLowerCase().contains(searchTerm.toLowerCase()) &&
             w.deletedAt == null);
 
         int count = 0;
         for (final w in matches) {
-          await _db.workspaceDao.softDelete(w.id);
+          await _workspaceDao.softDelete(w.id);
           count++;
         }
         return count > 0
@@ -120,7 +100,6 @@ class ExecuteAiActionUseCase {
       case 'add_note':
       case 'create_task':
       default:
-        // Task creation fallback
         await _createTaskUseCase.execute(
           intent: intent,
           workspaceId: workspaceId,

@@ -1,69 +1,72 @@
-import '../../../../database/daos/notification_dao.dart';
-import '../../../../database/daos/reminder_dao.dart';
-import '../../../../database/daos/task_dao.dart';
-import '../../../notifications/services/notification_service.dart';
+import '../../../../database/app_database.dart';
+import '../../data/services/notification_service.dart';
 
+/// Replays missed notifications after DND window ends (PRD F-08).
 class ReplayDndNotificationsUseCase {
-  final NotificationDao _notificationDao;
-  final ReminderDao _reminderDao;
-  final TaskDao _taskDao;
+  final AppDatabase _db;
   final NotificationService _notificationService;
 
   ReplayDndNotificationsUseCase({
-    required NotificationDao notificationDao,
-    required ReminderDao reminderDao,
-    required TaskDao taskDao,
+    required AppDatabase db,
     NotificationService? notificationService,
-  })  : _notificationDao = notificationDao,
-        _reminderDao = reminderDao,
-        _taskDao = taskDao,
+  })  : _db = db,
         _notificationService = notificationService ?? NotificationService();
 
-  /// Check for missed DND notifications and dispatch a single batch summary replay.
   Future<int> execute() async {
-    final dndMissedReminders = await _reminderDao.getDndMissedUnreplayed();
-    final dndLogs = await _notificationDao.getUnreplayed();
+    final unreplayedLogs = await _db.notificationDao.getUnreplayed();
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
 
-    if (dndMissedReminders.isEmpty && dndLogs.isEmpty) {
-      return 0;
-    }
+    if (unreplayedLogs.isNotEmpty) {
+      if (unreplayedLogs.length == 1) {
+        final log = unreplayedLogs.first;
+        final firedTime = log.firedAt ?? log.scheduledAt;
+        final elapsedMinutes = ((nowMs - firedTime) / 60000).round();
+        final timeAgo = elapsedMinutes < 60
+            ? '$elapsedMinutes mins ago'
+            : '${(elapsedMinutes / 60).round()} hrs ago';
 
-    final now = DateTime.now();
-    final nowMs = now.millisecondsSinceEpoch;
-    final List<String> bulletPoints = [];
-
-    for (final reminder in dndMissedReminders) {
-      if (reminder.taskId != null) {
-        final task = await _taskDao.getById(reminder.taskId!);
-        if (task != null && task.status != 'completed') {
-          final elapsedHours = (nowMs - reminder.fireAt) ~/ (1000 * 60 * 60);
-          if (elapsedHours >= 2) {
-            bulletPoints.add('· ${task.name} (was due $elapsedHours hrs ago)');
-          } else {
-            bulletPoints.add('· ${task.name}');
-          }
-        }
+        await _notificationService.showInstantNotification(
+          id: 'dnd_${log.id}'.hashCode.abs(),
+          title: 'DND Replay: Missed Reminder 🌙',
+          body: 'Scheduled $timeAgo · Tap to view task details',
+          payload: 'item:${log.reminderId}',
+        );
+      } else {
+        await _notificationService.showInstantNotification(
+          id: 'dnd_summary_$nowMs'.hashCode.abs(),
+          title: 'DND Catchup 🌙',
+          body:
+              'You missed ${unreplayedLogs.length} reminders while Do Not Disturb was active.',
+          payload: 'route:/briefing',
+        );
       }
-      await _reminderDao.markReplayed(reminder.id, nowMs);
+
+      for (final log in unreplayedLogs) {
+        await _db.notificationDao.markReplayed(log.id);
+      }
+
+      return unreplayedLogs.length;
     }
 
-    for (final log in dndLogs) {
-      await _notificationDao.markReplayed(log.id);
-    }
+    // Secondary fallback: query items with deadline/fireAt in the last 12 hours that are pending
+    final twelveHoursAgo = nowMs - (12 * 3600 * 1000);
+    final activeItems = await _db.itemDao.watchAllActive().first;
+    final missedDndItems = activeItems.where((t) {
+      if (t.status == 'completed') return false;
+      final time = t.fireAt ?? t.deadline;
+      return time != null && time >= twelveHoursAgo && time <= nowMs;
+    }).toList();
 
-    if (bulletPoints.isNotEmpty) {
-      final String summaryBody = bulletPoints.take(3).join('\n') +
-          (bulletPoints.length > 3 ? '\n+${bulletPoints.length - 3} more items' : '');
+    if (missedDndItems.isEmpty) return 0;
 
-      await _notificationService.showNotification(
-        id: 'dnd_replay'.hashCode.abs(),
-        title: 'While you were away (DND):',
-        body: summaryBody,
-        channelId: NotificationService.channelRemindersId,
-        payload: 'route:/home',
-      );
-    }
+    await _notificationService.showInstantNotification(
+      id: 'dnd_catchup_items'.hashCode.abs(),
+      title: 'Missed Reminders Catchup 💡',
+      body:
+          'You have ${missedDndItems.length} pending items from earlier today.',
+      payload: 'route:/briefing',
+    );
 
-    return bulletPoints.length;
+    return missedDndItems.length;
   }
 }

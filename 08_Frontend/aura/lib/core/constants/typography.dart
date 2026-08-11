@@ -92,6 +92,12 @@ abstract final class AuraTypography {
         letterSpacing: 1.0,
       );
 
+  /// Bento metric values (large numbers in stats cards). 28sp ExtraBold.
+  static TextStyle get bentoMetricValue => _base(
+        size: 28,
+        weight: FontWeight.w800,
+      );
+
   // ── Overline (smaller labels) ─────────────────────────────────────────────
   /// Breadcrumbs, contextual hints. 12sp Regular.
   static TextStyle get overline => _base(

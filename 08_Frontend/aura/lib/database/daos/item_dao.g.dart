@@ -1,11 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'event_dao.dart';
+part of 'item_dao.dart';
 
 // ignore_for_file: type=lint
-mixin _$EventDaoMixin on DatabaseAccessor<AppDatabase> {
+mixin _$ItemDaoMixin on DatabaseAccessor<AppDatabase> {
   $WorkspacesTable get workspaces => attachedDatabase.workspaces;
   $WorkspaceSectionsTable get workspaceSections =>
       attachedDatabase.workspaceSections;
-  $EventsTable get events => attachedDatabase.events;
+  $ItemsTable get items => attachedDatabase.items;
+  $RemindersScheduleTable get remindersSchedule =>
+      attachedDatabase.remindersSchedule;
 }

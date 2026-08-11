@@ -2,9 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/providers.dart';
 import '../../../../core/services/connectivity_service.dart';
-import '../../../../database/app_database.dart';
-import '../../../../database/daos/offline_queue_dao.dart';
 import '../../data/datasources/llm_api_datasource.dart';
 import '../usecases/create_task_usecase.dart';
 

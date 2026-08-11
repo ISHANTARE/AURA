@@ -1,8 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_database.dart';
-import '../tables/offline_queue_table.dart';
 
 part 'offline_queue_dao.g.dart';
 
@@ -73,6 +71,3 @@ class OfflineQueueDao extends DatabaseAccessor<AppDatabase>
   }
 }
 
-final offlineQueueDaoProvider = Provider<OfflineQueueDao>(
-  (ref) => OfflineQueueDao(ref.watch(databaseProvider)),
-);

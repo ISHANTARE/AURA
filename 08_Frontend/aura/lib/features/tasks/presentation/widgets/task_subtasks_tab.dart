@@ -1,11 +1,15 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:aura/core/constants/colors.dart';
-import 'package:aura/core/constants/typography.dart';
-import '../providers/task_detail_providers.dart';
+import '../../../../core/constants/colors.dart';
+import '../../../../core/constants/spacing.dart';
+import '../../../../core/constants/typography.dart';
+import '../../../../core/providers/providers.dart';
 
+/// Subtasks Tab Widget — Reactive subtask list & inline subtask creation
 class TaskSubtasksTab extends ConsumerStatefulWidget {
   final String parentTaskId;
   final String workspaceId;
@@ -22,7 +26,6 @@ class TaskSubtasksTab extends ConsumerStatefulWidget {
 
 class _TaskSubtasksTabState extends ConsumerState<TaskSubtasksTab> {
   final TextEditingController _subtaskController = TextEditingController();
-  bool _isAdding = false;
 
   @override
   void dispose() {
@@ -30,159 +33,163 @@ class _TaskSubtasksTabState extends ConsumerState<TaskSubtasksTab> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final subtasksAsync = ref.watch(taskSubtasksStreamProvider(widget.parentTaskId));
+  Future<void> _addSubtask() async {
+    final title = _subtaskController.text.trim();
+    if (title.isEmpty) return;
 
-    return subtasksAsync.when(
-      data: (subtasks) {
-        final total = subtasks.length;
-        final completed = subtasks.where((s) => s.status == 'done').length;
-        final progress = total > 0 ? completed / total : 0.0;
+    final itemDao = ref.read(itemDaoProvider);
+    final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+    final subtaskId = 'subtask_${nowEpoch}_${title.hashCode.abs()}';
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Progress Bar
-            if (total > 0) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '$completed / $total subtasks done',
-                    style: AuraTypography.bodySmall.copyWith(color: AuraColors.textSecondary),
-                  ),
-                  Text(
-                    '${(progress * 100).round()}%',
-                    style: AuraTypography.badgeText.copyWith(color: AuraColors.accentLime),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 8,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AuraColors.bgElevated,
-                  border: Border.all(color: AuraColors.border, width: 1.5),
-                ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: progress,
-                  child: Container(color: AuraColors.accentLime),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            // Subtask items
-            ...subtasks.map((subtask) {
-              final isDone = subtask.status == 'done';
-              return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AuraColors.bgCard,
-                  border: Border.all(color: AuraColors.borderMuted, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        ref
-                            .read(taskDetailActionProvider.notifier)
-                            .toggleSubtask(subtask.id, !isDone);
-                      },
-                      child: Icon(
-                        isDone ? LucideIcons.checkSquare : LucideIcons.square,
-                        size: 20,
-                        color: isDone ? AuraColors.accentGreen : AuraColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        subtask.name,
-                        style: AuraTypography.bodyPrimary.copyWith(
-                          decoration: isDone ? TextDecoration.lineThrough : null,
-                          color: isDone ? AuraColors.textDisabled : AuraColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-
-            const SizedBox(height: 12),
-
-            // Inline Add Subtask
-            if (_isAdding)
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _subtaskController,
-                      autofocus: true,
-                      style: AuraTypography.bodyPrimary,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter subtask name...',
-                        hintStyle: TextStyle(color: AuraColors.textDisabled),
-                        filled: true,
-                        fillColor: AuraColors.bgElevated,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: AuraColors.border, width: 1.5),
-                          borderRadius: BorderRadius.zero,
-                        ),
-                      ),
-                      onSubmitted: (_) => _submitSubtask(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(LucideIcons.check, color: AuraColors.accentLime),
-                    onPressed: _submitSubtask,
-                  ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.x, color: AuraColors.textSecondary),
-                    onPressed: () => setState(() => _isAdding = false),
-                  ),
-                ],
-              )
-            else
-              OutlinedButton.icon(
-                onPressed: () => setState(() => _isAdding = true),
-                icon: const Icon(LucideIcons.plus, size: 16, color: AuraColors.accentLime),
-                label: Text(
-                  'ADD SUBTASK',
-                  style: AuraTypography.buttonSecondary.copyWith(
-                    color: AuraColors.accentLime,
-                    fontSize: 13,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AuraColors.border, width: 1.5),
-                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                ),
-              ),
-          ],
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator(color: AuraColors.accentLime)),
-      error: (e, s) => Text('Error loading subtasks: $e', style: AuraTypography.bodySmall),
+    await itemDao.insertItem(
+      ItemsCompanion(
+        id: Value(subtaskId),
+        title: Value(title),
+        parentId: Value(widget.parentTaskId),
+        workspaceId: Value(widget.workspaceId),
+        category: const Value('reminder'),
+        kind: const Value('task'),
+        status: const Value('pending'),
+        priority: const Value('medium'),
+        createdAt: Value(nowEpoch),
+        updatedAt: Value(nowEpoch),
+      ),
     );
+
+    _subtaskController.clear();
+    HapticFeedback.lightImpact();
   }
 
-  void _submitSubtask() {
-    final text = _subtaskController.text.trim();
-    if (text.isNotEmpty) {
-      ref.read(taskDetailActionProvider.notifier).addSubtask(
-            parentTaskId: widget.parentTaskId,
-            workspaceId: widget.workspaceId,
-            title: text,
-          );
-      _subtaskController.clear();
-      setState(() => _isAdding = false);
-    }
+  @override
+  Widget build(BuildContext context) {
+    final itemDao = ref.watch(itemDaoProvider);
+
+    return Column(
+      children: [
+        // Subtask List
+        Expanded(
+          child: StreamBuilder<List<Item>>(
+            stream: itemDao.watchSubtasks(widget.parentTaskId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AuraColors.accentLime),
+                  ),
+                );
+              }
+
+              final subtasks = snapshot.data ?? [];
+              if (subtasks.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(LucideIcons.checkSquare,
+                          color: AuraColors.textDisabled, size: 32),
+                      const SizedBox(height: 8),
+                      Text('No subtasks yet. Add one below!',
+                          style: AuraTypography.bodySmall),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: AuraSpacing.sm),
+                itemCount: subtasks.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AuraSpacing.xs),
+                itemBuilder: (context, index) {
+                  final subtask = subtasks[index];
+                  final isDone = subtask.status == 'completed';
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AuraSpacing.sm,
+                      vertical: AuraSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AuraColors.bgCard,
+                      border: Border.all(color: AuraColors.border, width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: isDone,
+                          activeColor: AuraColors.accentLime,
+                          checkColor: Colors.black,
+                          onChanged: (val) async {
+                            HapticFeedback.lightImpact();
+                            await itemDao.updateStatus(
+                              subtask.id,
+                              val == true ? 'completed' : 'pending',
+                            );
+                          },
+                        ),
+                        Expanded(
+                          child: Text(
+                            subtask.title,
+                            style: AuraTypography.bodyPrimary.copyWith(
+                              decoration:
+                                  isDone ? TextDecoration.lineThrough : null,
+                              color: isDone
+                                  ? AuraColors.textDisabled
+                                  : AuraColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(LucideIcons.trash2,
+                              color: AuraColors.textSecondary, size: 16),
+                          onPressed: () async {
+                            HapticFeedback.lightImpact();
+                            await itemDao.softDelete(subtask.id);
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: AuraSpacing.sm),
+
+        // Inline Add Subtask Bar
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _subtaskController,
+                style: AuraTypography.bodyPrimary,
+                decoration: InputDecoration(
+                  hintText: 'Add subtask...',
+                  hintStyle: AuraTypography.bodySmall,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AuraSpacing.md, vertical: AuraSpacing.sm),
+                ),
+                onSubmitted: (_) => _addSubtask(),
+              ),
+            ),
+            const SizedBox(width: AuraSpacing.xs),
+            IconButton(
+              style: IconButton.styleFrom(
+                backgroundColor: AuraColors.accentLime,
+                foregroundColor: Colors.black,
+                shape: const RoundedRectangleBorder(
+                  side: BorderSide(color: AuraColors.border, width: 2),
+                ),
+              ),
+              icon: const Icon(LucideIcons.plus, size: 20),
+              onPressed: _addSubtask,
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }

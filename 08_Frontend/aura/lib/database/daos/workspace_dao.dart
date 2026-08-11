@@ -1,13 +1,10 @@
 import 'package:drift/drift.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_database.dart';
-import '../tables/workspaces_table.dart';
-import '../tables/workspace_sections_table.dart';
 
 part 'workspace_dao.g.dart';
 
-@DriftAccessor(tables: [Workspaces, WorkspaceSections])
+@DriftAccessor(tables: [Workspaces, WorkspaceSections, Items])
 class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixin {
   WorkspaceDao(super.db);
 
@@ -27,40 +24,31 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
             ..orderBy([(w) => OrderingTerm(expression: w.sortOrder)]))
           .watch();
 
-  /// Get count of active tasks for a workspace
-  Stream<int> watchTaskCount(String workspaceId) {
-    return (select(db.tasks)
+  /// Get count of active items (tasks/events/reminders) for a workspace
+  Stream<int> watchItemCount(String workspaceId) {
+    return (select(items)
           ..where((t) => t.workspaceId.equals(workspaceId))
-          ..where((t) => t.status.isNotIn(const ['done', 'cancelled']))
+          ..where((t) => t.status.isNotIn(const ['completed', 'cancelled']))
           ..where((t) => t.deletedAt.isNull()))
         .watch()
         .map((list) => list.length);
   }
 
-  /// Get count of overdue tasks for a workspace
-  Stream<int> watchOverdueTaskCount(String workspaceId) {
+  /// Get count of overdue items for a workspace
+  Stream<int> watchOverdueCount(String workspaceId) {
     final now = DateTime.now().millisecondsSinceEpoch;
-    return (select(db.tasks)
+    return (select(items)
           ..where((t) => t.workspaceId.equals(workspaceId))
-          ..where((t) => t.status.isNotIn(const ['done', 'cancelled']))
-          ..where((t) => t.deadline.isSmallerThanValue(now))
+          ..where((t) => t.status.isNotIn(const ['completed', 'cancelled']))
+          ..where((t) => t.deadline.isSmallerThanValue(now) | t.fireAt.isSmallerThanValue(now))
           ..where((t) => t.deletedAt.isNull()))
-        .watch()
-        .map((list) => list.length);
-  }
-
-  /// Get count of events for a workspace
-  Stream<int> watchEventCount(String workspaceId) {
-    return (select(db.events)
-          ..where((e) => e.workspaceId.equals(workspaceId))
-          ..where((e) => e.deletedAt.isNull()))
         .watch()
         .map((list) => list.length);
   }
 
   /// Get count of sections for a workspace
   Stream<int> watchSectionCount(String workspaceId) {
-    return (select(db.workspaceSections)
+    return (select(workspaceSections)
           ..where((s) => s.workspaceId.equals(workspaceId))
           ..where((s) => s.isArchived.equals(false))
           ..where((s) => s.deletedAt.isNull()))
@@ -96,7 +84,7 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
   Future<bool> updateWorkspace(WorkspacesCompanion workspace) =>
       update(workspaces).replace(workspace);
 
-  /// Archive a workspace (soft-disable, does not delete tasks).
+  /// Archive a workspace.
   Future<void> archive(String id) {
     final now = DateTime.now().millisecondsSinceEpoch;
     return (update(workspaces)..where((w) => w.id.equals(id))).write(
@@ -137,7 +125,7 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
   Future<bool> updateSection(WorkspaceSectionsCompanion section) =>
       update(workspaceSections).replace(section);
 
-  /// Archive a section (tasks move to sectionId = null at app level).
+  /// Archive a section.
   Future<void> archiveSection(String id) {
     final now = DateTime.now().millisecondsSinceEpoch;
     return (update(workspaceSections)..where((s) => s.id.equals(id))).write(
@@ -149,6 +137,3 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
   }
 }
 
-final workspaceDaoProvider = Provider<WorkspaceDao>(
-  (ref) => WorkspaceDao(ref.watch(databaseProvider)),
-);

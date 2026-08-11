@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:aura/core/constants/colors.dart';
-import 'package:aura/core/constants/typography.dart';
-import 'package:aura/features/reminders/presentation/providers/reminder_providers.dart';
-import 'package:aura/features/reminders/presentation/widgets/snooze_bottom_sheet.dart';
-import '../providers/task_detail_providers.dart';
-import '../widgets/task_deadline_card.dart';
-import '../widgets/task_options_sheet.dart';
-import '../widgets/task_stats_bento.dart';
-import '../widgets/task_subtasks_tab.dart';
+import '../../../../core/constants/colors.dart';
+import '../../../../core/constants/spacing.dart';
+import '../../../../core/constants/typography.dart';
+import '../../../../core/providers/providers.dart';
+import '../../domain/usecases/task_detail_usecases.dart';
+import '../../presentation/widgets/task_options_sheet.dart';
+import '../../presentation/widgets/task_subtasks_tab.dart';
+import '../../../reminders/presentation/widgets/snooze_picker_sheet.dart';
 
+/// Task / Item Detail Screen for AURA v2
 class TaskDetailScreen extends ConsumerStatefulWidget {
-  final String taskId;
+  const TaskDetailScreen({super.key, required this.taskId});
 
-  const TaskDetailScreen({
-    super.key,
-    required this.taskId,
-  });
+  final String taskId;
 
   @override
   ConsumerState<TaskDetailScreen> createState() => _TaskDetailScreenState();
@@ -28,8 +26,8 @@ class TaskDetailScreen extends ConsumerStatefulWidget {
 class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController _notesController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descController = TextEditingController();
   bool _isEditingTitle = false;
 
   @override
@@ -41,457 +39,536 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _notesController.dispose();
     _titleController.dispose();
-    _descController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final taskAsync = ref.watch(taskDetailStreamProvider(widget.taskId));
+    final itemDao = ref.watch(itemDaoProvider);
 
-    return taskAsync.when(
-      data: (task) {
-        if (task == null) {
-          return Scaffold(
+    return StreamBuilder<Item?>(
+      stream: itemDao.watchById(widget.taskId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
             backgroundColor: AuraColors.bgBase,
-            appBar: AppBar(backgroundColor: AuraColors.bgBase),
             body: Center(
-              child: Text('Task not found or deleted', style: AuraTypography.body),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AuraColors.accentLime),
+              ),
             ),
           );
         }
 
-        if (!_isEditingTitle && _titleController.text != task.name) {
-          _titleController.text = task.name;
+        final item = snapshot.data;
+        if (item == null) {
+          return Scaffold(
+            backgroundColor: AuraColors.bgBase,
+            appBar: AppBar(
+              backgroundColor: AuraColors.bgBase,
+              leading: IconButton(
+                icon: const Icon(LucideIcons.arrowLeft,
+                    color: AuraColors.textPrimary),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            body: Center(
+              child: Text('Item not found or deleted.',
+                  style: AuraTypography.body),
+            ),
+          );
         }
 
-        final workspaceAsync = ref.watch(parentWorkspaceStreamProvider(task.workspaceId));
-        final workspaceName = workspaceAsync.value?.name ?? 'General';
-        final isDone = task.status == 'done';
+        if (_notesController.text.isEmpty && item.notes != null) {
+          _notesController.text = item.notes!;
+        }
+        if (!_isEditingTitle && _titleController.text != item.title) {
+          _titleController.text = item.title;
+        }
+
+        final isCompleted = item.status == 'completed';
 
         return Scaffold(
           backgroundColor: AuraColors.bgBase,
-
-          // App Bar
           appBar: AppBar(
             backgroundColor: AuraColors.bgBase,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(LucideIcons.arrowLeft, color: AuraColors.textPrimary),
-              onPressed: () => Navigator.pop(context),
+              icon: const Icon(LucideIcons.arrowLeft,
+                  color: AuraColors.textPrimary),
+              onPressed: () => Navigator.of(context).pop(),
             ),
+            title: Text(item.kind.toUpperCase(),
+                style: AuraTypography.screenHeader),
             actions: [
               IconButton(
-                icon: const Icon(LucideIcons.edit2, color: AuraColors.accentLime, size: 20),
-                onPressed: () => setState(() => _isEditingTitle = !_isEditingTitle),
-              ),
-              IconButton(
-                icon: const Icon(LucideIcons.moreVertical, color: AuraColors.textPrimary),
-                onPressed: () {
-                  TaskOptionsSheet.show(context, taskId: task.id, taskTitle: task.name);
-                },
+                icon: const Icon(LucideIcons.moreVertical,
+                    color: AuraColors.textPrimary),
+                onPressed: () => TaskOptionsSheet.show(
+                  context,
+                  taskId: item.id,
+                  taskTitle: item.title,
+                ),
               ),
             ],
+            bottom: TabBar(
+              controller: _tabController,
+              indicatorColor: AuraColors.accentLime,
+              labelColor: AuraColors.accentLime,
+              unselectedLabelColor: AuraColors.textSecondary,
+              labelStyle: AuraTypography.label.copyWith(fontSize: 11),
+              tabs: const [
+                Tab(text: 'DETAILS'),
+                Tab(text: 'SUBTASKS'),
+                Tab(text: 'NOTES'),
+                Tab(text: 'ATTACHMENTS'),
+              ],
+            ),
           ),
-
-          body: Column(
+          body: TabBarView(
+            controller: _tabController,
             children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Breadcrumb
-                      Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 14,
-                            color: AuraColors.accentLime,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'TASK — ${workspaceName.toUpperCase()}',
-                            style: AuraTypography.labelLime,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
+              // Tab 1: Details
+              _DetailsTab(
+                item: item,
+                isCompleted: isCompleted,
+                isEditingTitle: _isEditingTitle,
+                titleController: _titleController,
+                onTitleEditToggle: (editing) {
+                  setState(() => _isEditingTitle = editing);
+                },
+                onSaveTitle: (newTitle) async {
+                  if (newTitle.trim().isNotEmpty) {
+                    await UpdateTaskDetailUseCase(itemDao).execute(
+                      itemId: item.id,
+                      title: newTitle.trim(),
+                    );
+                  }
+                  setState(() => _isEditingTitle = false);
+                },
+                onToggleStatus: () async {
+                  HapticFeedback.mediumImpact();
+                  final newStatus = isCompleted ? 'pending' : 'completed';
+                  await itemDao.updateStatus(item.id, newStatus);
 
-                      // Task Name (Inline Edit)
-                      if (_isEditingTitle)
-                        TextField(
-                          controller: _titleController,
-                          autofocus: true,
-                          style: AuraTypography.display.copyWith(fontSize: 22),
-                          decoration: const InputDecoration(
-                            border: UnderlineInputBorder(
-                              borderSide: BorderSide(color: AuraColors.accentLime, width: 2),
-                            ),
-                          ),
-                          onSubmitted: (val) {
-                            if (val.trim().isNotEmpty) {
-                              ref
-                                  .read(taskDetailActionProvider.notifier)
-                                  .updateTask(taskId: task.id, name: val.trim());
-                            }
-                            setState(() => _isEditingTitle = false);
-                          },
-                        )
-                      else
-                        GestureDetector(
-                          onTap: () => setState(() => _isEditingTitle = true),
-                          child: Text(
-                            task.name,
-                            style: AuraTypography.display.copyWith(
-                              fontSize: 24,
-                              decoration: isDone ? TextDecoration.lineThrough : null,
-                              color: isDone ? AuraColors.textDisabled : AuraColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 20),
-
-                      // Quick Stats Bento
-                      TaskStatsBento(
-                        status: task.status,
-                        priority: task.priority,
-                        source: task.source,
-                        onStatusChanged: (newStatus) {
-                          ref
-                              .read(taskDetailActionProvider.notifier)
-                              .updateTask(taskId: task.id, status: newStatus);
-                        },
-                        onPriorityChanged: (newPriority) {
-                          ref
-                              .read(taskDetailActionProvider.notifier)
-                              .updateTask(taskId: task.id, priority: newPriority);
-                        },
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Deadline Section
-                      Text('DEADLINE', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
-                      const SizedBox(height: 8),
-                      TaskDeadlineCard(
-                        deadline: task.deadline != null
-                            ? DateTime.fromMillisecondsSinceEpoch(task.deadline!)
-                            : null,
-                        onDeadlineChanged: (newDeadline) {
-                          ref.read(taskDetailActionProvider.notifier).updateTask(
-                                taskId: task.id,
-                                deadline: newDeadline,
-                              );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Reminders Section
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('REMINDERS', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
-                          TextButton.icon(
-                            onPressed: () {
-                              if (task.deadline != null) {
-                                ref.read(reminderActionProvider.notifier).scheduleForTask(
-                                      taskId: task.id,
-                                      title: task.name,
-                                      deadline: DateTime.fromMillisecondsSinceEpoch(task.deadline!),
-                                    );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Reminder scheduled!')),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Set a deadline first to add reminders.')),
-                                );
-                              }
-                            },
-                            icon: const Icon(LucideIcons.plus, size: 14, color: AuraColors.accentLime),
-                            label: Text('+ Add', style: AuraTypography.labelLime),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      Consumer(
-                        builder: (ctx, r, _) {
-                          final remindersAsync = r.watch(taskRemindersStreamProvider(task.id));
-                          return remindersAsync.when(
-                            data: (reminders) {
-                              if (reminders.isEmpty) {
-                                return Text(
-                                  'No active reminders',
-                                  style: AuraTypography.bodySmall.copyWith(fontStyle: FontStyle.italic),
-                                );
-                              }
-                              return Column(
-                                children: reminders.map((rem) {
-                                  final fireDate = DateTime.fromMillisecondsSinceEpoch(rem.fireAt);
-                                  return Container(
-                                    margin: const EdgeInsets.only(bottom: 6),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: AuraColors.bgCard,
-                                      border: Border.all(color: AuraColors.borderMuted, width: 1),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(LucideIcons.bell, size: 14, color: AuraColors.accentLime),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            '${fireDate.month}/${fireDate.day} · ${fireDate.hour}:${fireDate.minute.toString().padLeft(2, '0')}',
-                                            style: AuraTypography.bodySmall.copyWith(color: AuraColors.textPrimary),
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: rem.status == 'fired'
-                                                ? AuraColors.accentGreen.withValues(alpha: 0.2)
-                                                : AuraColors.bgElevated,
-                                          ),
-                                          child: Text(
-                                            rem.status.toUpperCase(),
-                                            style: AuraTypography.badgeText.copyWith(
-                                              fontSize: 9,
-                                              color: rem.status == 'fired' ? AuraColors.accentGreen : AuraColors.textSecondary,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              );
-                            },
-                            loading: () => const SizedBox.shrink(),
-                            error: (e, s) => const SizedBox.shrink(),
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Content Tabs Header
-                      TabBar(
-                        controller: _tabController,
-                        indicatorColor: AuraColors.accentLime,
-                        labelColor: AuraColors.accentLime,
-                        unselectedLabelColor: AuraColors.textSecondary,
-                        labelStyle: AuraTypography.badgeText,
-                        tabs: const [
-                          Tab(text: 'Details'),
-                          Tab(text: 'Subtasks'),
-                          Tab(text: 'Notes'),
-                          Tab(text: 'Attachments'),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Content Tabs View
-                      SizedBox(
-                        height: 260,
-                        child: TabBarView(
-                          controller: _tabController,
-                          children: [
-                            // Tab 1: Details
-                            SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('DESCRIPTION', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
-                                  const SizedBox(height: 6),
-                                  TextField(
-                                    controller: _descController..text = task.description ?? '',
-                                    maxLines: 3,
-                                    style: AuraTypography.bodyPrimary,
-                                    decoration: const InputDecoration(
-                                      hintText: 'Add description or context...',
-                                      hintStyle: TextStyle(color: AuraColors.textDisabled),
-                                      filled: true,
-                                      fillColor: AuraColors.bgCard,
-                                      border: OutlineInputBorder(
-                                        borderSide: BorderSide(color: AuraColors.borderMuted),
-                                      ),
-                                    ),
-                                    onChanged: (val) {
-                                      ref.read(taskDetailActionProvider.notifier).updateTask(
-                                            taskId: task.id,
-                                            description: val,
-                                          );
-                                    },
-                                  ),
-                                  const SizedBox(height: 12),
-                                  if (task.aiRawTranscript != null && task.aiRawTranscript!.isNotEmpty)
-                                    ExpansionTile(
-                                      title: Text('Raw Voice Transcript', style: AuraTypography.bodySmall),
-                                      iconColor: AuraColors.accentLime,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Text(
-                                            '"${task.aiRawTranscript}"',
-                                            style: AuraTypography.bodySmall.copyWith(fontStyle: FontStyle.italic),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                            ),
-
-                            // Tab 2: Subtasks
-                            TaskSubtasksTab(
-                              parentTaskId: task.id,
-                              workspaceId: task.workspaceId,
-                            ),
-
-                            // Tab 3: Notes
-                            SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('TASK NOTES', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
-                                  const SizedBox(height: 6),
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: AuraColors.bgElevated,
-                                      border: Border.all(color: AuraColors.border, width: 1.5),
-                                    ),
-                                    child: Text(
-                                      task.description ?? 'No notes recorded for this task yet.',
-                                      style: AuraTypography.bodyMedium,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Tab 4: Attachments
-                            Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(LucideIcons.paperclip, color: AuraColors.textDisabled, size: 32),
-                                  const SizedBox(height: 8),
-                                  Text('No attachments yet', style: AuraTypography.bodySmall),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Fixed Action Bar (64dp)
-              Container(
-                height: 64,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                decoration: const BoxDecoration(
-                  color: AuraColors.bgElevated,
-                  border: Border(top: BorderSide(color: AuraColors.border, width: 2)),
-                ),
-                child: Row(
-                  children: [
-                    // MARK AS DONE CTA
-                    Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: ElevatedButton.icon(
+                  if (context.mounted && newStatus == 'completed') {
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Task marked done ✓'),
+                        duration: const Duration(seconds: 10),
+                        action: SnackBarAction(
+                          label: 'UNDO',
+                          textColor: AuraColors.accentLime,
                           onPressed: () async {
-                            HapticFeedback.heavyImpact();
-                            final newStatus = isDone ? 'todo' : 'done';
-                            await ref.read(taskDetailActionProvider.notifier).updateTask(
-                              taskId: task.id,
-                              status: newStatus,
-                            );
-
-                            if (context.mounted && !isDone) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Task "${task.name}" completed!'),
-                                  action: SnackBarAction(
-                                    label: 'UNDO',
-                                    onPressed: () {
-                                      HapticFeedback.mediumImpact();
-                                      ref.read(taskDetailActionProvider.notifier).updateTask(
-                                        taskId: task.id,
-                                        status: 'todo',
-                                      );
-                                    },
-                                  ),
-                                  duration: const Duration(seconds: 5),
-                                ),
-                              );
-                            }
+                            await itemDao.updateStatus(item.id, 'pending');
                           },
-                          icon: Icon(
-                            isDone ? LucideIcons.rotateCcw : LucideIcons.checkCircle,
-                            size: 18,
-                            color: AuraColors.textOnAccent,
-                          ),
-                          label: Text(
-                            isDone ? 'MARK AS TODO' : 'MARK AS DONE',
-                            style: AuraTypography.buttonText.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isDone ? AuraColors.textSecondary : AuraColors.accentLime,
-                            foregroundColor: AuraColors.textOnAccent,
-                            elevation: 0,
-                            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                          ),
                         ),
                       ),
-                    ),
+                    );
+                  }
+                },
+              ),
 
-                    const SizedBox(width: 12),
-
-                    // SNOOZE REMINDER button
-                    Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            HapticFeedback.mediumImpact();
-                            SnoozeBottomSheet.show(
-                              context,
-                              reminderId: 'r-${task.id}',
-                              taskId: task.id,
-                              taskTitle: task.name,
-                            );
-                          },
-                          icon: const Icon(LucideIcons.clock, size: 18, color: AuraColors.textPrimary),
-                          label: Text('SNOOZE', style: AuraTypography.buttonSecondary),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AuraColors.border, width: 1.5),
-                            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+              // Tab 2: Subtasks
+              Padding(
+                padding: const EdgeInsets.all(AuraSpacing.md),
+                child: TaskSubtasksTab(
+                  parentTaskId: item.id,
+                  workspaceId: item.workspaceId ?? '',
                 ),
               ),
+
+              // Tab 3: Notes
+              _NotesTab(
+                notesController: _notesController,
+                onSaveNotes: (newNotes) async {
+                  await UpdateTaskDetailUseCase(itemDao).execute(
+                    itemId: item.id,
+                    notes: newNotes,
+                  );
+                },
+              ),
+
+              // Tab 4: Attachments
+              _AttachmentsTab(item: item),
             ],
           ),
         );
       },
-      loading: () => const Scaffold(
-        backgroundColor: AuraColors.bgBase,
-        body: Center(child: CircularProgressIndicator(color: AuraColors.accentLime)),
+    );
+  }
+}
+
+// ── Sub-Tabs Components ──────────────────────────────────────────────────────
+
+class _DetailsTab extends StatelessWidget {
+  const _DetailsTab({
+    required this.item,
+    required this.isCompleted,
+    required this.isEditingTitle,
+    required this.titleController,
+    required this.onTitleEditToggle,
+    required this.onSaveTitle,
+    required this.onToggleStatus,
+  });
+
+  final Item item;
+  final bool isCompleted;
+  final bool isEditingTitle;
+  final TextEditingController titleController;
+  final ValueChanged<bool> onTitleEditToggle;
+  final ValueChanged<String> onSaveTitle;
+  final VoidCallback onToggleStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    final deadline = item.deadline ?? item.fireAt;
+    final deadlineStr = deadline != null
+        ? DateFormat('EEEE, MMM d · h:mm a')
+            .format(DateTime.fromMillisecondsSinceEpoch(deadline))
+        : 'No deadline set (Tap to add)';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AuraSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Main Card ───────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AuraSpacing.md),
+            decoration: BoxDecoration(
+              color: AuraColors.bgCard,
+              border: Border.all(
+                  color: AuraColors.border, width: AuraSpacing.borderWidth),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black,
+                  offset: Offset(4, 4),
+                  blurRadius: 0,
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title (Inline Editable)
+                isEditingTitle
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: titleController,
+                              autofocus: true,
+                              style: AuraTypography.cardTitle,
+                              onSubmitted: onSaveTitle,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(LucideIcons.check,
+                                color: AuraColors.accentLime),
+                            onPressed: () => onSaveTitle(titleController.text),
+                          ),
+                        ],
+                      )
+                    : GestureDetector(
+                        onTap: () => onTitleEditToggle(true),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.title,
+                                style: AuraTypography.display.copyWith(
+                                  fontSize: 22,
+                                  decoration: isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: isCompleted
+                                      ? AuraColors.textDisabled
+                                      : AuraColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            const Icon(LucideIcons.edit2,
+                                size: 16, color: AuraColors.textSecondary),
+                          ],
+                        ),
+                      ),
+                const SizedBox(height: AuraSpacing.sm),
+
+                // Tags Row
+                Wrap(
+                  spacing: AuraSpacing.sm,
+                  runSpacing: AuraSpacing.xs,
+                  children: [
+                    _Tag(
+                      label: item.category.toUpperCase(),
+                      color: AuraColors.accentLime,
+                    ),
+                    _Tag(
+                      label: item.kind.toUpperCase(),
+                      color: AuraColors.accentBlue,
+                    ),
+                    _Tag(
+                      label: item.priority.toUpperCase(),
+                      color: _priorityColor(item.priority),
+                    ),
+                    _Tag(
+                      label: isCompleted ? 'COMPLETED' : 'PENDING',
+                      color: isCompleted
+                          ? AuraColors.accentGreen
+                          : AuraColors.accentOrange,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AuraSpacing.md),
+                const Divider(color: AuraColors.borderMuted, height: 1),
+                const SizedBox(height: AuraSpacing.md),
+
+                // Deadline tile (Tap to pick date/time)
+                Consumer(
+                  builder: (context, ref, _) => InkWell(
+                    onTap: () => _pickDeadline(context, ref, item),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          const Icon(LucideIcons.calendar,
+                              size: 16, color: AuraColors.accentLime),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(deadlineStr, style: AuraTypography.body),
+                          ),
+                          const Icon(LucideIcons.chevronRight,
+                              size: 16, color: AuraColors.textSecondary),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: AuraSpacing.xl),
+
+          // ── Actions ─────────────────────────────────────────────
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isCompleted
+                    ? AuraColors.bgElevated
+                    : AuraColors.accentLime,
+                foregroundColor: Colors.black,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                  side: BorderSide(color: AuraColors.border, width: 2),
+                ),
+                elevation: 0,
+              ),
+              onPressed: onToggleStatus,
+              child: Text(
+                isCompleted ? 'MARK AS PENDING ↺' : 'MARK AS DONE ✓',
+                style: AuraTypography.label.copyWith(
+                  color: isCompleted ? AuraColors.textPrimary : Colors.black,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AuraSpacing.sm),
+
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AuraColors.textPrimary,
+                side: const BorderSide(color: AuraColors.border, width: 2),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+              icon: const Icon(LucideIcons.clock,
+                  size: 18, color: AuraColors.accentLime),
+              label: Text(
+                'SNOOZE REMINDER ⏰',
+                style: AuraTypography.label.copyWith(
+                  color: AuraColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+              onPressed: () => SnoozePickerSheet.show(
+                context,
+                taskId: item.id,
+                taskTitle: item.title,
+              ),
+            ),
+          ),
+        ],
       ),
-      error: (e, s) => Scaffold(
-        backgroundColor: AuraColors.bgBase,
-        body: Center(child: Text('Error loading task: $e', style: AuraTypography.body)),
+    );
+  }
+
+  Future<void> _pickDeadline(
+      BuildContext context, WidgetRef ref, Item item) async {
+    final now = DateTime.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: item.deadline != null
+          ? DateTime.fromMillisecondsSinceEpoch(item.deadline!)
+          : now.add(const Duration(days: 1)),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (pickedDate == null) return;
+
+    if (!context.mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 9, minute: 0),
+    );
+    if (pickedTime == null) return;
+
+    final newDeadline = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    final itemDao = ref.read(itemDaoProvider);
+    await UpdateTaskDetailUseCase(itemDao).execute(
+      itemId: item.id,
+      deadline: newDeadline,
+    );
+    HapticFeedback.lightImpact();
+  }
+
+  Color _priorityColor(String? priority) {
+    switch (priority) {
+      case 'high':
+        return AuraColors.accentRed;
+      case 'medium':
+        return AuraColors.accentOrange;
+      default:
+        return AuraColors.textSecondary;
+    }
+  }
+}
+
+class _NotesTab extends StatelessWidget {
+  const _NotesTab({
+    required this.notesController,
+    required this.onSaveNotes,
+  });
+
+  final TextEditingController notesController;
+  final ValueChanged<String> onSaveNotes;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AuraSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ITEM NOTES 📝', style: AuraTypography.labelLime),
+          const SizedBox(height: AuraSpacing.xs),
+          Expanded(
+            child: TextField(
+              controller: notesController,
+              maxLines: null,
+              expands: true,
+              style: AuraTypography.bodyPrimary,
+              decoration: const InputDecoration(
+                hintText: 'Type notes, ideas, or key details here...',
+                contentPadding: EdgeInsets.all(AuraSpacing.md),
+              ),
+              onChanged: onSaveNotes,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttachmentsTab extends StatelessWidget {
+  const _AttachmentsTab({required this.item});
+  final Item item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AuraSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ATTACHMENTS & OCR DATA 📎', style: AuraTypography.labelLime),
+          const SizedBox(height: AuraSpacing.md),
+          Container(
+            padding: const EdgeInsets.all(AuraSpacing.md),
+            decoration: BoxDecoration(
+              color: AuraColors.bgCard,
+              border: Border.all(color: AuraColors.border, width: 1),
+            ),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.fileText,
+                    color: AuraColors.accentLime, size: 24),
+                const SizedBox(width: AuraSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.title, style: AuraTypography.cardTitle),
+                      const SizedBox(height: 2),
+                      Text('Category: ${item.category} | Kind: ${item.kind}',
+                          style: AuraTypography.bodySmall),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        border: Border.all(color: color, width: 1),
+      ),
+      child: Text(
+        label,
+        style: AuraTypography.label.copyWith(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

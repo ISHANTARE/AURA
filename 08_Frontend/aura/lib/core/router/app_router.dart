@@ -15,10 +15,11 @@ import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/alarms/presentation/screens/alarms_screen.dart';
 import '../../features/notes/presentation/screens/notes_screen.dart';
 import '../../features/capture/presentation/screens/share_receive_screen.dart';
-import '../../features/reminders/data/services/dnd_service.dart';
-import '../../features/capture/domain/services/offline_queue_processor.dart';
+import '../../features/capture/presentation/widgets/voice_capture_overlay.dart';
+
 import '../constants/colors.dart';
 import '../constants/typography.dart';
+import '../widgets/bottom_nav.dart';
 
 /// Route name constants — use these everywhere instead of string literals.
 abstract final class Routes {
@@ -42,12 +43,18 @@ abstract final class Routes {
 }
 
 /// Riverpod provider for the go_router instance.
-/// Marked as keep-alive so the router is not recreated on every rebuild.
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: Routes.home,
     debugLogDiagnostics: false,
-    redirect: _handleRedirect,
+    redirect: (context, state) async {
+      // Only guard the root route on cold start
+      if (state.matchedLocation != Routes.home) return null;
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
+      if (!onboardingDone) return Routes.onboarding;
+      return null;
+    },
     routes: [
       // ── Main shell ────────────────────────────────────────────────────────
       ShellRoute(
@@ -60,15 +67,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/workspaces',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: WorkspaceListScreen(),
-            ),
-          ),
-          GoRoute(
             path: Routes.alarms,
             pageBuilder: (context, state) => const NoTransitionPage(
               child: AlarmsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/workspaces',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: WorkspaceListScreen(),
             ),
           ),
           GoRoute(
@@ -106,7 +113,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const OnboardingScreen(),
       ),
 
-      // ── Deep links ────────────────────────────────────────────────────────
+      // ── Deep links & Actions ──────────────────────────────────────────────
       GoRoute(
         path: Routes.briefing,
         builder: (context, state) => const MorningBriefingScreen(),
@@ -124,19 +131,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// Checks if onboarding should be shown on first launch.
-Future<String?> _handleRedirect(BuildContext context, GoRouterState state) async {
-  final prefs = await SharedPreferences.getInstance();
-  final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
-  if (!onboardingDone && state.matchedLocation == Routes.home) {
-    return Routes.onboarding;
-  }
-  return null;
-}
-
 // ── Main navigation shell ──────────────────────────────────────────────────
 
-/// Bottom navigation shell — wraps all main tabs + floating orb.
 class _MainShell extends ConsumerStatefulWidget {
   const _MainShell({required this.child});
   final Widget child;
@@ -157,23 +153,12 @@ class _MainShellState extends ConsumerState<_MainShell> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    // Initialize background services (DND listener & Offline queue processor)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(dndServiceProvider);
-      ref.read(offlineQueueProcessorProvider);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AuraColors.bgBase,
       body: Stack(
         children: [
           widget.child,
-          // Floating orb — draggable, always above bottom nav
           FloatingOrb(onTap: _onCaptureTap),
         ],
       ),
@@ -188,7 +173,8 @@ class _MainShellState extends ConsumerState<_MainShell> {
   }
 
   void _onCaptureTap() {
-    // Sprint 4: open voice capture overlay
+    // Open voice capture overlay bottom sheet
+    VoiceCaptureOverlay.show(context);
   }
 }
 

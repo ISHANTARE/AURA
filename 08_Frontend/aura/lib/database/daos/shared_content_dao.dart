@@ -1,5 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../../core/providers/providers.dart';
 import '../app_database.dart';
 
 class SharedContentDao {
@@ -18,6 +17,3 @@ class SharedContentDao {
       db.update(db.sharedContents).replace(content);
 }
 
-final sharedContentDaoProvider = Provider<SharedContentDao>(
-  (ref) => SharedContentDao(ref.watch(databaseProvider)),
-);

@@ -5,7 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
-import '../../../../database/app_database.dart';
+import '../../../../core/providers/providers.dart';
 import '../../domain/entities/capture_state.dart';
 import '../../domain/entities/intent_result.dart';
 import '../../domain/entities/workspace_match_result.dart';
@@ -61,6 +61,8 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
         return DeleteConfirmationCard(intent: intent);
       case 'add_note':
         return NoteConfirmationCard(intent: intent);
+      // create_event and create_reminder fall through to the generic task card
+      // which displays all fields including eventStart, eventEnd, eventLocation
     }
 
     final workspaceMatch = widget.state.workspaceMatch;
@@ -182,6 +184,8 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
         return 'CREATE EVENT';
       case 'add_note':
         return 'ADD NOTE';
+      case 'create_reminder':
+        return 'CREATE REMINDER';
       case 'create_task':
       default:
         return 'CREATE TASK';

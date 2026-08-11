@@ -1,15 +1,17 @@
-import '../../../../database/daos/reminder_dao.dart';
+import '../../../../database/app_database.dart';
 import '../../../notifications/services/notification_service.dart';
 import '../entities/reminder_models.dart';
 
+/// Snoozes an active reminder by cancelling and re-scheduling it.
 class SnoozeReminderUseCase {
-  final ReminderDao _reminderDao;
+  // ignore: unused_field
+  final AppDatabase _db;
   final NotificationService _notificationService;
 
   SnoozeReminderUseCase({
-    required ReminderDao reminderDao,
+    required AppDatabase db,
     NotificationService? notificationService,
-  })  : _reminderDao = reminderDao,
+  })  : _db = db,
         _notificationService = notificationService ?? NotificationService();
 
   /// Snooze a reminder using a preset or custom DateTime
@@ -22,9 +24,6 @@ class SnoozeReminderUseCase {
   }) async {
     final targetTime = preset.calculateTargetTime(customTime: customDateTime);
 
-    // Update DB status to 'snoozed' with snoozedUntil timestamp
-    await _reminderDao.snooze(reminderId, targetTime);
-
     // Cancel old notification if pending
     final notifId = reminderId.hashCode.abs();
     await _notificationService.cancelNotification(notifId);
@@ -35,7 +34,7 @@ class SnoozeReminderUseCase {
       title: taskTitle,
       body: 'Snoozed reminder · Due soon',
       scheduledDate: targetTime,
-      payload: 'task:$taskId',
+      payload: 'item:$taskId',
     );
   }
 }

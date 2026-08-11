@@ -1,0 +1,14 @@
+﻿Analyzing aura...                                               
+
+   info - The import of '../../database/daos/item_dao.dart' is unnecessary because all of the used elements are also provided by the import of '../../database/app_database.dart' - lib\core\providers\providers.dart:4:8 - unnecessary_import
+   info - The import of '../../database/daos/workspace_dao.dart' is unnecessary because all of the used elements are also provided by the import of '../../database/app_database.dart' - lib\core\providers\providers.dart:5:8 - unnecessary_import
+   info - The import of '../../database/daos/notification_dao.dart' is unnecessary because all of the used elements are also provided by the import of '../../database/app_database.dart' - lib\core\providers\providers.dart:6:8 - unnecessary_import
+   info - The import of '../../database/daos/offline_queue_dao.dart' is unnecessary because all of the used elements are also provided by the import of '../../database/app_database.dart' - lib\core\providers\providers.dart:7:8 - unnecessary_import
+warning - Unused import: 'package:drift/drift.dart' - lib\database\daos\daily_log_dao.dart:1:8 - unused_import
+   info - The import of '../app_database.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/providers/providers.dart' - lib\database\daos\daily_log_dao.dart:4:8 - unnecessary_import
+   info - The import of '../tables/items_table.dart' is unnecessary because all of the used elements are also provided by the import of '../app_database.dart' - lib\database\daos\item_dao.dart:3:8 - unnecessary_import
+   info - The import of '../tables/reminders_schedule_table.dart' is unnecessary because all of the used elements are also provided by the import of '../app_database.dart' - lib\database\daos\item_dao.dart:4:8 - unnecessary_import
+   info - The import of '../../../../database/app_database.dart' is unnecessary because all of the used elements are also provided by the import of '../../../../core/providers/providers.dart' - lib\features\capture\presentation\providers\capture_provider.dart:4:8 - unnecessary_import
+   info - The import of '../../../../database/app_database.dart' is unnecessary because all of the used elements are also provided by the import of '../../../../core/providers/providers.dart' - lib\features\reminders\data\services\dnd_service.dart:7:8 - unnecessary_import
+warning - Unused import: '../entities/reminder_models.dart' - lib\features\reminders\domain\usecases\schedule_reminder_usecase.dart:3:8 - unused_import
+

@@ -1,13 +1,11 @@
-﻿import 'package:drift/drift.dart';
-import 'tasks_table.dart';
-import 'events_table.dart';
+import 'package:drift/drift.dart';
+import 'items_table.dart';
 import 'workspaces_table.dart';
 
 class Notes extends Table {
   TextColumn get id          => text()();
-  TextColumn get taskId      => text().references(Tasks, #id).nullable()();
-  TextColumn get eventId     => text().references(Events, #id).nullable()();
-  TextColumn get workspaceId => text().references(Workspaces, #id)();
+  TextColumn get itemId      => text().references(Items, #id).nullable()();
+  TextColumn get workspaceId => text().references(Workspaces, #id).nullable()();
   TextColumn get content     => text()();
   TextColumn get type        => text().withDefault(const Constant('text'))();
   TextColumn get filePath    => text().nullable()();

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:aura/core/constants/colors.dart';
-import 'package:aura/core/constants/typography.dart';
-import '../providers/task_detail_providers.dart';
+import '../../../../core/constants/colors.dart';
+import '../../../../core/constants/spacing.dart';
+import '../../../../core/constants/typography.dart';
+import '../../../../core/providers/providers.dart';
 
+/// Task Options Bottom Sheet (Share / Duplicate / Move / Delete)
 class TaskOptionsSheet extends ConsumerWidget {
   final String taskId;
   final String taskTitle;
@@ -30,121 +33,202 @@ class TaskOptionsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final itemDao = ref.watch(itemDaoProvider);
+    final workspacesAsync = ref.watch(workspacesListProvider);
+
     return Container(
       decoration: const BoxDecoration(
         color: AuraColors.bgElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         border: Border(
-          top: BorderSide(color: AuraColors.border, width: 2),
-          left: BorderSide(color: AuraColors.border, width: 2),
-          right: BorderSide(color: AuraColors.border, width: 2),
+          top: BorderSide(
+              color: AuraColors.border, width: AuraSpacing.borderWidth),
         ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.all(AuraSpacing.md),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AuraColors.textDisabled,
-                borderRadius: BorderRadius.circular(2),
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  taskTitle,
+                  style: AuraTypography.screenHeader,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
+              IconButton(
+                icon: const Icon(LucideIcons.x, color: AuraColors.textPrimary),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AuraSpacing.xs),
+          const Divider(color: AuraColors.borderMuted, height: 1),
+          const SizedBox(height: AuraSpacing.sm),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              taskTitle,
-              style: AuraTypography.sectionHeader,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(height: 16),
-
+          // 1. Share Item
           _OptionTile(
             icon: LucideIcons.share2,
-            title: 'Share task',
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Share functionality ready')),
-              );
-            },
-          ),
-          _OptionTile(
-            icon: LucideIcons.copy,
-            title: 'Duplicate task',
+            title: 'Share Item',
+            subtitle: 'Share item title via device apps',
             onTap: () async {
-              Navigator.pop(context);
-              final newId = await ref
-                  .read(taskDetailActionProvider.notifier)
-                  .duplicateTask(taskId);
-              if (context.mounted && newId != null) {
+              HapticFeedback.lightImpact();
+              Navigator.of(context).pop();
+              await Clipboard.setData(ClipboardData(text: 'AURA Task: $taskTitle'));
+              if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Task duplicated!')),
+                  const SnackBar(
+                    content: Text('Task copied to clipboard!'),
+                    duration: Duration(seconds: 2),
+                  ),
                 );
               }
             },
           ),
-          const Divider(color: AuraColors.borderMuted, height: 1),
+
+          // 2. Duplicate Item
+          _OptionTile(
+            icon: LucideIcons.copy,
+            title: 'Duplicate Item',
+            subtitle: 'Create a copy of this task',
+            onTap: () async {
+              HapticFeedback.mediumImpact();
+              Navigator.of(context).pop();
+              final newId = await itemDao.duplicateItem(taskId);
+              if (context.mounted && newId != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Item duplicated!'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+          ),
+
+          // 3. Move Workspace
+          _OptionTile(
+            icon: LucideIcons.folderInput,
+            title: 'Move Workspace',
+            subtitle: 'Re-assign task to a different workspace',
+            onTap: () {
+              Navigator.of(context).pop();
+              workspacesAsync.whenData((workspaces) {
+                _showMoveWorkspaceDialog(context, itemDao, workspaces);
+              });
+            },
+          ),
+
+          // 4. Delete Item
           _OptionTile(
             icon: LucideIcons.trash2,
-            title: 'Delete task',
-            textColor: AuraColors.accentRed,
+            title: 'Delete Item',
+            subtitle: 'Soft delete item from workspace',
             iconColor: AuraColors.accentRed,
-            onTap: () async {
-              Navigator.pop(context);
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  backgroundColor: AuraColors.bgElevated,
-                  title: const Text('Delete Task?', style: TextStyle(color: AuraColors.textPrimary)),
-                  content: const Text(
-                    'Are you sure you want to delete this task? You can undo within 5 seconds.',
-                    style: TextStyle(color: AuraColors.textSecondary),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('CANCEL'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      style: ElevatedButton.styleFrom(backgroundColor: AuraColors.accentRed),
-                      child: const Text('DELETE', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
+            titleColor: AuraColors.accentRed,
+            onTap: () {
+              Navigator.of(context).pop();
+              _showDeleteConfirmationDialog(context, itemDao);
+            },
+          ),
+
+          const SizedBox(height: AuraSpacing.sm),
+        ],
+      ),
+    );
+  }
+
+  void _showMoveWorkspaceDialog(
+    BuildContext context,
+    ItemDao itemDao,
+    List<Workspace> workspaces,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AuraColors.bgCard,
+        shape: const RoundedRectangleBorder(
+          side: BorderSide(
+              color: AuraColors.border, width: AuraSpacing.borderWidth),
+          borderRadius: BorderRadius.zero,
+        ),
+        title: Text('MOVE TO WORKSPACE', style: AuraTypography.screenHeader),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: workspaces
+              .map(
+                (ws) => ListTile(
+                  title: Text(ws.name, style: AuraTypography.cardTitle),
+                  subtitle: Text(ws.colorHex, style: AuraTypography.bodySmall),
+                  onTap: () async {
+                    HapticFeedback.lightImpact();
+                    await itemDao.updateWorkspace(taskId, ws.id);
+                    if (ctx.mounted) {
+                      Navigator.of(ctx).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Moved to "${ws.name}"'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
                 ),
-              );
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
 
-              if (confirm == true && context.mounted) {
-                await ref
-                    .read(taskDetailActionProvider.notifier)
-                    .softDeleteTask(taskId);
-
+  void _showDeleteConfirmationDialog(BuildContext context, ItemDao itemDao) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AuraColors.bgCard,
+        shape: const RoundedRectangleBorder(
+          side: BorderSide(
+              color: AuraColors.border, width: AuraSpacing.borderWidth),
+          borderRadius: BorderRadius.zero,
+        ),
+        title: Text('DELETE TASK?', style: AuraTypography.screenHeader),
+        content: Text(
+          'Are you sure you want to delete "$taskTitle"? It will be moved to trash.',
+          style: AuraTypography.body,
+        ),
+        actions: [
+          TextButton(
+            child: Text('CANCEL', style: AuraTypography.buttonSecondary),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AuraColors.accentRed,
+              foregroundColor: Colors.white,
+              shape: const RoundedRectangleBorder(
+                side: BorderSide(color: AuraColors.border, width: 2),
+                borderRadius: BorderRadius.zero,
+              ),
+            ),
+            child: Text('DELETE',
+                style: AuraTypography.buttonPrimary
+                    .copyWith(color: Colors.white)),
+            onPressed: () async {
+              HapticFeedback.mediumImpact();
+              await itemDao.softDelete(taskId);
+              if (ctx.mounted) {
+                Navigator.of(ctx).pop();
                 if (context.mounted) {
-                  Navigator.pop(context); // Exit detail screen
+                  Navigator.of(context).pop(); // pop detail screen
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Task deleted'),
-                      action: SnackBarAction(
-                        label: 'UNDO',
-                        textColor: AuraColors.accentLime,
-                        onPressed: () {
-                          ref
-                              .read(taskDetailActionProvider.notifier)
-                              .restoreTask(taskId);
-                        },
-                      ),
-                      duration: const Duration(seconds: 5),
+                    const SnackBar(
+                      content: Text('Task deleted'),
+                      duration: Duration(seconds: 2),
                     ),
                   );
                 }
@@ -158,31 +242,39 @@ class TaskOptionsSheet extends ConsumerWidget {
 }
 
 class _OptionTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final Color? textColor;
-  final Color? iconColor;
-
   const _OptionTile({
     required this.icon,
     required this.title,
+    required this.subtitle,
     required this.onTap,
-    this.textColor,
-    this.iconColor,
+    this.iconColor = AuraColors.textPrimary,
+    this.titleColor = AuraColors.textPrimary,
   });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Color iconColor;
+  final Color titleColor;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor ?? AuraColors.textPrimary, size: 20),
-      title: Text(
-        title,
-        style: AuraTypography.bodyMedium.copyWith(
-          color: textColor ?? AuraColors.textPrimary,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        onTap: onTap,
+        tileColor: AuraColors.bgCard,
+        shape: const RoundedRectangleBorder(
+          side: BorderSide(color: AuraColors.border, width: 1),
         ),
+        leading: Icon(icon, color: iconColor, size: 20),
+        title: Text(title,
+            style: AuraTypography.cardTitle.copyWith(color: titleColor)),
+        subtitle: Text(subtitle, style: AuraTypography.bodySmall),
+        trailing: const Icon(LucideIcons.chevronRight,
+            color: AuraColors.textSecondary, size: 16),
       ),
-      onTap: onTap,
     );
   }
 }

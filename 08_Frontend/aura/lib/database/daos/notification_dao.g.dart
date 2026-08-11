@@ -7,9 +7,9 @@ mixin _$NotificationDaoMixin on DatabaseAccessor<AppDatabase> {
   $WorkspacesTable get workspaces => attachedDatabase.workspaces;
   $WorkspaceSectionsTable get workspaceSections =>
       attachedDatabase.workspaceSections;
-  $TasksTable get tasks => attachedDatabase.tasks;
-  $EventsTable get events => attachedDatabase.events;
-  $RemindersTable get reminders => attachedDatabase.reminders;
+  $ItemsTable get items => attachedDatabase.items;
+  $RemindersScheduleTable get remindersSchedule =>
+      attachedDatabase.remindersSchedule;
   $NotificationLogsTable get notificationLogs =>
       attachedDatabase.notificationLogs;
 }

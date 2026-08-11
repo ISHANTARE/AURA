@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
-import '../../../../core/services/connectivity_service.dart';
-import '../../../../database/daos/offline_queue_dao.dart';
+import '../../../../core/providers/providers.dart';
 
 /// Sync Status & Connectivity Badge (Sprint 7 / PRD F-10).
 /// Shows live network state and pending offline queue item count.
@@ -14,8 +13,7 @@ class SyncStatusBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isOnlineAsync = ref.watch(isOnlineProvider);
-    final isOnline = isOnlineAsync.value ?? true;
+    final isOnline = ref.watch(isOnlineProvider);
     final queueDao = ref.watch(offlineQueueDaoProvider);
 
     return StreamBuilder<int>(

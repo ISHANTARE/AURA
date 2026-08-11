@@ -1,238 +1,408 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:aura/core/constants/colors.dart';
-import 'package:aura/core/constants/typography.dart';
-import 'package:aura/core/router/app_router.dart';
-import 'package:aura/database/daos/event_dao.dart';
-import 'package:aura/database/daos/notification_dao.dart';
-import 'package:aura/database/daos/reminder_dao.dart';
-import 'package:aura/database/daos/task_dao.dart';
-import '../../domain/usecases/generate_morning_briefing_usecase.dart';
+import '../../../../core/constants/colors.dart';
+import '../../../../core/constants/spacing.dart';
+import '../../../../core/constants/typography.dart';
+import '../../../../core/providers/providers.dart';
+import '../../../../core/router/app_router.dart';
 
-final morningBriefingUseCaseProvider = Provider<GenerateMorningBriefingUseCase>((ref) {
-  return GenerateMorningBriefingUseCase(
-    taskDao: ref.watch(taskDaoProvider),
-    eventDao: ref.watch(eventDaoProvider),
-    reminderDao: ref.watch(reminderDaoProvider),
-    notificationDao: ref.watch(notificationDaoProvider),
-  );
-});
-
-final morningBriefingDataProvider = FutureProvider<MorningBriefingData>((ref) async {
-  return ref.watch(morningBriefingUseCaseProvider).execute();
-});
-
+/// Morning Briefing Screen — AURA v2 Morning Briefing.
+/// Shows: user greeting, today's focus tasks, urgent alarms, and quick stats.
 class MorningBriefingScreen extends ConsumerWidget {
   const MorningBriefingScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final briefingAsync = ref.watch(morningBriefingDataProvider);
+    final now = DateTime.now();
+    final dateStr = DateFormat('EEEE, MMMM d').format(now);
+
+    final userName = ref.watch(userNameProvider).valueOrNull ?? 'there';
+    final firstName = userName.split(' ').first;
+
+    final focusAsync = ref.watch(todayFocusItemsProvider);
+    final urgentAsync = ref.watch(urgentItemsProvider);
+    final statsAsync = ref.watch(quickStatsProvider);
 
     return Scaffold(
       backgroundColor: AuraColors.bgBase,
+      appBar: AppBar(
+        backgroundColor: AuraColors.bgBase,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(LucideIcons.x, color: AuraColors.textPrimary),
+          onPressed: () => context.go(Routes.home),
+        ),
+        title: Text('MORNING BRIEFING', style: AuraTypography.screenHeader),
+      ),
       body: SafeArea(
-        child: briefingAsync.when(
-          data: (data) => Column(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AuraSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SizedBox.shrink(),
-                    IconButton(
-                      icon: const Icon(LucideIcons.x, color: AuraColors.textSecondary),
-                      onPressed: () => context.go(Routes.home),
-                    ),
-                  ],
-                ),
+              // ── Greeting ───────────────────────────────────────────────
+              Text(
+                'Good morning, $firstName! 🌅',
+                style: AuraTypography.display.copyWith(fontSize: 22),
               ),
+              const SizedBox(height: 4),
+              Text(dateStr, style: AuraTypography.overline),
 
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: AuraSpacing.lg),
+
+              // ── Quick Stats ────────────────────────────────────────────
+              statsAsync.when(
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (s) => _BriefingSection(
+                  title: 'TODAY AT A GLANCE',
+                  child: Row(
                     children: [
-                      // Header
-                      Text(data.greeting, style: AuraTypography.display),
-                      const SizedBox(height: 4),
-                      Text(data.dateFormatted, style: AuraTypography.bodySmall),
-                      const SizedBox(height: 16),
-
-                      // AI Summary Line
-                      Text(
-                        '── ${data.summaryLine} ──',
-                        style: AuraTypography.bodySmall.copyWith(
-                          fontStyle: FontStyle.italic,
-                          color: AuraColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Section 1: URGENT
-                      if (data.urgentTasks.isNotEmpty) ...[
-                        _BriefingCard(
-                          title: '🔴 URGENT',
-                          titleColor: AuraColors.accentRed,
-                          children: data.urgentTasks.map((t) => ListTile(
-                                leading: const Icon(LucideIcons.alertTriangle, color: AuraColors.accentRed, size: 16),
-                                title: Text(t.name, style: AuraTypography.cardTitle),
-                                trailing: const Icon(LucideIcons.chevronRight, color: AuraColors.textSecondary, size: 16),
-                                onTap: () => context.push(Routes.taskRoute(t.id)),
-                              )).toList(),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // Section 2: TODAY'S FOCUS
-                      _BriefingCard(
-                        title: '🎯 TODAY\'S FOCUS',
-                        titleColor: AuraColors.accentLime,
-                        badge: 'AI suggested 🤖',
-                        children: data.focusTasks.isEmpty
-                            ? [
-                                Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Text('All clear today!', style: AuraTypography.bodySmall),
-                                )
-                              ]
-                            : data.focusTasks.asMap().entries.map((entry) {
-                                final idx = entry.key + 1;
-                                final t = entry.value;
-                                return ListTile(
-                                  leading: CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: AuraColors.accentLime,
-                                    child: Text('$idx', style: AuraTypography.badgeText.copyWith(color: AuraColors.textOnAccent)),
-                                  ),
-                                  title: Text(t.name, style: AuraTypography.cardTitle),
-                                  trailing: const Icon(LucideIcons.chevronRight, color: AuraColors.textSecondary, size: 16),
-                                  onTap: () => context.push(Routes.taskRoute(t.id)),
-                                );
-                              }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Section 3: UPCOMING
-                      if (data.upcomingTasks.isNotEmpty) ...[
-                        _BriefingCard(
-                          title: '📅 UPCOMING',
-                          titleColor: AuraColors.accentBlue,
-                          subtitle: 'Next 7 days',
-                          children: data.upcomingTasks.map((t) => ListTile(
-                                leading: const Icon(LucideIcons.calendar, color: AuraColors.accentBlue, size: 16),
-                                title: Text(t.name, style: AuraTypography.cardTitle),
-                                trailing: const Icon(LucideIcons.chevronRight, color: AuraColors.textSecondary, size: 16),
-                                onTap: () => context.push(Routes.taskRoute(t.id)),
-                              )).toList(),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // Section 4: DND Missed items (Conditional)
-                      if (data.missedDndReminders.isNotEmpty) ...[
-                        _BriefingCard(
-                          title: '🔕 WHILE YOU WERE IN DND',
-                          titleColor: AuraColors.accentOrange,
-                          children: data.missedDndReminders.map((r) => ListTile(
-                                leading: const Icon(LucideIcons.bellOff, color: AuraColors.accentOrange, size: 16),
-                                title: Text('Missed reminder (ID: ${r.id})', style: AuraTypography.bodySmall),
-                              )).toList(),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      const SizedBox(height: 20),
+                      _StatTile(
+                          label: 'Pending', value: '${s.pending}',
+                          color: AuraColors.accentLime),
+                      const SizedBox(width: AuraSpacing.sm),
+                      _StatTile(
+                          label: 'Completed', value: '${s.completed}',
+                          color: AuraColors.accentGreen),
+                      const SizedBox(width: AuraSpacing.sm),
+                      _StatTile(
+                          label: 'Overdue', value: '${s.overdue}',
+                          color: s.overdue > 0
+                              ? AuraColors.accentRed
+                              : AuraColors.textDisabled),
                     ],
                   ),
                 ),
               ),
 
-              // Bottom CTA: START MY DAY
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.go(Routes.home),
-                    icon: const Icon(LucideIcons.play, size: 18, color: AuraColors.textOnAccent),
-                    label: Text(
-                      'START MY DAY',
-                      style: AuraTypography.buttonText.copyWith(fontWeight: FontWeight.bold),
+              const SizedBox(height: AuraSpacing.lg),
+
+              // ── Today's Focus ──────────────────────────────────────────
+              _BriefingSection(
+                title: "TODAY'S FOCUS",
+                badge: const _AiBadge(),
+                child: focusAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          AuraColors.accentLime),
+                      strokeWidth: 2,
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AuraColors.accentLime,
-                      foregroundColor: AuraColors.textOnAccent,
-                      elevation: 0,
-                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                  ),
+                  error: (e, __) => Text('Error: $e', style: AuraTypography.body),
+                  data: (items) {
+                    if (items.isEmpty) {
+                      return Padding(
+                        padding:
+                            const EdgeInsets.symmetric(vertical: AuraSpacing.sm),
+                        child: Text(
+                          'Nothing on your focus list. Enjoy a calm morning!',
+                          style: AuraTypography.body.copyWith(
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      );
+                    }
+                    return Column(
+                      children: items
+                          .take(5)
+                          .toList()
+                          .asMap()
+                          .entries
+                          .map((e) => _FocusRow(
+                                index: e.key + 1,
+                                item: e.value,
+                                onTap: () => context
+                                    .push(Routes.taskRoute(e.value.id)),
+                              ))
+                          .toList(),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: AuraSpacing.lg),
+
+              // ── Urgent Alarms ──────────────────────────────────────────
+              _BriefingSection(
+                title: 'URGENT ALARMS & DEADLINES',
+                child: urgentAsync.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (items) {
+                    if (items.isEmpty) {
+                      return Text(
+                        'No urgent items. 🎉',
+                        style: AuraTypography.body.copyWith(
+                          fontStyle: FontStyle.italic,
+                        ),
+                      );
+                    }
+                    return Column(
+                      children: items
+                          .take(3)
+                          .map((item) => _UrgentRow(item: item))
+                          .toList(),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: AuraSpacing.xl),
+
+              // ── CTA ────────────────────────────────────────────────────
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AuraColors.accentLime,
+                    foregroundColor: Colors.black,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
+                      side: BorderSide(color: AuraColors.border, width: 2),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: () => context.go(Routes.home),
+                  child: Text(
+                    'START THE DAY →',
+                    style: AuraTypography.label.copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
                     ),
                   ),
                 ),
               ),
             ],
           ),
-          loading: () => const Center(child: CircularProgressIndicator(color: AuraColors.accentLime)),
-          error: (e, s) => Center(child: Text('Error: $e', style: AuraTypography.body)),
         ),
       ),
     );
   }
 }
 
-class _BriefingCard extends StatelessWidget {
-  final String title;
-  final Color titleColor;
-  final String? subtitle;
-  final String? badge;
-  final List<Widget> children;
+// ── Sub-widgets ──────────────────────────────────────────────────────────────
 
-  const _BriefingCard({
+class _BriefingSection extends StatelessWidget {
+  const _BriefingSection({
     required this.title,
-    required this.titleColor,
-    this.subtitle,
+    required this.child,
     this.badge,
-    required this.children,
   });
+
+  final String title;
+  final Widget child;
+  final Widget? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(title, style: AuraTypography.label),
+            if (badge != null) ...[
+              const SizedBox(width: AuraSpacing.sm),
+              badge!,
+            ],
+          ],
+        ),
+        const SizedBox(height: AuraSpacing.xs),
+        Container(height: 1, color: AuraColors.borderMuted),
+        const SizedBox(height: AuraSpacing.sm),
+        child,
+      ],
+    );
+  }
+}
+
+class _AiBadge extends StatelessWidget {
+  const _AiBadge();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: AuraColors.bgCard,
-        border: Border.all(color: AuraColors.border, width: 2),
+        border: Border.all(color: AuraColors.accentLime.withValues(alpha: 0.5)),
+        color: AuraColors.accentLime.withValues(alpha: 0.08),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(title, style: AuraTypography.bentoMetricLabel.copyWith(color: titleColor)),
-                    if (subtitle != null) ...[
-                      const SizedBox(width: 8),
-                      Text('· $subtitle', style: AuraTypography.bodySmall),
-                    ],
-                  ],
+          const Icon(LucideIcons.sparkles, size: 10, color: AuraColors.accentLime),
+          const SizedBox(width: 3),
+          Text(
+            'AI suggested',
+            style: AuraTypography.label.copyWith(
+              color: AuraColors.accentLime,
+              fontSize: 9,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AuraSpacing.sm, vertical: AuraSpacing.sm),
+        decoration: BoxDecoration(
+          color: AuraColors.bgCard,
+          border: Border.all(color: AuraColors.border, width: 2),
+          boxShadow: const [
+            BoxShadow(
+                color: AuraColors.shadow, offset: Offset(3, 3), blurRadius: 0),
+          ],
+        ),
+        child: Column(
+          children: [
+            Text(value,
+                style: AuraTypography.bentoMetricValue.copyWith(
+                  color: color,
+                  fontSize: 24,
+                )),
+            const SizedBox(height: 2),
+            Text(label, style: AuraTypography.overline),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FocusRow extends StatelessWidget {
+  const _FocusRow({
+    required this.index,
+    required this.item,
+    required this.onTap,
+  });
+
+  final int index;
+  final Item item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AuraSpacing.xs + 2),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              child: Text(
+                '$index.',
+                style: AuraTypography.cardTitle.copyWith(
+                  color: AuraColors.accentLime,
+                  fontSize: 13,
                 ),
-                if (badge != null)
-                  Text(badge!, style: AuraTypography.bodySmall.copyWith(color: AuraColors.textSecondary)),
+              ),
+            ),
+            const SizedBox(width: AuraSpacing.sm),
+            Expanded(
+              child: Text(
+                item.title,
+                style: AuraTypography.cardTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              color: _priorityColor(item.priority).withValues(alpha: 0.15),
+              child: Text(
+                item.priority.toUpperCase(),
+                style: AuraTypography.label.copyWith(
+                  color: _priorityColor(item.priority),
+                  fontSize: 9,
+                ),
+              ),
+            ),
+            const SizedBox(width: AuraSpacing.xs),
+            const Icon(LucideIcons.chevronRight,
+                size: 14, color: AuraColors.textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _priorityColor(String? priority) {
+    switch (priority) {
+      case 'high':
+        return AuraColors.accentRed;
+      case 'medium':
+        return AuraColors.accentOrange;
+      default:
+        return AuraColors.textSecondary;
+    }
+  }
+}
+
+class _UrgentRow extends StatelessWidget {
+  const _UrgentRow({required this.item});
+  final Item item;
+
+  @override
+  Widget build(BuildContext context) {
+    final deadline = item.deadline ?? item.fireAt;
+    final deadlineStr = deadline != null
+        ? DateFormat('EEE · h:mm a')
+            .format(DateTime.fromMillisecondsSinceEpoch(deadline))
+        : 'No deadline';
+
+    final isOverdue = (deadline ?? 0) < DateTime.now().millisecondsSinceEpoch;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AuraSpacing.sm),
+      child: Row(
+        children: [
+          Container(
+            width: AuraSpacing.priorityStripe,
+            height: 36,
+            color: isOverdue ? AuraColors.accentRed : AuraColors.accentOrange,
+          ),
+          const SizedBox(width: AuraSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: AuraTypography.bodyPrimary,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(deadlineStr, style: AuraTypography.overline),
               ],
             ),
           ),
-          const Divider(color: AuraColors.borderMuted, height: 1),
-          ...children,
         ],
       ),
     );
