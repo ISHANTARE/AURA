@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:drift/drift.dart' hide Column;
+
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
@@ -131,6 +133,119 @@ class NotesScreen extends ConsumerWidget {
         error: (err, _) =>
             Center(child: Text('Error: $err', style: AuraTypography.body)),
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AuraColors.accentLime,
+        foregroundColor: Colors.black,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: BorderSide(color: Colors.black, width: 2),
+        ),
+        elevation: 0,
+        onPressed: () => _showCreateNoteModal(context, ref),
+        child: const Icon(LucideIcons.plus, size: 24),
+      ),
+    );
+  }
+
+  void _showCreateNoteModal(BuildContext context, WidgetRef ref) {
+    final titleCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AuraColors.bgCard,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: AuraSpacing.md,
+            right: AuraSpacing.md,
+            top: AuraSpacing.md,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + AuraSpacing.md,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('NEW NOTE', style: AuraTypography.cardTitle),
+              const SizedBox(height: AuraSpacing.md),
+              TextField(
+                controller: titleCtrl,
+                style: AuraTypography.body,
+                decoration: InputDecoration(
+                  labelText: 'NOTE TITLE',
+                  labelStyle: AuraTypography.labelLime,
+                  filled: true,
+                  fillColor: AuraColors.bgBase,
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: AuraColors.border, width: 2),
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: AuraColors.accentLime, width: 2),
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AuraSpacing.md),
+              TextField(
+                controller: bodyCtrl,
+                style: AuraTypography.body,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: 'NOTE CONTENT',
+                  labelStyle: AuraTypography.labelLime,
+                  filled: true,
+                  fillColor: AuraColors.bgBase,
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: AuraColors.border, width: 2),
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: AuraColors.accentLime, width: 2),
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AuraSpacing.lg),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AuraColors.accentLime,
+                    foregroundColor: Colors.black,
+                    side: const BorderSide(color: Colors.black, width: 2),
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                  ),
+                  onPressed: () async {
+                    final title = titleCtrl.text.trim().isEmpty ? 'Untitled Note' : titleCtrl.text.trim();
+                    final body = bodyCtrl.text.trim();
+                    final itemDao = ref.read(itemDaoProvider);
+                    final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+
+                    await itemDao.insertItem(
+                      ItemsCompanion.insert(
+                        id: 'note_$nowEpoch',
+                        title: title,
+                        category: 'reminder',
+                        kind: 'note',
+                        notes: Value(body.isEmpty ? null : body),
+                        createdAt: nowEpoch,
+                        updatedAt: nowEpoch,
+                      ),
+                    );
+
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  child: Text('SAVE NOTE', style: AuraTypography.label.copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

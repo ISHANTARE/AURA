@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:drift/drift.dart' hide Column;
+
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
@@ -129,6 +131,142 @@ class AlarmsScreen extends ConsumerWidget {
         error: (err, _) =>
             Center(child: Text('Error: $err', style: AuraTypography.body)),
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AuraColors.accentLime,
+        foregroundColor: Colors.black,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: BorderSide(color: Colors.black, width: 2),
+        ),
+        elevation: 0,
+        onPressed: () => _showCreateAlarmModal(context, ref),
+        child: const Icon(LucideIcons.plus, size: 24),
+      ),
+    );
+  }
+
+  void _showCreateAlarmModal(BuildContext context, WidgetRef ref) {
+    final titleCtrl = TextEditingController(text: 'Alarm');
+    TimeOfDay selectedTime = TimeOfDay.now();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AuraColors.bgCard,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final now = DateTime.now();
+            final alarmDt = DateTime(
+              now.year,
+              now.month,
+              now.day,
+              selectedTime.hour,
+              selectedTime.minute,
+            );
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: AuraSpacing.md,
+                right: AuraSpacing.md,
+                top: AuraSpacing.md,
+                bottom: MediaQuery.of(context).viewInsets.bottom + AuraSpacing.md,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('NEW ALARM', style: AuraTypography.cardTitle),
+                  const SizedBox(height: AuraSpacing.md),
+                  TextField(
+                    controller: titleCtrl,
+                    style: AuraTypography.body,
+                    decoration: InputDecoration(
+                      labelText: 'ALARM LABEL',
+                      labelStyle: AuraTypography.labelLime,
+                      filled: true,
+                      fillColor: AuraColors.bgBase,
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: AuraColors.border, width: 2),
+                        borderRadius: BorderRadius.zero,
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: AuraColors.accentLime, width: 2),
+                        borderRadius: BorderRadius.zero,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AuraSpacing.md),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Time: ${selectedTime.format(context)}',
+                        style: AuraTypography.cardTitle.copyWith(color: AuraColors.accentLime),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AuraColors.bgBase,
+                          foregroundColor: AuraColors.textPrimary,
+                          side: const BorderSide(color: AuraColors.border, width: 1),
+                        ),
+                        onPressed: () async {
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: selectedTime,
+                          );
+                          if (picked != null) {
+                            setModalState(() => selectedTime = picked);
+                          }
+                        },
+                        child: const Text('PICK TIME'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AuraSpacing.lg),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AuraColors.accentLime,
+                        foregroundColor: Colors.black,
+                        side: const BorderSide(color: Colors.black, width: 2),
+                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                      ),
+                      onPressed: () async {
+                        final title = titleCtrl.text.trim().isEmpty ? 'Alarm' : titleCtrl.text.trim();
+                        final itemDao = ref.read(itemDaoProvider);
+
+                        final targetDt = alarmDt.isBefore(now)
+                            ? alarmDt.add(const Duration(days: 1))
+                            : alarmDt;
+                        final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+
+                        await itemDao.insertItem(
+                          ItemsCompanion.insert(
+                            id: 'alarm_$nowEpoch',
+                            title: title,
+                            category: 'alarm',
+                            kind: 'alarm',
+                            fireAt: Value(targetDt.millisecondsSinceEpoch),
+                            createdAt: nowEpoch,
+                            updatedAt: nowEpoch,
+                          ),
+                        );
+
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      child: Text('SET ALARM', style: AuraTypography.label.copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

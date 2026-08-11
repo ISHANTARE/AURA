@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
+import 'platform/overlay_channel.dart';
 import 'features/home/presentation/providers/home_providers.dart';
 import 'features/reminders/data/services/dnd_service.dart';
 import 'features/reminders/data/services/notification_service.dart';
@@ -32,9 +34,18 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
         .selectNotificationStream
         .listen(_onNotificationTapPayload);
 
+    // Listen for global floating orb taps from native system overlay
+    OverlayChannel.listenToOrbTaps(() {
+      final router = ref.read(appRouterProvider);
+      router.push(Routes.home);
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Start DND service
       ref.read(dndServiceProvider);
+
+      // Auto-start system-level floating orb if permission is granted
+      OverlayChannel.autoStartIfPermitted();
 
       // Run nudge & overdue evaluation
       _onAppActive();
@@ -126,12 +137,13 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
+    final accent = ref.watch(themeAccentProvider);
 
     return MaterialApp.router(
       title: 'AURA',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.dark(accent.color),
+      darkTheme: AppTheme.dark(accent.color),
       themeMode: ThemeMode.dark,
       routerConfig: router,
     );

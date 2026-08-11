@@ -9,6 +9,8 @@ import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/empty_state.dart';
 
+import '../widgets/create_workspace_modal.dart';
+
 /// Workspace List Screen — AURA v2 Workspaces Management
 class WorkspaceListScreen extends ConsumerWidget {
   const WorkspaceListScreen({super.key});
@@ -23,6 +25,12 @@ class WorkspaceListScreen extends ConsumerWidget {
         title: Text('WORKSPACES', style: AuraTypography.screenHeader),
         backgroundColor: AuraColors.bgBase,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.plus, color: AuraColors.accentLime),
+            onPressed: () => CreateWorkspaceModal.show(context),
+          ),
+        ],
       ),
       body: workspacesAsync.when(
         data: (workspaces) {
@@ -75,6 +83,17 @@ class WorkspaceListScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err', style: AuraTypography.body)),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AuraColors.accentLime,
+        foregroundColor: Colors.black,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: BorderSide(color: Colors.black, width: 2),
+        ),
+        elevation: 0,
+        onPressed: () => CreateWorkspaceModal.show(context),
+        child: const Icon(LucideIcons.plus, size: 24),
       ),
     );
   }

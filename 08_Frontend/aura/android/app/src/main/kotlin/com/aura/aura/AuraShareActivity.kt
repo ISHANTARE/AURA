@@ -2,6 +2,7 @@ package com.aura.aura
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -17,6 +18,10 @@ class AuraShareActivity : FlutterActivity() {
 
     private var sharedPayload: Map<String, Any?>? = null
     private var methodChannel: MethodChannel? = null
+
+    override fun getInitialRoute(): String {
+        return "/share"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +49,12 @@ class AuraShareActivity : FlutterActivity() {
                     )
                 }
             } else if (type.startsWith("image/")) {
-                val imageUri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                val imageUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM)
+                }
                 if (imageUri != null) {
                     val localPath = copyUriToCache(imageUri, "shared_image.jpg")
                     sharedPayload = mapOf(
@@ -54,7 +64,12 @@ class AuraShareActivity : FlutterActivity() {
                     )
                 }
             } else if (type == "application/pdf") {
-                val pdfUri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                val pdfUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM)
+                }
                 if (pdfUri != null) {
                     val localPath = copyUriToCache(pdfUri, "shared_doc.pdf")
                     sharedPayload = mapOf(

@@ -15,7 +15,7 @@ import '../constants/spacing.dart';
 ///   - Space Grotesk everywhere
 ///   - Only two themes: dark (default) and light (minimal variation)
 abstract final class AppTheme {
-  static ThemeData dark() {
+  static ThemeData dark([Color accentColor = AuraColors.accentLime]) {
     final base = ThemeData.dark(useMaterial3: true);
 
     return base.copyWith(
@@ -23,10 +23,10 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: AuraColors.bgBase,
 
       // ── Color scheme ─────────────────────────────────────────────────────
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.dark(
         surface: AuraColors.bgBase,
         onSurface: AuraColors.textPrimary,
-        primary: AuraColors.accentLime,
+        primary: accentColor,
         onPrimary: AuraColors.textOnAccent,
         secondary: AuraColors.accentBlue,
         onSecondary: AuraColors.textOnAccent,
