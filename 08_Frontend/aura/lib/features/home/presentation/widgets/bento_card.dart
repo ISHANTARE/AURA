@@ -4,15 +4,15 @@ import 'package:flutter/services.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 
-/// Base bento card — hard drop-shadow, 2px white border, #141414 background.
-/// All home screen cells extend this.
+/// Premium Bento Card — soft layered elevation, rounded corners, subtle outline.
+/// Base container for home screen widgets.
 class BentoCard extends StatefulWidget {
   const BentoCard({
     super.key,
     required this.child,
     this.onTap,
     this.padding = const EdgeInsets.all(AuraSpacing.md),
-    this.borderRadius = 0,
+    this.borderRadius = 16.0,
     this.backgroundColor = AuraColors.bgCard,
     this.borderColor = AuraColors.border,
   });
@@ -28,8 +28,7 @@ class BentoCard extends StatefulWidget {
   State<BentoCard> createState() => _BentoCardState();
 }
 
-class _BentoCardState extends State<BentoCard>
-    with SingleTickerProviderStateMixin {
+class _BentoCardState extends State<BentoCard> {
   bool _pressed = false;
 
   void _onTapDown(TapDownDetails _) {
@@ -48,32 +47,27 @@ class _BentoCardState extends State<BentoCard>
 
   @override
   Widget build(BuildContext context) {
-    final offset = _pressed
-        ? AuraSpacing.shadowOffsetPressed
-        : AuraSpacing.shadowOffset;
-
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 80),
+        duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         transform: _pressed
-            ? (Matrix4.identity()
-              ..translate(
-                  AuraSpacing.shadowOffset - AuraSpacing.shadowOffsetPressed,
-                  AuraSpacing.shadowOffset - AuraSpacing.shadowOffsetPressed))
+            ? (Matrix4.identity()..scale(0.98))
             : Matrix4.identity(),
+        transformAlignment: Alignment.center,
         decoration: BoxDecoration(
           color: widget.backgroundColor,
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          border: Border.all(color: widget.borderColor, width: AuraSpacing.borderWidth),
-          boxShadow: [
+          border: Border.all(color: widget.borderColor, width: 1),
+          boxShadow: const [
             BoxShadow(
               color: AuraColors.shadow,
-              offset: Offset(offset, offset),
-              blurRadius: 0,
+              blurRadius: 16,
+              spreadRadius: 0,
+              offset: Offset(0, 4),
             ),
           ],
         ),
@@ -85,3 +79,4 @@ class _BentoCardState extends State<BentoCard>
     );
   }
 }
+

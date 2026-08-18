@@ -291,14 +291,8 @@ class _IconButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: AuraColors.bgCard,
-          border: Border.all(color: AuraColors.border, width: AuraSpacing.borderWidth),
-          boxShadow: const [
-            BoxShadow(
-              color: AuraColors.shadow,
-              offset: Offset(2, 2),
-              blurRadius: 0,
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AuraColors.border, width: 1),
         ),
         child: Icon(icon, size: 20, color: AuraColors.textPrimary),
       ),

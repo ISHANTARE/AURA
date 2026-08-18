@@ -5,7 +5,7 @@ import '../constants/colors.dart';
 import '../constants/spacing.dart';
 import '../constants/typography.dart';
 
-/// Neubrutalist 5-Tab Bottom Navigation Bar for AURA v2
+/// Premium Dark 5-Tab Bottom Navigation Bar with Animated Pill Indicator
 class AuraBottomNav extends StatelessWidget {
   const AuraBottomNav({
     super.key,
@@ -18,13 +18,15 @@ class AuraBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themePrimary = Theme.of(context).colorScheme.primary;
+
     return Container(
       height: AuraSpacing.bottomNavHeight + MediaQuery.paddingOf(context).bottom,
       padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
       decoration: const BoxDecoration(
-        color: AuraColors.bgBase,
+        color: AuraColors.bgCard,
         border: Border(
-          top: BorderSide(color: AuraColors.border, width: AuraSpacing.borderWidth),
+          top: BorderSide(color: AuraColors.border, width: 1),
         ),
       ),
       child: Row(
@@ -32,32 +34,37 @@ class AuraBottomNav extends StatelessWidget {
         children: [
           _NavItem(
             icon: LucideIcons.home,
-            label: 'HOME',
+            label: 'Home',
             isSelected: selectedIndex == 0,
+            activeColor: themePrimary,
             onTap: () => onDestinationSelected(0),
           ),
           _NavItem(
             icon: LucideIcons.alarmClock,
-            label: 'ALARMS',
+            label: 'Alarms',
             isSelected: selectedIndex == 1,
+            activeColor: themePrimary,
             onTap: () => onDestinationSelected(1),
           ),
           _NavItem(
             icon: LucideIcons.layoutGrid,
-            label: 'WORKSPACES',
+            label: 'Spaces',
             isSelected: selectedIndex == 2,
+            activeColor: themePrimary,
             onTap: () => onDestinationSelected(2),
           ),
           _NavItem(
             icon: LucideIcons.fileText,
-            label: 'NOTES',
+            label: 'Notes',
             isSelected: selectedIndex == 3,
+            activeColor: themePrimary,
             onTap: () => onDestinationSelected(3),
           ),
           _NavItem(
             icon: LucideIcons.settings,
-            label: 'SETTINGS',
+            label: 'Settings',
             isSelected: selectedIndex == 4,
+            activeColor: themePrimary,
             onTap: () => onDestinationSelected(4),
           ),
         ],
@@ -71,40 +78,53 @@ class _NavItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.isSelected,
+    required this.activeColor,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final bool isSelected;
+  final Color activeColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = isSelected ? AuraColors.accentLime : AuraColors.textSecondary;
-
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
+      behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AuraSpacing.xs, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: activeColor,
-              size: 20,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: isSelected ? AuraTypography.labelLime : AuraTypography.label,
-            ),
-          ],
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? activeColor.withValues(alpha: 0.16) : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? activeColor : AuraColors.textMuted,
+                size: 20,
+              ),
+              if (isSelected) ...[
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: AuraTypography.label.copyWith(
+                    color: activeColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+

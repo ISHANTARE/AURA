@@ -193,17 +193,17 @@ class _OrbCellState extends State<OrbCell> with SingleTickerProviderStateMixin {
                   width: AuraSpacing.orbSize,
                   height: AuraSpacing.orbSize,
                   decoration: BoxDecoration(
-                    color: AuraColors.accentLime,
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AuraColors.shadow,
-                      width: 3,
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 2,
                     ),
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
-                        color: AuraColors.shadow,
-                        offset: Offset(3, 3),
-                        blurRadius: 0,
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                        blurRadius: 16,
+                        spreadRadius: 2,
                       ),
                     ],
                   ),

@@ -31,7 +31,7 @@ class QuickStatsRow extends StatelessWidget {
               icon: LucideIcons.clock,
               label: 'PENDING',
               count: s.pending,
-              color: AuraColors.accentLime,
+              color: Theme.of(context).colorScheme.primary,
             ),
             _VerticalDivider(),
             _StatChip(
