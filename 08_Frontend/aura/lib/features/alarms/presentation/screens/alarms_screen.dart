@@ -13,7 +13,7 @@ import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../reminders/data/services/notification_service.dart';
 
-/// Alarms Screen — AURA v2 Dedicated Alarms & Time Alerts Screen
+/// Alarms Screen — AURA v2 Redesigned Alarms Screen
 class AlarmsScreen extends ConsumerWidget {
   const AlarmsScreen({super.key});
 
@@ -21,6 +21,7 @@ class AlarmsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final alarmsAsync = ref.watch(alarmsListProvider);
     final itemDao = ref.watch(itemDaoProvider);
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       backgroundColor: AuraColors.bgBase,
@@ -58,89 +59,88 @@ class AlarmsScreen extends ConsumerWidget {
                   : 'Active';
 
               return Container(
-                padding: const EdgeInsets.all(AuraSpacing.md),
                 decoration: BoxDecoration(
                   color: AuraColors.bgCard,
-                  border: Border.all(
-                      color: AuraColors.border, width: AuraSpacing.borderWidth),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AuraColors.border, width: 1),
                   boxShadow: const [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(4, 4),
-                      blurRadius: 0,
+                      color: AuraColors.shadow,
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(AuraSpacing.xs + 2),
-                      decoration: BoxDecoration(
-                        color: AuraColors.accentLime.withValues(alpha: 0.15),
-                        border: Border.all(color: AuraColors.accentLime),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AuraSpacing.md, vertical: 16),
+                  child: Row(
+                    children: [
+                      // Circular icon container
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(LucideIcons.alarmClock, color: primaryColor, size: 26),
                       ),
-                      child: const Icon(LucideIcons.alarmClock,
-                          color: AuraColors.accentLime, size: 24),
-                    ),
-                    const SizedBox(width: AuraSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            timeStr,
-                            style: AuraTypography.cardTitle.copyWith(
-                              fontSize: 22,
-                              color: AuraColors.accentLime,
+                      const SizedBox(width: AuraSpacing.md),
+                      // Time + label
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              timeStr,
+                              style: AuraTypography.display.copyWith(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: AuraColors.textPrimary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${alarm.title} · $dateStr',
-                            style: AuraTypography.bodySmall,
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            Text(
+                              '${alarm.title} · $dateStr',
+                              style: AuraTypography.caption,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(LucideIcons.trash2,
-                          color: AuraColors.textSecondary, size: 20),
-                      onPressed: () async {
-                        HapticFeedback.mediumImpact();
-                        await itemDao.softDelete(alarm.id);
-                        await NotificationService().cancel(alarm.id.hashCode.abs());
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Alarm deleted'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
+                      // Delete button
+                      IconButton(
+                        icon: const Icon(LucideIcons.trash2,
+                            color: AuraColors.textMuted, size: 20),
+                        onPressed: () async {
+                          HapticFeedback.mediumImpact();
+                          await itemDao.softDelete(alarm.id);
+                          await NotificationService().cancel(alarm.id.hashCode.abs());
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Alarm deleted'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AuraColors.accentLime),
-          ),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) =>
             Center(child: Text('Error: $err', style: AuraTypography.body)),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AuraColors.accentLime,
-        foregroundColor: Colors.black,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-          side: BorderSide(color: Colors.black, width: 2),
-        ),
-        elevation: 0,
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () => _showCreateAlarmModal(context, ref),
         child: const Icon(LucideIcons.plus, size: 24),
       ),
@@ -150,11 +150,14 @@ class AlarmsScreen extends ConsumerWidget {
   void _showCreateAlarmModal(BuildContext context, WidgetRef ref) {
     final titleCtrl = TextEditingController(text: 'Alarm');
     TimeOfDay selectedTime = TimeOfDay.now();
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AuraColors.bgCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      backgroundColor: AuraColors.bgElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       isScrollControlled: true,
       builder: (ctx) {
         return StatefulBuilder(
@@ -172,70 +175,100 @@ class AlarmsScreen extends ConsumerWidget {
               padding: EdgeInsets.only(
                 left: AuraSpacing.md,
                 right: AuraSpacing.md,
-                top: AuraSpacing.md,
+                top: AuraSpacing.lg,
                 bottom: MediaQuery.of(context).viewInsets.bottom + AuraSpacing.md,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: AuraSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AuraColors.borderMuted,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
                   Text('NEW ALARM', style: AuraTypography.cardTitle),
                   const SizedBox(height: AuraSpacing.md),
                   TextField(
                     controller: titleCtrl,
                     style: AuraTypography.body,
                     decoration: InputDecoration(
-                      labelText: 'ALARM LABEL',
-                      labelStyle: AuraTypography.labelLime,
+                      labelText: 'Alarm label',
                       filled: true,
-                      fillColor: AuraColors.bgBase,
-                      enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: AuraColors.border, width: 2),
-                        borderRadius: BorderRadius.zero,
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: AuraColors.accentLime, width: 2),
-                        borderRadius: BorderRadius.zero,
+                      fillColor: AuraColors.bgCard,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AuraColors.border),
                       ),
                     ),
                   ),
                   const SizedBox(height: AuraSpacing.md),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Time: ${selectedTime.format(context)}',
-                        style: AuraTypography.cardTitle.copyWith(color: AuraColors.accentLime),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AuraColors.bgBase,
-                          foregroundColor: AuraColors.textPrimary,
-                          side: const BorderSide(color: AuraColors.border, width: 1),
+                  // Time display + picker row
+                  Container(
+                    padding: const EdgeInsets.all(AuraSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AuraColors.bgCard,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AuraColors.border, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Time', style: AuraTypography.caption),
+                            Text(
+                              selectedTime.format(context),
+                              style: AuraTypography.display.copyWith(
+                                fontSize: 28,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ],
                         ),
-                        onPressed: () async {
-                          final picked = await showTimePicker(
-                            context: context,
-                            initialTime: selectedTime,
-                          );
-                          if (picked != null) {
-                            setModalState(() => selectedTime = picked);
-                          }
-                        },
-                        child: const Text('PICK TIME'),
-                      ),
-                    ],
+                        ElevatedButton.icon(
+                          icon: const Icon(LucideIcons.clock, size: 16),
+                          label: const Text('CHANGE'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor.withValues(alpha: 0.15),
+                            foregroundColor: primaryColor,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final picked = await showTimePicker(
+                              context: context,
+                              initialTime: selectedTime,
+                            );
+                            if (picked != null) {
+                              setModalState(() => selectedTime = picked);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: AuraSpacing.lg),
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AuraColors.accentLime,
-                        foregroundColor: Colors.black,
-                        side: const BorderSide(color: Colors.black, width: 2),
-                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       onPressed: () async {
                         final title = titleCtrl.text.trim().isEmpty ? 'Alarm' : titleCtrl.text.trim();
@@ -270,9 +303,10 @@ class AlarmsScreen extends ConsumerWidget {
 
                         if (context.mounted) Navigator.pop(context);
                       },
-                      child: Text('SET ALARM', style: AuraTypography.label.copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
+                      child: const Text('SET ALARM'),
                     ),
                   ),
+                  const SizedBox(height: AuraSpacing.sm),
                 ],
               ),
             );

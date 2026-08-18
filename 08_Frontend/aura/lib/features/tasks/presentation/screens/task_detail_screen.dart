@@ -54,11 +54,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             backgroundColor: AuraColors.bgBase,
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AuraColors.accentLime),
-              ),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -115,15 +111,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
             ],
             bottom: TabBar(
               controller: _tabController,
-              indicatorColor: AuraColors.accentLime,
-              labelColor: AuraColors.accentLime,
-              unselectedLabelColor: AuraColors.textSecondary,
               labelStyle: AuraTypography.label.copyWith(fontSize: 11),
               tabs: const [
                 Tab(text: 'DETAILS'),
                 Tab(text: 'SUBTASKS'),
                 Tab(text: 'NOTES'),
-                Tab(text: 'ATTACHMENTS'),
+                Tab(text: 'INFO'),
               ],
             ),
           ),
@@ -161,7 +154,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
                         duration: const Duration(seconds: 10),
                         action: SnackBarAction(
                           label: 'UNDO',
-                          textColor: AuraColors.accentLime,
                           onPressed: () async {
                             await itemDao.updateStatus(item.id, 'pending');
                           },
@@ -242,13 +234,13 @@ class _DetailsTab extends StatelessWidget {
             padding: const EdgeInsets.all(AuraSpacing.md),
             decoration: BoxDecoration(
               color: AuraColors.bgCard,
-              border: Border.all(
-                  color: AuraColors.border, width: AuraSpacing.borderWidth),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AuraColors.border, width: 1),
               boxShadow: const [
                 BoxShadow(
-                  color: Colors.black,
-                  offset: Offset(4, 4),
-                  blurRadius: 0,
+                  color: AuraColors.shadow,
+                  blurRadius: 16,
+                  offset: Offset(0, 4),
                 ),
               ],
             ),
@@ -306,7 +298,6 @@ class _DetailsTab extends StatelessWidget {
                   children: [
                     _Tag(
                       label: item.category.toUpperCase(),
-                      color: AuraColors.accentLime,
                     ),
                     _Tag(
                       label: item.kind.toUpperCase(),
@@ -337,8 +328,8 @@ class _DetailsTab extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Row(
                         children: [
-                          const Icon(LucideIcons.calendar,
-                              size: 16, color: AuraColors.accentLime),
+                          Icon(LucideIcons.calendar,
+                              size: 16, color: Theme.of(context).colorScheme.primary),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(deadlineStr, style: AuraTypography.body),
@@ -357,62 +348,56 @@ class _DetailsTab extends StatelessWidget {
           const SizedBox(height: AuraSpacing.xl),
 
           // ── Actions ─────────────────────────────────────────────
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isCompleted
-                    ? AuraColors.bgElevated
-                    : AuraColors.accentLime,
-                foregroundColor: Colors.black,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                  side: BorderSide(color: AuraColors.border, width: 2),
-                ),
-                elevation: 0,
-              ),
-              onPressed: onToggleStatus,
-              child: Text(
-                isCompleted ? 'MARK AS PENDING ↺' : 'MARK AS DONE ✓',
-                style: AuraTypography.label.copyWith(
-                  color: isCompleted ? AuraColors.textPrimary : Colors.black,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: AuraSpacing.sm),
-
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AuraColors.textPrimary,
-                side: const BorderSide(color: AuraColors.border, width: 2),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                ),
-              ),
-              icon: const Icon(LucideIcons.clock,
-                  size: 18, color: AuraColors.accentLime),
-              label: Text(
-                'SNOOZE REMINDER ⏰',
-                style: AuraTypography.label.copyWith(
-                  color: AuraColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-              onPressed: () => SnoozePickerSheet.show(
-                context,
-                taskId: item.id,
-                taskTitle: item.title,
-              ),
-            ),
+          Consumer(
+            builder: (context, _, __) {
+              final primary = Theme.of(context).colorScheme.primary;
+              return Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isCompleted ? AuraColors.bgElevated : primary,
+                        foregroundColor: isCompleted ? AuraColors.textPrimary : Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: onToggleStatus,
+                      child: Text(
+                        isCompleted ? 'MARK AS PENDING ↺' : 'MARK AS DONE ✓',
+                        style: AuraTypography.label.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AuraSpacing.sm),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AuraColors.textPrimary,
+                        side: const BorderSide(color: AuraColors.border, width: 1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: Icon(LucideIcons.clock, size: 18, color: primary),
+                      label: const Text('SNOOZE REMINDER ⏰'),
+                      onPressed: () => SnoozePickerSheet.show(
+                        context,
+                        taskId: item.id,
+                        taskTitle: item.title,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -483,7 +468,7 @@ class _NotesTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ITEM NOTES 📝', style: AuraTypography.labelLime),
+          Text('NOTES', style: AuraTypography.label.copyWith(color: AuraColors.textSecondary)),
           const SizedBox(height: AuraSpacing.xs),
           Expanded(
             child: TextField(
@@ -515,18 +500,19 @@ class _AttachmentsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ATTACHMENTS & OCR DATA 📎', style: AuraTypography.labelLime),
+          Text('ADDITIONAL INFO', style: AuraTypography.label.copyWith(color: AuraColors.textSecondary)),
           const SizedBox(height: AuraSpacing.md),
           Container(
             padding: const EdgeInsets.all(AuraSpacing.md),
             decoration: BoxDecoration(
               color: AuraColors.bgCard,
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AuraColors.border, width: 1),
             ),
             child: Row(
               children: [
                 const Icon(LucideIcons.fileText,
-                    color: AuraColors.accentLime, size: 24),
+                    color: AuraColors.accentBlue, size: 24),
                 const SizedBox(width: AuraSpacing.sm),
                 Expanded(
                   child: Column(
@@ -549,23 +535,24 @@ class _AttachmentsTab extends StatelessWidget {
 }
 
 class _Tag extends StatelessWidget {
-  const _Tag({required this.label, required this.color});
+  const _Tag({required this.label, this.color});
 
   final String label;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final c = color ?? Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        border: Border.all(color: color, width: 1),
+        color: c.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
         style: AuraTypography.label.copyWith(
-          color: color,
+          color: c,
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),

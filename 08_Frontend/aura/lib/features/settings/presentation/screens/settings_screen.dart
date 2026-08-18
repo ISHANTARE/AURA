@@ -107,7 +107,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AuraColors.bgCard,
-                border: Border.all(color: AuraColors.border, width: 2),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +138,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                                 filled: true,
                                 fillColor: AuraColors.bgElevated,
-                                border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none),
                               ),
                             ),
                           ],
@@ -371,9 +371,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       onPressed: _saveSettings,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: activeAccent.color,
-                        foregroundColor: Colors.black,
+                        foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: Text('SAVE ALL SETTINGS', style: AuraTypography.buttonText.copyWith(fontWeight: FontWeight.bold)),
                     ),
@@ -505,9 +505,10 @@ class _SettingsSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: AuraTypography.bentoMetricLabel.copyWith(
-        color: AuraColors.accentLime,
+      style: AuraTypography.label.copyWith(
+        color: Theme.of(context).colorScheme.primary,
         letterSpacing: 1.2,
+        fontSize: 11,
       ),
     );
   }

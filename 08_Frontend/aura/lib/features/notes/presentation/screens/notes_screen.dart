@@ -14,7 +14,7 @@ import '../../../../core/providers/providers.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/empty_state.dart';
 
-/// Notes Screen — AURA v2 Reactive Notes & Voice Captures Screen
+/// Notes Screen — AURA v2 Redesigned Notes Screen
 class NotesScreen extends ConsumerWidget {
   const NotesScreen({super.key});
 
@@ -22,6 +22,7 @@ class NotesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notesAsync = ref.watch(notesListProvider);
     final itemDao = ref.watch(itemDaoProvider);
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       backgroundColor: AuraColors.bgBase,
@@ -46,9 +47,10 @@ class NotesScreen extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: AuraSpacing.sm),
             itemBuilder: (context, index) {
               final note = notes[index];
-              final dateStr = DateFormat('MMM d, h:mm a').format(
+              final dateStr = DateFormat('MMM d · h:mm a').format(
                 DateTime.fromMillisecondsSinceEpoch(note.updatedAt),
               );
+              final hasBody = note.notes != null && note.notes!.isNotEmpty;
 
               return GestureDetector(
                 onTap: () => context.push(Routes.taskRoute(note.id)),
@@ -56,26 +58,32 @@ class NotesScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(AuraSpacing.md),
                   decoration: BoxDecoration(
                     color: AuraColors.bgCard,
-                    border: Border.all(
-                      color: AuraColors.border,
-                      width: AuraSpacing.borderWidth,
-                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AuraColors.border, width: 1),
                     boxShadow: const [
                       BoxShadow(
-                        color: Colors.black,
-                        offset: Offset(4, 4),
-                        blurRadius: 0,
+                        color: AuraColors.shadow,
+                        blurRadius: 10,
+                        offset: Offset(0, 3),
                       ),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Header row
                       Row(
                         children: [
-                          const Icon(LucideIcons.fileText,
-                              color: AuraColors.accentLime, size: 18),
-                          const SizedBox(width: AuraSpacing.xs),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(LucideIcons.fileText,
+                                color: primaryColor, size: 16),
+                          ),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               note.title,
@@ -85,8 +93,10 @@ class NotesScreen extends ConsumerWidget {
                             ),
                           ),
                           IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                             icon: const Icon(LucideIcons.trash2,
-                                color: AuraColors.textSecondary, size: 18),
+                                color: AuraColors.textMuted, size: 18),
                             onPressed: () async {
                               HapticFeedback.mediumImpact();
                               await itemDao.softDelete(note.id);
@@ -102,20 +112,23 @@ class NotesScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      if (note.notes != null && note.notes!.isNotEmpty) ...[
-                        const SizedBox(height: AuraSpacing.xs),
+                      // Note body preview
+                      if (hasBody) ...[
+                        const SizedBox(height: 8),
                         Text(
                           note.notes!,
-                          style: AuraTypography.body,
+                          style: AuraTypography.body.copyWith(
+                            color: AuraColors.textSecondary,
+                          ),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                      const SizedBox(height: AuraSpacing.xs),
+                      const SizedBox(height: 8),
                       Text(
                         dateStr,
                         style: AuraTypography.overline.copyWith(
-                          color: AuraColors.textSecondary,
+                          color: AuraColors.textMuted,
                         ),
                       ),
                     ],
@@ -125,22 +138,15 @@ class NotesScreen extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AuraColors.accentLime),
-          ),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) =>
             Center(child: Text('Error: $err', style: AuraTypography.body)),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AuraColors.accentLime,
-        foregroundColor: Colors.black,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-          side: BorderSide(color: Colors.black, width: 2),
-        ),
-        elevation: 0,
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () => _showCreateNoteModal(context, ref),
         child: const Icon(LucideIcons.plus, size: 24),
       ),
@@ -150,77 +156,86 @@ class NotesScreen extends ConsumerWidget {
   void _showCreateNoteModal(BuildContext context, WidgetRef ref) {
     final titleCtrl = TextEditingController();
     final bodyCtrl = TextEditingController();
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AuraColors.bgCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      backgroundColor: AuraColors.bgElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       isScrollControlled: true,
       builder: (ctx) {
         return Padding(
           padding: EdgeInsets.only(
             left: AuraSpacing.md,
             right: AuraSpacing.md,
-            top: AuraSpacing.md,
+            top: AuraSpacing.lg,
             bottom: MediaQuery.of(ctx).viewInsets.bottom + AuraSpacing.md,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: AuraSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AuraColors.borderMuted,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               Text('NEW NOTE', style: AuraTypography.cardTitle),
               const SizedBox(height: AuraSpacing.md),
               TextField(
                 controller: titleCtrl,
-                style: AuraTypography.body,
+                autofocus: true,
+                style: AuraTypography.bodyPrimary,
                 decoration: InputDecoration(
-                  labelText: 'NOTE TITLE',
-                  labelStyle: AuraTypography.labelLime,
+                  hintText: 'Note title...',
                   filled: true,
-                  fillColor: AuraColors.bgBase,
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: AuraColors.border, width: 2),
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: AuraColors.accentLime, width: 2),
-                    borderRadius: BorderRadius.zero,
+                  fillColor: AuraColors.bgCard,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AuraColors.border),
                   ),
                 ),
               ),
-              const SizedBox(height: AuraSpacing.md),
+              const SizedBox(height: AuraSpacing.sm),
               TextField(
                 controller: bodyCtrl,
                 style: AuraTypography.body,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  labelText: 'NOTE CONTENT',
-                  labelStyle: AuraTypography.labelLime,
+                  hintText: 'Write something...',
                   filled: true,
-                  fillColor: AuraColors.bgBase,
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: AuraColors.border, width: 2),
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: AuraColors.accentLime, width: 2),
-                    borderRadius: BorderRadius.zero,
+                  fillColor: AuraColors.bgCard,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AuraColors.border),
                   ),
                 ),
               ),
               const SizedBox(height: AuraSpacing.lg),
               SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AuraColors.accentLime,
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(color: Colors.black, width: 2),
-                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: () async {
-                    final title = titleCtrl.text.trim().isEmpty ? 'Untitled Note' : titleCtrl.text.trim();
+                    final title = titleCtrl.text.trim().isEmpty
+                        ? 'Untitled Note'
+                        : titleCtrl.text.trim();
                     final body = bodyCtrl.text.trim();
                     final itemDao = ref.read(itemDaoProvider);
                     final nowEpoch = DateTime.now().millisecondsSinceEpoch;
@@ -239,9 +254,10 @@ class NotesScreen extends ConsumerWidget {
 
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
-                  child: Text('SAVE NOTE', style: AuraTypography.label.copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
+                  child: const Text('SAVE NOTE'),
                 ),
               ),
+              const SizedBox(height: AuraSpacing.sm),
             ],
           ),
         );
