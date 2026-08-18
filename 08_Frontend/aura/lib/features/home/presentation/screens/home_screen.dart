@@ -65,8 +65,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final dateStr = DateFormat('EEEE, MMMM d').format(now);
     final mediaQuery = MediaQuery.of(context);
 
-    // Dynamic user name from SharedPreferences
-    final userName = ref.watch(userNameProvider).valueOrNull ?? 'there';
+    // Dynamic user name from StateNotifierProvider
+    final userName = ref.watch(userNameProvider);
     final greeting = _greeting(now.hour, userName);
 
     final urgentAsync = ref.watch(urgentItemsProvider);

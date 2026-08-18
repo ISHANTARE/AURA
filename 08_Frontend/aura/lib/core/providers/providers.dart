@@ -88,11 +88,28 @@ final notesListProvider = StreamProvider<List<Item>>((ref) {
 
 // ── User Preferences Providers ────────────────────────────────────────────────
 
-/// FutureProvider for the user's display name from SharedPreferences.
-/// Falls back to 'there' if not set during onboarding.
-final userNameProvider = FutureProvider<String>((ref) async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getString('USER_NAME') ?? 'there';
+class UserNameNotifier extends StateNotifier<String> {
+  UserNameNotifier() : super('there') {
+    _loadName();
+  }
+
+  Future<void> _loadName() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getString('USER_NAME') ?? 'there';
+  }
+
+  Future<void> setName(String newName) async {
+    state = newName;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('USER_NAME', newName);
+  }
+}
+
+/// StateNotifierProvider for the user's display name.
+/// Updates reactively when user changes name in Settings or Onboarding.
+final userNameProvider =
+    StateNotifierProvider<UserNameNotifier, String>((ref) {
+  return UserNameNotifier();
 });
 
 // ── Quick Stats Provider ──────────────────────────────────────────────────────

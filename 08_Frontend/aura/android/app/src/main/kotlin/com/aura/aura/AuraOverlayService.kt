@@ -186,12 +186,11 @@ class AuraOverlayService : Service() {
     }
 
     private fun onOrbTapped() {
-        // Bring AURA App to foreground and trigger capture overlay
-        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            putExtra("trigger_capture", true)
+        // Launch translucent floating capture window over current app
+        val captureIntent = Intent(this, AuraCaptureActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
-        startActivity(launchIntent)
+        startActivity(captureIntent)
 
         // Send method channel callback to Flutter if connected
         methodChannel?.invokeMethod("onOrbTapped", null)

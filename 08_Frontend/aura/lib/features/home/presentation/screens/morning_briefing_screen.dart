@@ -20,7 +20,7 @@ class MorningBriefingScreen extends ConsumerWidget {
     final now = DateTime.now();
     final dateStr = DateFormat('EEEE, MMMM d').format(now);
 
-    final userName = ref.watch(userNameProvider).valueOrNull ?? 'there';
+    final userName = ref.watch(userNameProvider);
     final firstName = userName.split(' ').first;
 
     final focusAsync = ref.watch(todayFocusItemsProvider);

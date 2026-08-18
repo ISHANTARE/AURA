@@ -135,7 +135,11 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
                         ),
                         onPressed: () {
                           ref.read(captureProvider.notifier).reset();
-                          Navigator.of(context).pop();
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          } else {
+                            SystemNavigator.pop();
+                          }
                         },
                         child: const Text('DONE', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
@@ -230,7 +234,13 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
           onTap: () async {
             HapticFeedback.lightImpact();
             await ref.read(captureProvider.notifier).cancelCapture();
-            if (mounted) Navigator.of(context).pop();
+            if (mounted) {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                SystemNavigator.pop();
+              }
+            }
           },
           child: Container(
             width: 32,

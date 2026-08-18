@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -7,29 +8,48 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aura/core/constants/colors.dart';
 import 'package:aura/core/constants/spacing.dart';
 import 'package:aura/core/constants/typography.dart';
+import 'package:aura/core/providers/providers.dart';
 import 'package:aura/core/router/app_router.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
+  final TextEditingController _nameController = TextEditingController(text: 'Ishant');
   int _currentPage = 0;
 
   // Selected workspaces for Screen 3
   final Set<String> _selectedWorkspaces = {'VIT', 'GATE Prep'};
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
   Future<void> _completeOnboarding() async {
+    final name = _nameController.text.trim();
+    if (name.isNotEmpty) {
+      await ref.read(userNameProvider.notifier).setName(name);
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
     if (mounted) context.go(Routes.home);
   }
 
   void _nextPage() {
+    if (_currentPage == 0) {
+      final name = _nameController.text.trim();
+      if (name.isNotEmpty) {
+        ref.read(userNameProvider.notifier).setName(name);
+      }
+    }
     if (_currentPage < 3) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -101,55 +121,94 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Slide 1: Welcome
   Widget _buildWelcomeSlide() {
-    return Padding(
-      padding: const EdgeInsets.all(AuraSpacing.xl),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: AuraColors.accentLime,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.black, width: 3),
-              boxShadow: const [
-                BoxShadow(color: AuraColors.orbGlow, blurRadius: 28, spreadRadius: 8),
-              ],
-            ),
-            child: Center(
-              child: Text('A', style: AuraTypography.orbLabel.copyWith(fontSize: 28)),
-            ),
-          ),
-          const SizedBox(height: AuraSpacing.xl),
-          Text('AURA', style: AuraTypography.display),
-          const SizedBox(height: AuraSpacing.sm),
-          Text('AI-Unified Reality Assistant', style: AuraTypography.body),
-          const SizedBox(height: AuraSpacing.xl2),
-          Text(
-            'One tap. You speak.\nLife organizes itself.',
-            textAlign: TextAlign.center,
-            style: AuraTypography.sectionHeader,
-          ),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _nextPage,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AuraColors.accentLime,
-                foregroundColor: AuraColors.textOnAccent,
-                elevation: 0,
-                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(AuraSpacing.xl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AuraColors.accentLime,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black, width: 3),
+                boxShadow: const [
+                  BoxShadow(color: AuraColors.orbGlow, blurRadius: 28, spreadRadius: 8),
+                ],
               ),
-              child: Text(
-                'GET STARTED →',
-                style: AuraTypography.buttonText.copyWith(fontWeight: FontWeight.bold),
+              child: Center(
+                child: Text('A', style: AuraTypography.orbLabel.copyWith(fontSize: 28)),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: AuraSpacing.xl),
+            Text('AURA', style: AuraTypography.display),
+            const SizedBox(height: AuraSpacing.sm),
+            Text('AI-Unified Reality Assistant', style: AuraTypography.body),
+            const SizedBox(height: AuraSpacing.lg),
+            Text(
+              'One tap. You speak.\nLife organizes itself.',
+              textAlign: TextAlign.center,
+              style: AuraTypography.sectionHeader,
+            ),
+            const SizedBox(height: AuraSpacing.xl),
+
+            // Name Input Field
+            Container(
+              padding: const EdgeInsets.all(AuraSpacing.md),
+              decoration: BoxDecoration(
+                color: AuraColors.bgCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AuraColors.border, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'What should AURA call you?',
+                    style: AuraTypography.label.copyWith(color: AuraColors.accentLime, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _nameController,
+                    style: AuraTypography.cardTitle,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your name',
+                      hintStyle: AuraTypography.body,
+                      filled: true,
+                      fillColor: AuraColors.bgElevated,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AuraColors.border),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AuraSpacing.xl),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _nextPage,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AuraColors.accentLime,
+                  foregroundColor: AuraColors.textOnAccent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  'GET STARTED →',
+                  style: AuraTypography.buttonText.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

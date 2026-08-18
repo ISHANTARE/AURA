@@ -11,6 +11,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../reminders/data/services/notification_service.dart';
 
 /// Alarms Screen — AURA v2 Dedicated Alarms & Time Alerts Screen
 class AlarmsScreen extends ConsumerWidget {
@@ -107,6 +108,7 @@ class AlarmsScreen extends ConsumerWidget {
                       onPressed: () async {
                         HapticFeedback.mediumImpact();
                         await itemDao.softDelete(alarm.id);
+                        await NotificationService().cancel(alarm.id.hashCode.abs());
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -244,9 +246,11 @@ class AlarmsScreen extends ConsumerWidget {
                             : alarmDt;
                         final nowEpoch = DateTime.now().millisecondsSinceEpoch;
 
+                        final alarmId = 'alarm_$nowEpoch';
+
                         await itemDao.insertItem(
                           ItemsCompanion.insert(
-                            id: 'alarm_$nowEpoch',
+                            id: alarmId,
                             title: title,
                             category: 'alarm',
                             kind: 'alarm',
@@ -254,6 +258,14 @@ class AlarmsScreen extends ConsumerWidget {
                             createdAt: nowEpoch,
                             updatedAt: nowEpoch,
                           ),
+                        );
+
+                        await NotificationService().scheduleAlarm(
+                          id: alarmId.hashCode.abs(),
+                          title: title,
+                          body: 'Alarm: ${DateFormat('h:mm a').format(targetDt)}',
+                          scheduledDate: targetDt,
+                          payload: alarmId,
                         );
 
                         if (context.mounted) Navigator.pop(context);

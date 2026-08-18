@@ -75,6 +75,17 @@
             </intent-filter>
         </activity>
 
+        <!-- Translucent Capture Overlay Activity (Sprint 3) -->
+        <activity
+            android:name=".AuraCaptureActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/TranslucentTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+
         <!-- Component declarations for Sprint 3 -->
         <service
             android:name=".AuraOverlayService"

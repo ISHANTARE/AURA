@@ -1,136 +1,175 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// AURA Typography System
-/// Font: Space Grotesk (Google Fonts)
-/// Source: 03_UX/design_system.md — Typography section
+import 'colors.dart';
+
+/// AURA Typography System — Inter
+/// Migrated from Space Grotesk to Inter for a cleaner, modern productivity feel.
+/// Type scale: Display → Headline → Title → Body → Caption → Label
 abstract final class AuraTypography {
   // ── Font family ───────────────────────────────────────────────────────────
-  static const String fontFamily = 'SpaceGrotesk';
+  static const String fontFamily = 'Inter';
 
   // ── Base TextStyle factory ────────────────────────────────────────────────
   static TextStyle _base({
     required double size,
     required FontWeight weight,
-    Color color = const Color(0xFFFFFFFF),
+    Color color = AuraColors.textPrimary,
     double? letterSpacing,
+    double? height,
     TextDecoration? decoration,
   }) =>
-      GoogleFonts.spaceGrotesk(
+      GoogleFonts.inter(
         fontSize: size,
         fontWeight: weight,
         color: color,
         letterSpacing: letterSpacing,
+        height: height,
         decoration: decoration,
       );
 
   // ── Display / Hero ────────────────────────────────────────────────────────
-  /// Large stats, orb label. 36sp ExtraBold.
-  static TextStyle get display => _base(size: 36, weight: FontWeight.w800);
+  /// Large stats, welcome screens, orb label. 40sp ExtraBold.
+  static TextStyle get display => _base(
+        size: 40,
+        weight: FontWeight.w800,
+        height: 1.1,
+      );
+
+  // ── Headline ──────────────────────────────────────────────────────────────
+  /// Screen titles, onboarding headings. 28sp Bold.
+  static TextStyle get headline => _base(
+        size: 28,
+        weight: FontWeight.w700,
+        height: 1.2,
+      );
 
   // ── Screen / Section Headers ──────────────────────────────────────────────
-  /// Screen titles, section names. 22sp Bold.
-  static TextStyle get sectionHeader => _base(size: 22, weight: FontWeight.w700);
+  /// App bar titles, section names. 20sp SemiBold.
+  static TextStyle get sectionHeader => _base(
+        size: 20,
+        weight: FontWeight.w600,
+        height: 1.3,
+      );
 
   /// Alias for sectionHeader — used in screen app bars.
-  static TextStyle get screenHeader => _base(size: 22, weight: FontWeight.w700);
+  static TextStyle get screenHeader => sectionHeader;
 
-  // ── Card Titles ───────────────────────────────────────────────────────────
-  /// Task names, event titles. 17sp SemiBold.
-  static TextStyle get cardTitle => _base(size: 17, weight: FontWeight.w600);
+  // ── Title ─────────────────────────────────────────────────────────────────
+  /// Card titles, list item primaries. 16sp SemiBold.
+  static TextStyle get cardTitle => _base(
+        size: 16,
+        weight: FontWeight.w600,
+        height: 1.4,
+      );
 
   // ── Body ──────────────────────────────────────────────────────────────────
-  /// Deadlines, descriptions. 14sp Regular, secondary white.
+  /// Primary body content. 15sp Regular, full white.
+  static TextStyle get bodyPrimary => _base(
+        size: 15,
+        weight: FontWeight.w400,
+        height: 1.5,
+      );
+
+  /// Standard body — 14sp Regular, secondary text color.
   static TextStyle get body => _base(
         size: 14,
         weight: FontWeight.w400,
-        color: const Color(0x99FFFFFF),
+        color: AuraColors.textSecondary,
+        height: 1.5,
       );
 
-  /// Body at full white opacity (for primary content in detail screens).
-  static TextStyle get bodyPrimary => _base(size: 14, weight: FontWeight.w400);
-
   /// Body medium — 15sp Regular, full white.
-  static TextStyle get bodyMedium => _base(size: 15, weight: FontWeight.w400);
+  static TextStyle get bodyMedium => bodyPrimary;
 
-  /// Body small — 13sp Regular, secondary white.
+  /// Body small — 13sp Regular, secondary text color.
   static TextStyle get bodySmall => _base(
         size: 13,
         weight: FontWeight.w400,
-        color: const Color(0x99FFFFFF),
+        color: AuraColors.textSecondary,
+        height: 1.5,
       );
 
-  // ── Labels / Tags ─────────────────────────────────────────────────────────
-  /// Category labels, badges. 11sp Medium, ALL CAPS, letter-spacing 1.2.
+  // ── Caption ───────────────────────────────────────────────────────────────
+  /// Timestamps, meta info, breadcrumbs. 12sp Regular, muted.
+  static TextStyle get caption => _base(
+        size: 12,
+        weight: FontWeight.w400,
+        color: AuraColors.textMuted,
+        height: 1.4,
+      );
+
+  // ── Labels / Tags / Overline ──────────────────────────────────────────────
+  /// Category labels, badges. 11sp Medium, letter-spacing 0.8.
   static TextStyle get label => _base(
         size: 11,
         weight: FontWeight.w500,
-        color: const Color(0x99FFFFFF),
-        letterSpacing: 1.2,
+        color: AuraColors.textSecondary,
+        letterSpacing: 0.8,
       );
 
-  /// Label variant in lime (active section headers, focus cell numbers).
-  static TextStyle get labelLime => _base(
+  /// Overline — section markers, ALL CAPS hints. 11sp Medium.
+  static TextStyle get overline => _base(
         size: 11,
         weight: FontWeight.w500,
-        color: const Color(0xFFC8FF00),
+        color: AuraColors.textMuted,
         letterSpacing: 1.2,
       );
 
-  /// Badge / meta text — 11sp SemiBold, ALL CAPS, letter-spacing 1.0.
+  /// Badge / chip text. 11sp SemiBold.
   static TextStyle get badgeText => _base(
         size: 11,
         weight: FontWeight.w600,
-        color: const Color(0x99FFFFFF),
-        letterSpacing: 1.0,
+        color: AuraColors.textSecondary,
+        letterSpacing: 0.5,
       );
 
-  /// Bento metric labels (stats bento row). 11sp Bold, ALL CAPS.
+  // ── Stat / Metric Values ──────────────────────────────────────────────────
+  /// Large stat numbers in dashboard cards. 32sp ExtraBold.
+  static TextStyle get bentoMetricValue => _base(
+        size: 32,
+        weight: FontWeight.w800,
+        height: 1.1,
+      );
+
+  /// Stat metric labels beneath numbers. 11sp Bold, muted.
   static TextStyle get bentoMetricLabel => _base(
         size: 11,
         weight: FontWeight.w700,
-        letterSpacing: 1.0,
-      );
-
-  /// Bento metric values (large numbers in stats cards). 28sp ExtraBold.
-  static TextStyle get bentoMetricValue => _base(
-        size: 28,
-        weight: FontWeight.w800,
-      );
-
-  // ── Overline (smaller labels) ─────────────────────────────────────────────
-  /// Breadcrumbs, contextual hints. 12sp Regular.
-  static TextStyle get overline => _base(
-        size: 12,
-        weight: FontWeight.w400,
-        color: const Color(0x99FFFFFF),
+        color: AuraColors.textMuted,
         letterSpacing: 0.8,
       );
 
   // ── Button labels ─────────────────────────────────────────────────────────
-  /// Primary CTA (lime button). 16sp Bold black.
+  /// Primary CTA button label. 15sp Bold white.
   static TextStyle get buttonPrimary => _base(
-        size: 16,
-        weight: FontWeight.w700,
-        color: const Color(0xFF000000),
-      );
-
-  /// Alias for buttonPrimary — used in ElevatedButton child widgets.
-  static TextStyle get buttonText => _base(
         size: 15,
         weight: FontWeight.w700,
-        color: const Color(0xFF000000),
       );
 
-  /// Secondary CTA. 15sp SemiBold white.
-  static TextStyle get buttonSecondary =>
-      _base(size: 15, weight: FontWeight.w600);
+  /// Alias for buttonPrimary.
+  static TextStyle get buttonText => buttonPrimary;
+
+  /// Secondary CTA. 15sp SemiBold.
+  static TextStyle get buttonSecondary => _base(
+        size: 15,
+        weight: FontWeight.w600,
+        color: AuraColors.textSecondary,
+      );
 
   // ── Orb label ─────────────────────────────────────────────────────────────
-  /// The "A" on the orb. 24sp ExtraBold black.
+  /// The "A" on the orb. 22sp ExtraBold white.
   static TextStyle get orbLabel => _base(
-        size: 24,
+        size: 22,
         weight: FontWeight.w800,
-        color: const Color(0xFF000000),
+      );
+
+  // ── Legacy alias ──────────────────────────────────────────────────────────
+  /// @deprecated Use [label] instead.
+  static TextStyle get labelLime => _base(
+        size: 11,
+        weight: FontWeight.w500,
+        color: AuraColors.accentPrimary,
+        letterSpacing: 0.8,
       );
 }

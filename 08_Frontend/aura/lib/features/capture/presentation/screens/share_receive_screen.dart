@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -10,7 +11,6 @@ import '../../../../core/providers/providers.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../database/daos/shared_content_dao.dart';
 import '../../domain/usecases/process_shared_content_usecase.dart';
-import '../../../capture/presentation/providers/capture_provider.dart';
 import '../../../../platform/share_channel.dart';
 
 /// Provider for ShareChannel instance
@@ -55,6 +55,15 @@ class ShareReceiveScreen extends ConsumerStatefulWidget {
 
 class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
   _ShareState _state = const _ShareState(status: _ShareStatus.loading);
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -106,19 +115,14 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
 
       if (!mounted) return;
 
+      _titleController.text = result.title;
+      _notesController.text = result.extractedText;
+
       setState(() => _state = _ShareState(
             status: _ShareStatus.done,
             payload: payload,
             result: result,
           ));
-
-      // Pre-fill the capture transcript with the extracted text
-      // and route to home to show voice confirmation
-      ref.read(captureProvider.notifier).updateTypedTranscript(
-            '${result.title}: ${result.extractedText}'.trim(),
-          );
-
-      if (mounted) context.go(Routes.home);
     } catch (e) {
       if (mounted) {
         setState(() => _state = _ShareState(
@@ -126,6 +130,52 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
               payload: payload,
               errorMessage: 'Processing failed: $e',
             ));
+      }
+    }
+  }
+
+  Future<void> _saveSharedItem() async {
+    final title = _titleController.text.trim();
+    final notes = _notesController.text.trim();
+
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a title')),
+      );
+      return;
+    }
+
+    try {
+      final db = ref.read(databaseProvider);
+      final workspaces = await db.workspaceDao.getAll();
+      final wsId = workspaces.isNotEmpty ? workspaces.first.id : 'default';
+      final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+      final itemId = 'shared_${nowEpoch}_${title.hashCode.abs()}';
+
+      final companion = ItemsCompanion(
+        id: Value(itemId),
+        workspaceId: Value(wsId),
+        title: Value(title),
+        notes: Value(notes.isNotEmpty ? notes : null),
+        kind: Value(notes.isNotEmpty ? 'generic' : 'task'),
+        status: const Value('pending'),
+        createdAt: Value(nowEpoch),
+        updatedAt: Value(nowEpoch),
+      );
+
+      await db.itemDao.insertItem(companion);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Item saved to AURA!')),
+        );
+        context.go(Routes.home);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save item: $e')),
+        );
       }
     }
   }
@@ -297,26 +347,100 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
   }
 
   Widget _buildDone() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: const BoxDecoration(
-            color: AuraColors.accentGreen,
-            shape: BoxShape.circle,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: AuraColors.accentGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(LucideIcons.check, size: 24, color: Colors.black),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Content Extracted!', style: AuraTypography.cardTitle),
+                  Text('Review and save to your database', style: AuraTypography.caption),
+                ],
+              ),
+            ],
           ),
-          child: const Icon(LucideIcons.check, size: 36, color: Colors.black),
-        ),
-        const SizedBox(height: AuraSpacing.md),
-        Text('Content saved!', style: AuraTypography.sectionHeader),
-        const SizedBox(height: AuraSpacing.xs),
-        Text(
-          'Returning to home…',
-          style: AuraTypography.body,
-        ),
-      ],
+          const SizedBox(height: AuraSpacing.lg),
+
+          // Title field
+          Text('TITLE', style: AuraTypography.label.copyWith(color: AuraColors.accentLime, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _titleController,
+            style: AuraTypography.cardTitle,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AuraColors.bgCard,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AuraColors.border),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AuraSpacing.md),
+
+          // Extracted text / Notes field
+          Text('EXTRACTED CONTENT / NOTES', style: AuraTypography.label.copyWith(color: AuraColors.accentLime, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _notesController,
+            maxLines: 5,
+            style: AuraTypography.bodyPrimary,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AuraColors.bgCard,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AuraColors.border),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AuraSpacing.xl),
+
+          // Action Buttons: SAVE vs DISCARD
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AuraColors.accentLime,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(0, 48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(LucideIcons.save, size: 18, color: Colors.black),
+                  label: const Text('SAVE TO AURA', style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: _saveSharedItem,
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 48),
+                  side: const BorderSide(color: AuraColors.border),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () => context.go(Routes.home),
+                child: const Text('DISCARD'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

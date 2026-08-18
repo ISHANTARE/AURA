@@ -50,8 +50,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _saveSettings() async {
+    final newName = _userNameController.text.trim();
+    await ref.read(userNameProvider.notifier).setName(newName);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('USER_NAME', _userNameController.text.trim());
     await prefs.setString('LLM_API_KEY', _apiKeyController.text.trim());
     await prefs.setString('LLM_BASE_URL', _baseUrlController.text.trim());
     await prefs.setString('LLM_MODEL', _selectedModel);

@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum ThemeAccent {
-  neonLime('Neon Lime', Color(0xFFC8FF00)),
-  cyberCyan('Cyber Cyan', Color(0xFF00E5FF)),
-  electricPurple('Electric Purple', Color(0xFFB57BFF)),
-  sunsetOrange('Sunset Orange', Color(0xFFFF6B00));
+  indigoPrimary('Indigo', Color(0xFF7B6FF0)),
+  cyberCyan('Cyber Cyan', Color(0xFF22D3EE)),
+  electricPurple('Electric Purple', Color(0xFFC084FC)),
+  sunsetOrange('Sunset Orange', Color(0xFFFF9966)),
+  roseGold('Rose Gold', Color(0xFFF472B6));
 
   final String label;
   final Color color;
@@ -14,16 +15,16 @@ enum ThemeAccent {
 }
 
 class ThemeAccentNotifier extends StateNotifier<ThemeAccent> {
-  ThemeAccentNotifier() : super(ThemeAccent.neonLime) {
+  ThemeAccentNotifier() : super(ThemeAccent.indigoPrimary) {
     _loadAccent();
   }
 
   Future<void> _loadAccent() async {
     final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString('THEME_ACCENT') ?? 'Neon Lime';
+    final name = prefs.getString('THEME_ACCENT') ?? ThemeAccent.indigoPrimary.label;
     state = ThemeAccent.values.firstWhere(
       (a) => a.label == name,
-      orElse: () => ThemeAccent.neonLime,
+      orElse: () => ThemeAccent.indigoPrimary,
     );
   }
 

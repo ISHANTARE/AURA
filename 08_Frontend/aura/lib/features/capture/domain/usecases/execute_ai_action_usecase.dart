@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../database/app_database.dart';
+import '../../../reminders/data/services/notification_service.dart';
 import '../entities/intent_result.dart';
 import 'create_task_usecase.dart';
 
@@ -43,6 +44,14 @@ class ExecuteAiActionUseCase {
             createdAt: nowEpoch,
             updatedAt: nowEpoch,
           ),
+        );
+
+        await NotificationService().scheduleAlarm(
+          id: alarmId.hashCode.abs(),
+          title: intent.title ?? 'Alarm',
+          body: 'Alarm: ${_formatTime(fireTime)}',
+          scheduledDate: fireTime,
+          payload: alarmId,
         );
 
         return 'Set alarm for ${_formatTime(fireTime)}';

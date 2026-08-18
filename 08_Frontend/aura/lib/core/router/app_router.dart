@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/morning_briefing_screen.dart';
-import '../../features/home/presentation/widgets/floating_orb.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/workspaces/presentation/screens/workspace_list_screen.dart';
 import '../../features/workspaces/presentation/screens/workspace_detail_screen.dart';
@@ -15,7 +14,7 @@ import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/alarms/presentation/screens/alarms_screen.dart';
 import '../../features/notes/presentation/screens/notes_screen.dart';
 import '../../features/capture/presentation/screens/share_receive_screen.dart';
-import '../../features/capture/presentation/widgets/voice_capture_overlay.dart';
+import '../../features/capture/presentation/screens/floating_capture_overlay_screen.dart';
 
 import '../constants/colors.dart';
 import '../constants/typography.dart';
@@ -126,6 +125,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: Routes.share,
         builder: (context, state) => const ShareReceiveScreen(),
       ),
+      GoRoute(
+        path: '/capture-overlay',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          opaque: false,
+          barrierColor: Colors.black.withValues(alpha: 0.5),
+          barrierDismissible: true,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          child: const FloatingCaptureOverlayScreen(),
+        ),
+      ),
     ],
     errorBuilder: (context, state) => _ErrorScreen(error: state.error),
   );
@@ -156,12 +168,7 @@ class _MainShellState extends ConsumerState<_MainShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AuraColors.bgBase,
-      body: Stack(
-        children: [
-          widget.child,
-          FloatingOrb(onTap: _onCaptureTap),
-        ],
-      ),
+      body: widget.child,
       bottomNavigationBar: AuraBottomNav(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
@@ -170,11 +177,6 @@ class _MainShellState extends ConsumerState<_MainShell> {
         },
       ),
     );
-  }
-
-  void _onCaptureTap() {
-    // Open voice capture overlay bottom sheet
-    VoiceCaptureOverlay.show(context);
   }
 }
 
