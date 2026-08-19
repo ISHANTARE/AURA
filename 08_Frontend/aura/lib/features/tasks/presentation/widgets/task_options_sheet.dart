@@ -152,10 +152,8 @@ class TaskOptionsSheet extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AuraColors.bgCard,
-        shape: const RoundedRectangleBorder(
-          side: BorderSide(
-              color: AuraColors.border, width: AuraSpacing.borderWidth),
-          borderRadius: BorderRadius.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
         title: Text('MOVE TO WORKSPACE', style: AuraTypography.screenHeader),
         content: Column(
@@ -191,10 +189,8 @@ class TaskOptionsSheet extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AuraColors.bgCard,
-        shape: const RoundedRectangleBorder(
-          side: BorderSide(
-              color: AuraColors.border, width: AuraSpacing.borderWidth),
-          borderRadius: BorderRadius.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
         title: Text('DELETE TASK?', style: AuraTypography.screenHeader),
         content: Text(
@@ -210,9 +206,8 @@ class TaskOptionsSheet extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AuraColors.accentRed,
               foregroundColor: Colors.white,
-              shape: const RoundedRectangleBorder(
-                side: BorderSide(color: AuraColors.border, width: 2),
-                borderRadius: BorderRadius.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             child: Text('DELETE',

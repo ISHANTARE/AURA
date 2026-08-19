@@ -77,17 +77,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   Row(
                     children: List.generate(4, (index) {
                       final isSelected = _currentPage == index;
-                      return Container(
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
                         margin: const EdgeInsets.only(right: 8),
-                        width: 10,
-                        height: 10,
+                        width: isSelected ? 24 : 8,
+                        height: 8,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isSelected ? AuraColors.accentLime : Colors.transparent,
-                          border: Border.all(
-                            color: isSelected ? AuraColors.accentLime : AuraColors.borderMuted,
-                            width: 1.5,
-                          ),
+                          borderRadius: BorderRadius.circular(4),
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : AuraColors.borderMuted,
                         ),
                       );
                     }),
@@ -131,15 +130,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AuraColors.accentLime,
+                color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.black, width: 3),
-                boxShadow: const [
-                  BoxShadow(color: AuraColors.orbGlow, blurRadius: 28, spreadRadius: 8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                    blurRadius: 32,
+                    spreadRadius: 8,
+                  ),
                 ],
               ),
               child: Center(
-                child: Text('A', style: AuraTypography.orbLabel.copyWith(fontSize: 28)),
+                child: Text('A', style: AuraTypography.orbLabel.copyWith(fontSize: 28, color: Colors.white)),
               ),
             ),
             const SizedBox(height: AuraSpacing.xl),
@@ -167,7 +169,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   Text(
                     'What should AURA call you?',
-                    style: AuraTypography.label.copyWith(color: AuraColors.accentLime, fontWeight: FontWeight.bold),
+                    style: AuraTypography.label.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -192,14 +197,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             const SizedBox(height: AuraSpacing.xl),
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 52,
               child: ElevatedButton(
                 onPressed: _nextPage,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AuraColors.accentLime,
-                  foregroundColor: AuraColors.textOnAccent,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 child: Text(
                   'GET STARTED →',
@@ -221,7 +226,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(LucideIcons.shieldCheck, size: 48, color: AuraColors.accentLime),
+          const Icon(LucideIcons.shieldCheck, size: 48, color: AuraColors.accentBlue),
           const SizedBox(height: 16),
           Text('Permissions for AURA', style: AuraTypography.display.copyWith(fontSize: 26)),
           const SizedBox(height: 8),
@@ -261,14 +266,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 52,
             child: ElevatedButton(
               onPressed: _nextPage,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AuraColors.accentLime,
-                foregroundColor: AuraColors.textOnAccent,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
                 elevation: 0,
-                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               child: Text(
                 'CONTINUE →',
@@ -313,19 +318,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     }
                   });
                 },
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: isSelected ? AuraColors.accentLime : AuraColors.bgCard,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : AuraColors.bgCard,
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? AuraColors.accentLime : AuraColors.border,
-                      width: 2,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : AuraColors.border,
+                      width: 1,
                     ),
                   ),
                   child: Text(
                     ws,
                     style: AuraTypography.badgeText.copyWith(
-                      color: isSelected ? AuraColors.textOnAccent : AuraColors.textPrimary,
+                      color: isSelected ? Colors.white : AuraColors.textPrimary,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -337,14 +348,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 52,
             child: ElevatedButton(
               onPressed: _selectedWorkspaces.isNotEmpty ? _nextPage : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AuraColors.accentLime,
-                foregroundColor: AuraColors.textOnAccent,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
                 elevation: 0,
-                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               child: Text(
                 'CONTINUE →',
@@ -377,7 +388,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AuraColors.bgCard,
-              border: Border.all(color: AuraColors.accentLime, width: 2),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AuraColors.border, width: 1),
+              boxShadow: const [
+                BoxShadow(color: AuraColors.shadow, blurRadius: 10, offset: Offset(0, 3)),
+              ],
             ),
             child: Text(
               '"ML assignment due Friday 11:59 PM, remind me 1 day before."',
@@ -391,15 +406,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AuraColors.accentLime,
+              color: Theme.of(context).colorScheme.primary,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.black, width: 3),
-              boxShadow: const [
-                BoxShadow(color: AuraColors.orbGlow, blurRadius: 24, spreadRadius: 6),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                  blurRadius: 28,
+                  spreadRadius: 6,
+                ),
               ],
             ),
             child: Center(
-              child: Text('A', style: AuraTypography.orbLabel.copyWith(fontSize: 26)),
+              child: Text('A', style: AuraTypography.orbLabel.copyWith(fontSize: 26, color: Colors.white)),
             ),
           ),
           const SizedBox(height: 12),
@@ -408,14 +426,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const Spacer(),
           SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 52,
             child: ElevatedButton(
               onPressed: _completeOnboarding,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AuraColors.accentLime,
-                foregroundColor: AuraColors.textOnAccent,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
                 elevation: 0,
-                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               child: Text(
                 'OPEN AURA →',
@@ -448,11 +466,12 @@ class _PermissionItem extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AuraColors.bgCard,
-        border: Border.all(color: AuraColors.borderMuted, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AuraColors.border, width: 1),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AuraColors.accentLime, size: 24),
+          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -466,9 +485,15 @@ class _PermissionItem extends StatelessWidget {
           OutlinedButton(
             onPressed: onRequest,
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AuraColors.accentLime),
+              side: BorderSide(color: Theme.of(context).colorScheme.primary),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text('GRANT', style: AuraTypography.badgeText.copyWith(color: AuraColors.accentLime)),
+            child: Text(
+              'GRANT',
+              style: AuraTypography.badgeText.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
           ),
         ],
       ),

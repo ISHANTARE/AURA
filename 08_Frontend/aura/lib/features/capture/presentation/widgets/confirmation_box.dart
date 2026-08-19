@@ -81,19 +81,19 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                 Container(
                   width: 20,
                   height: 20,
-                  decoration: const BoxDecoration(
-                    color: AuraColors.accentLime,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Icon(LucideIcons.sparkles, size: 12, color: Colors.black),
+                    child: Icon(LucideIcons.sparkles, size: 12, color: Colors.white),
                   ),
                 ),
                 const SizedBox(width: AuraSpacing.xs),
                 Text(
                   _actionLabel(intent.intentType),
                   style: AuraTypography.label.copyWith(
-                    color: AuraColors.accentLime,
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -417,10 +417,9 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AuraColors.bgCard,
+      backgroundColor: AuraColors.bgElevated,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        side: BorderSide(color: AuraColors.border, width: 2),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -471,11 +470,13 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                               ws.name,
                               style: AuraTypography.bodyPrimary.copyWith(
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                color: isSelected ? AuraColors.accentLime : AuraColors.textPrimary,
+                                color: isSelected
+                                    ? Theme.of(ctx).colorScheme.primary
+                                    : AuraColors.textPrimary,
                               ),
                             ),
                             trailing: isSelected
-                                ? const Icon(LucideIcons.check, size: 18, color: AuraColors.accentLime)
+                                ? Icon(LucideIcons.check, size: 18, color: Theme.of(ctx).colorScheme.primary)
                                 : null,
                             onTap: () {
                               Navigator.of(ctx).pop();
@@ -755,13 +756,12 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                 height: 46,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AuraColors.accentLime,
-                    foregroundColor: Colors.black,
-                    elevation: 4,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 2,
                     minimumSize: const Size(0, 46),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                      side: const BorderSide(color: Colors.black, width: 2),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   onPressed: isSaving
@@ -795,7 +795,7 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, 46),
                 side: const BorderSide(color: AuraColors.border),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () {
                 HapticFeedback.selectionClick();

@@ -161,11 +161,10 @@ class MorningBriefingScreen extends ConsumerWidget {
                 height: 52,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AuraColors.accentLime,
-                    foregroundColor: Colors.black,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                      side: BorderSide(color: AuraColors.border, width: 2),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     elevation: 0,
                   ),
@@ -173,7 +172,6 @@ class MorningBriefingScreen extends ConsumerWidget {
                   child: Text(
                     'START THE DAY →',
                     style: AuraTypography.label.copyWith(
-                      color: Colors.black,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
                     ),

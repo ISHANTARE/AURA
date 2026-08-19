@@ -69,26 +69,24 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
     final captureState = ref.watch(captureProvider);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    // Border color turns red on error state
-    final borderColor = (captureState.status == CaptureStatus.error)
-        ? AuraColors.accentRed
-        : AuraColors.border;
-
     return AnimatedPadding(
       duration: const Duration(milliseconds: 150),
       padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AuraColors.bgCard, // #141414
+          color: AuraColors.bgCard,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           border: Border(
-            top: BorderSide(color: borderColor, width: 2),
-            left: BorderSide(color: borderColor, width: 2),
-            right: BorderSide(color: borderColor, width: 2),
+            top: BorderSide(
+              color: captureState.status == CaptureStatus.error
+                  ? AuraColors.accentRed
+                  : AuraColors.border,
+              width: 1,
+            ),
           ),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
-        padding: const EdgeInsets.all(AuraSpacing.sm),
+        padding: const EdgeInsets.fromLTRB(AuraSpacing.md, AuraSpacing.sm, AuraSpacing.md, AuraSpacing.sm),
         child: SafeArea(
           top: false,
           child: Builder(
@@ -117,7 +115,7 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
                         captureState.isOfflineSaved
                             ? 'Saved as Offline Draft'
                             : 'Task Created Successfully',
-                        style: AuraTypography.cardTitle.copyWith(color: AuraColors.accentLime),
+                        style: AuraTypography.cardTitle,
                       ),
                       const SizedBox(height: AuraSpacing.xs),
                       Text(
@@ -129,9 +127,12 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
                       const SizedBox(height: AuraSpacing.md),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AuraColors.accentLime,
-                          foregroundColor: Colors.black,
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
                           minimumSize: const Size(140, 44),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () {
                           ref.read(captureProvider.notifier).reset();
@@ -181,16 +182,15 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
           animation: _pulseController,
           builder: (context, child) {
             return Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: AuraColors.accentLime,
+                color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.black, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: AuraColors.orbGlow
-                        .withValues(alpha: _glowAnimation.value * 0.15),
+                    color: Theme.of(context).colorScheme.primary
+                        .withValues(alpha: _glowAnimation.value * 0.5),
                     blurRadius: 16,
                     spreadRadius: 4,
                   ),
@@ -199,7 +199,10 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
               child: Center(
                 child: Text(
                   'A',
-                  style: AuraTypography.orbLabel.copyWith(fontSize: 14),
+                  style: AuraTypography.orbLabel.copyWith(
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             );
@@ -217,7 +220,7 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
                 style: AuraTypography.label.copyWith(
                   color: (state.status == CaptureStatus.error)
                       ? AuraColors.accentRed
-                      : AuraColors.accentLime,
+                      : Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.0,
                 ),
@@ -246,14 +249,14 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: Colors.transparent,
-              border: Border.all(color: AuraColors.border, width: 2),
-              borderRadius: BorderRadius.circular(4),
+              color: AuraColors.bgElevated,
+              shape: BoxShape.circle,
+              border: Border.all(color: AuraColors.border, width: 1),
             ),
             child: const Icon(
               Icons.close,
-              color: AuraColors.textPrimary,
-              size: 18,
+              color: AuraColors.textSecondary,
+              size: 16,
             ),
           ),
         ),
@@ -296,14 +299,12 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
         child: Column(
           children: [
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AuraColors.accentLime),
               strokeWidth: 3,
             ),
             const SizedBox(height: AuraSpacing.sm),
             Text(
               'Thinking...',
               style: AuraTypography.bodyPrimary.copyWith(
-                color: AuraColors.accentLime,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -390,11 +391,11 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AuraColors.accentLime,
-              foregroundColor: Colors.black,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
               minimumSize: const Size(0, 44),
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               ref.read(captureProvider.notifier).startCapture();
@@ -433,15 +434,13 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
           height: 44,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AuraColors.accentLime,
-              foregroundColor: Colors.black,
-              elevation: 4,
-              shadowColor: Colors.black,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 2,
               minimumSize: const Size(0, 44),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-                side: const BorderSide(color: Colors.black, width: 2),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             onPressed: (state.status == CaptureStatus.processing)
@@ -457,7 +456,6 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
             child: Text(
               state.status == CaptureStatus.textInput ? 'SUBMIT →' : 'STOP & PROCESS →',
               style: AuraTypography.label.copyWith(
-                color: Colors.black,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
               ),

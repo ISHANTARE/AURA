@@ -5,8 +5,7 @@ import '../../../../core/constants/icons.dart';
 import '../../../../core/constants/typography.dart';
 import '../../domain/entities/workspace_models.dart';
 
-/// Dark Neubrutalist Workspace Card for Workspace List Screen.
-/// Follows wireframe 04_workspace_screen.md & design_system.md spec.
+/// Soft dark workspace card for Workspace List Screen.
 class WorkspaceCard extends StatefulWidget {
   final WorkspaceWithStats item;
   final VoidCallback onTap;
@@ -48,27 +47,21 @@ class _WorkspaceCardState extends State<WorkspaceCard> {
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 60),
-        margin: EdgeInsets.only(
-          top: _isPressed ? 4.0 : 0.0,
-          left: _isPressed ? 4.0 : 0.0,
-          bottom: _isPressed ? 0.0 : 4.0,
-          right: _isPressed ? 0.0 : 4.0,
-        ),
+        duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           color: AuraColors.bgCard,
-          borderRadius: BorderRadius.zero,
-          border: Border.all(color: AuraColors.border, width: 2.0),
-          boxShadow: _isPressed
-              ? []
-              : const [
-                  BoxShadow(
-                    color: AuraColors.shadow,
-                    offset: Offset(4, 4),
-                    blurRadius: 0,
-                  ),
-                ],
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AuraColors.border, width: 1.0),
+          boxShadow: [
+            BoxShadow(
+              color: _isPressed
+                  ? Colors.transparent
+                  : AuraColors.shadow,
+              blurRadius: _isPressed ? 0 : 12,
+              offset: _isPressed ? Offset.zero : const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,8 +74,7 @@ class _WorkspaceCardState extends State<WorkspaceCard> {
                   padding: const EdgeInsets.all(6.0),
                   decoration: BoxDecoration(
                     color: iconColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.zero,
-                    border: Border.all(color: iconColor, width: 1.5),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     iconData,

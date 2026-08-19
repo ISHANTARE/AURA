@@ -180,25 +180,25 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                     fillColor: AuraColors.bgCard,
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 14.0),
-                    enabledBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                       borderSide:
-                          BorderSide(color: AuraColors.border, width: 2.0),
+                          const BorderSide(color: AuraColors.border, width: 1.0),
                     ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                          color: AuraColors.accentLime, width: 2.0),
+                          color: Theme.of(context).colorScheme.primary, width: 2.0),
                     ),
-                    errorBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                       borderSide:
-                          BorderSide(color: AuraColors.accentRed, width: 2.0),
+                          const BorderSide(color: AuraColors.accentRed, width: 1.5),
                     ),
-                    focusedErrorBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                       borderSide:
-                          BorderSide(color: AuraColors.accentRed, width: 2.0),
+                          const BorderSide(color: AuraColors.accentRed, width: 1.5),
                     ),
                   ),
                   onChanged: (_) => setState(() {}),
@@ -366,12 +366,10 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AuraColors.accentLime,
-                      foregroundColor: AuraColors.textOnAccent,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                        side: BorderSide(
-                            color: AuraColors.border, width: 2.0),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       elevation: 0,
                     ),

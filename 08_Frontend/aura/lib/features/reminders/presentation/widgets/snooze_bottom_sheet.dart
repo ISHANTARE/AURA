@@ -78,11 +78,14 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
           // Header
           Row(
             children: [
-              const Icon(LucideIcons.bellRing, color: AuraColors.accentLime, size: 20),
+              Icon(LucideIcons.bellRing, color: Theme.of(context).colorScheme.primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 'SNOOZE REMINDER',
-                style: AuraTypography.labelLime,
+                style: AuraTypography.label.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -135,23 +138,20 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
                     });
                   }
                 },
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? AuraColors.accentLime : AuraColors.bgCard,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : AuraColors.bgCard,
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isSelected ? AuraColors.accentLime : AuraColors.borderMuted,
-                      width: 1.5,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : AuraColors.borderMuted,
+                      width: 1,
                     ),
-                    boxShadow: isSelected
-                        ? [
-                            const BoxShadow(
-                              color: AuraColors.accentLime,
-                              offset: Offset(2, 2),
-                              blurRadius: 0,
-                            )
-                          ]
-                        : null,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -161,9 +161,7 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
                             ? LucideIcons.calendar
                             : LucideIcons.clock,
                         size: 14,
-                        color: isSelected
-                            ? AuraColors.textOnAccent
-                            : AuraColors.textSecondary,
+                        color: isSelected ? Colors.white : AuraColors.textSecondary,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -171,9 +169,7 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
                             ? '${_customDateTime!.month}/${_customDateTime!.day} ${_customDateTime!.hour}:${_customDateTime!.minute.toString().padLeft(2, '0')}'
                             : preset.label,
                         style: AuraTypography.bodySmall.copyWith(
-                          color: isSelected
-                              ? AuraColors.textOnAccent
-                              : AuraColors.textPrimary,
+                          color: isSelected ? Colors.white : AuraColors.textPrimary,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
@@ -202,15 +198,14 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
                 if (context.mounted) Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AuraColors.accentLime,
-                foregroundColor: AuraColors.textOnAccent,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
                 elevation: 0,
-                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               child: Text(
                 'CONFIRM SNOOZE',
                 style: AuraTypography.buttonText.copyWith(
-                  color: AuraColors.textOnAccent,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.0,
                 ),
