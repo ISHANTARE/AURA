@@ -8,6 +8,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../domain/entities/intent_result.dart';
 import '../providers/capture_provider.dart';
+import 'voice_capture_overlay.dart';
 
 /// Dedicated Confirmation Card for Alarms (Sprint 8)
 class AlarmConfirmationCard extends ConsumerStatefulWidget {
@@ -73,7 +74,7 @@ class _AlarmConfirmationCardState extends ConsumerState<AlarmConfirmationCard> {
                 onTap: () async {
                   HapticFeedback.selectionClick();
                   await ref.read(captureProvider.notifier).cancelCapture();
-                  if (context.mounted) Navigator.of(context).pop();
+                  if (context.mounted) VoiceCaptureOverlay.closeOverlay(context);
                 },
                 child: const Icon(LucideIcons.x, size: 20, color: AuraColors.textSecondary),
               ),
@@ -174,7 +175,6 @@ class _AlarmConfirmationCardState extends ConsumerState<AlarmConfirmationCard> {
                 );
                 ref.read(captureProvider.notifier).updateIntent(intentWithSnooze);
                 ref.read(captureProvider.notifier).confirmAndSave();
-                Navigator.of(context).pop();
               },
               child: Text(
                 'SET ALARM NOW',

@@ -583,31 +583,43 @@ class WorkspacesCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     return BentoCard(
       padding: const EdgeInsets.all(AuraSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('WORKSPACES', style: AuraTypography.label),
-          const SizedBox(height: AuraSpacing.sm),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                ...workspaces.map((ws) => Padding(
-                      padding: const EdgeInsets.only(right: AuraSpacing.sm),
-                      child: _WorkspaceChip(
-                        workspace: ws,
-                        onTap: () =>
-                            onWorkspaceTap?.call(ws['id'] as String? ?? ''),
-                      ),
-                    )),
-                // Add chip
-                _AddWorkspaceChip(onTap: onAddTap),
+                Icon(LucideIcons.folder, color: primaryColor, size: 18),
+                const SizedBox(width: 8),
+                Text('WORKSPACES', style: AuraTypography.cardTitle),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: AuraSpacing.sm),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  ...workspaces.map((ws) => Padding(
+                        padding: const EdgeInsets.only(right: AuraSpacing.sm),
+                        child: _WorkspaceChip(
+                          workspace: ws,
+                          onTap: () =>
+                              onWorkspaceTap?.call(ws['id'] as String? ?? ''),
+                        ),
+                      )),
+                  // Add chip
+                  _AddWorkspaceChip(onTap: onAddTap),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -632,32 +644,31 @@ class _WorkspaceChip extends StatelessWidget {
       },
       child: Container(
         padding: const EdgeInsets.symmetric(
-            horizontal: AuraSpacing.md, vertical: AuraSpacing.sm - 2),
+            horizontal: AuraSpacing.md, vertical: 8),
         decoration: BoxDecoration(
-          color: AuraColors.bgCard,
-          border: Border.all(color: AuraColors.border, width: AuraSpacing.borderWidth),
-          boxShadow: const [
-            BoxShadow(
-                color: AuraColors.shadow,
-                offset: Offset(2, 2),
-                blurRadius: 0),
-          ],
+          color: AuraColors.bgElevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AuraColors.border, width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: AuraSpacing.xs),
-            Text(name, style: AuraTypography.bodyPrimary.copyWith(fontSize: 13)),
-            const SizedBox(width: AuraSpacing.xs),
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: 8),
+            Text(name, style: AuraTypography.bodyPrimary.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              color: color.withValues(alpha: 0.2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
               child: Text(
                 '$count',
                 style: AuraTypography.label.copyWith(
                   color: color,
-                  letterSpacing: 0,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
                 ),
               ),
             ),
@@ -674,27 +685,35 @@ class _AddWorkspaceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         onTap?.call();
       },
       child: Container(
-        width: 36,
-        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: AuraColors.bgCard,
-          border: Border.all(
-              color: AuraColors.border, width: AuraSpacing.borderWidth),
-          boxShadow: const [
-            BoxShadow(
-                color: AuraColors.shadow,
-                offset: Offset(2, 2),
-                blurRadius: 0),
+          color: primaryColor.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: primaryColor.withValues(alpha: 0.4), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.plus, size: 15, color: primaryColor),
+            const SizedBox(width: 6),
+            Text(
+              'New',
+              style: AuraTypography.bodyPrimary.copyWith(
+                color: primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
           ],
         ),
-        child: const Icon(LucideIcons.plus,
-            size: 16, color: AuraColors.textPrimary),
       ),
     );
   }

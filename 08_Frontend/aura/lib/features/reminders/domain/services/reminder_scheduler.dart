@@ -28,7 +28,7 @@ class ReminderScheduler {
   }) async {
     await _notificationService.scheduleAlarm(
       id: alarmId.hashCode,
-      title: '⏰ ALARM: $title',
+      title: 'ALARM: $title',
       body: 'Time to wake up or attend to your scheduled alarm!',
       scheduledDate: fireAt,
       payload: '$alarmId|alarm',

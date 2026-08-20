@@ -193,6 +193,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       ),
 
+                      const SizedBox(height: AuraSpacing.sm),
+
+                      // Row 4: RECENT QUICK NOTES
+                      _StaggerCell(
+                        animation: _cellAnims[3],
+                        child: _RecentNotesCell(
+                          onViewAllTap: () => context.go(Routes.notes),
+                          onNoteTap: (id) => context.push(Routes.taskRoute(id)),
+                        ),
+                      ),
+
+                      const SizedBox(height: AuraSpacing.sm),
+
+                      // Row 5: ACTIVE ALARMS
+                      _StaggerCell(
+                        animation: _cellAnims[4],
+                        child: _ActiveAlarmsCell(
+                          onViewAllTap: () => context.push('/alarms'),
+                          onAlarmTap: (id) => context.push('/alarms'),
+                        ),
+                      ),
+
                       SizedBox(
                         height: AuraSpacing.orbSize +
                             AuraSpacing.bottomNavHeight +
@@ -295,6 +317,238 @@ class _IconButton extends StatelessWidget {
           border: Border.all(color: AuraColors.border, width: 1),
         ),
         child: Icon(icon, size: 20, color: AuraColors.textPrimary),
+      ),
+    );
+  }
+}
+
+class _RecentNotesCell extends ConsumerWidget {
+  const _RecentNotesCell({
+    required this.onViewAllTap,
+    required this.onNoteTap,
+  });
+
+  final VoidCallback onViewAllTap;
+  final ValueChanged<String> onNoteTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notesAsync = ref.watch(notesListProvider);
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(AuraSpacing.md),
+      decoration: BoxDecoration(
+        color: AuraColors.bgCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AuraColors.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(LucideIcons.fileText, color: primaryColor, size: 18),
+                  const SizedBox(width: 8),
+                  Text('RECENT QUICK NOTES', style: AuraTypography.cardTitle),
+                ],
+              ),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onViewAllTap();
+                },
+                child: Row(
+                  children: [
+                    Text('VIEW ALL', style: AuraTypography.overline.copyWith(color: primaryColor)),
+                    const SizedBox(width: 2),
+                    Icon(LucideIcons.chevronRight, size: 14, color: primaryColor),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AuraSpacing.sm),
+          notesAsync.when(
+            data: (notes) {
+              if (notes.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'No quick notes saved. Tap the orb or say "Note down meeting ideas" to record one.',
+                    style: AuraTypography.body.copyWith(fontStyle: FontStyle.italic),
+                  ),
+                );
+              }
+              final recent = notes.take(3).toList();
+              return SizedBox(
+                height: 90,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: recent.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final note = recent[index];
+                    return GestureDetector(
+                      onTap: () => onNoteTap(note.id),
+                      child: Container(
+                        width: 170,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AuraColors.bgElevated,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AuraColors.border, width: 1),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              note.title,
+                              style: AuraTypography.bodyPrimary.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              note.notes ?? 'No additional details',
+                              style: AuraTypography.caption,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+            loading: () => const SizedBox(height: 60, child: Center(child: CircularProgressIndicator())),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveAlarmsCell extends ConsumerWidget {
+  const _ActiveAlarmsCell({
+    required this.onViewAllTap,
+    required this.onAlarmTap,
+  });
+
+  final VoidCallback onViewAllTap;
+  final ValueChanged<String> onAlarmTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final alarmsAsync = ref.watch(alarmsListProvider);
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(AuraSpacing.md),
+      decoration: BoxDecoration(
+        color: AuraColors.bgCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AuraColors.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(LucideIcons.alarmClock, color: primaryColor, size: 18),
+                  const SizedBox(width: 8),
+                  Text('ACTIVE ALARMS', style: AuraTypography.cardTitle),
+                ],
+              ),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onViewAllTap();
+                },
+                child: Row(
+                  children: [
+                    Text('MANAGE', style: AuraTypography.overline.copyWith(color: primaryColor)),
+                    const SizedBox(width: 2),
+                    Icon(LucideIcons.chevronRight, size: 14, color: primaryColor),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AuraSpacing.sm),
+          alarmsAsync.when(
+            data: (alarms) {
+              if (alarms.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'No alarms currently scheduled. Tap the orb or say "Set an alarm for 7 AM" to create one.',
+                    style: AuraTypography.body.copyWith(fontStyle: FontStyle.italic),
+                  ),
+                );
+              }
+              final active = alarms.take(2).toList();
+              return Column(
+                children: active.map((alarm) {
+                  final fireAtDt = alarm.fireAt != null
+                      ? DateTime.fromMillisecondsSinceEpoch(alarm.fireAt!)
+                      : null;
+                  final timeStr = fireAtDt != null
+                      ? DateFormat('h:mm a').format(fireAtDt)
+                      : 'Daily Alarm';
+
+                  return GestureDetector(
+                    onTap: () => onAlarmTap(alarm.id),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AuraColors.bgElevated,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AuraColors.border, width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.bell, size: 16, color: primaryColor),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              alarm.title,
+                              style: AuraTypography.bodyPrimary,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            timeStr,
+                            style: AuraTypography.cardTitle.copyWith(
+                              color: primaryColor,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const SizedBox(height: 50, child: Center(child: CircularProgressIndicator())),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
   }

@@ -45,14 +45,17 @@ class CreateTaskUseCase {
 
       // 2. Insert Item (v2 entity)
       final itemId = _uuid.v4();
+      final isNote = intent.intentType == 'add_note';
+      final category = isNote ? 'reminder' : (intent.intentType == 'create_alarm' ? 'alarm' : 'reminder');
+      final kind = isNote ? 'note' : (intent.intentType == 'create_event' ? 'event' : 'task');
 
       await _itemDao.insertItem(
         ItemsCompanion.insert(
           id: itemId,
           workspaceId: Value(finalWorkspaceId),
-          title: intent.title ?? 'Untitled Voice Task',
-          category: 'reminder',
-          kind: 'task',
+          title: intent.title ?? (isNote ? 'Untitled Note' : 'Untitled Voice Task'),
+          category: category,
+          kind: kind,
           status: const Value('pending'),
           priority: Value(intent.priority ?? 'medium'),
           deadline: Value(intent.deadline?.millisecondsSinceEpoch),

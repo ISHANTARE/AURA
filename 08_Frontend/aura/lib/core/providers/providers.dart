@@ -76,12 +76,13 @@ final workspacesListProvider = StreamProvider<List<Workspace>>((ref) {
   return ref.watch(workspaceDaoProvider).watchAll();
 });
 
-/// Stream provider for notes (items with notes present or generic kind)
+/// Stream provider for notes (items with kind == 'note' or category == 'note')
 final notesListProvider = StreamProvider<List<Item>>((ref) {
   return ref.watch(itemDaoProvider).watchAllActive().map((allItems) {
     return allItems
         .where((i) =>
-            (i.notes != null && i.notes!.isNotEmpty) || i.kind == 'generic')
+            i.category != 'alarm' &&
+            (i.kind == 'note' || i.category == 'note'))
         .toList();
   });
 });

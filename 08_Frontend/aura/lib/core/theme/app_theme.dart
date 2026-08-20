@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -232,7 +232,7 @@ abstract final class AppTheme {
         elevation: 0,
         modalBarrierColor: Color(0x80000000), // rgba(0,0,0,0.5) scrim
         dragHandleColor: AuraColors.border,
-        showDragHandle: true,
+        showDragHandle: false,
       ),
 
       // ── Dialog ────────────────────────────────────────────────────────────

@@ -80,6 +80,13 @@ class MainActivity : FlutterActivity() {
                 "isOverlayRunning" -> {
                     result.success(AuraOverlayService.isServiceRunning)
                 }
+                "updateOrbColor" -> {
+                    val colorHex = call.argument<String>("colorHex") ?: "#7B6FF0"
+                    getSharedPreferences(AuraOverlayService.PREFS_NAME, Context.MODE_PRIVATE)
+                        .edit().putString(AuraOverlayService.KEY_ORB_COLOR_HEX, colorHex).apply()
+                    AuraOverlayService.instance?.updateOrbColor(colorHex)
+                    result.success(true)
+                }
                 "pickAlarmSound" -> {
                     pendingRingtoneResult = result
                     val currentUriStr = call.argument<String>("currentUri")

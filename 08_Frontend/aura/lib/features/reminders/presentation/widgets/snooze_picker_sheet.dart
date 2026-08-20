@@ -61,7 +61,7 @@ class SnoozePickerSheet extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('SNOOZE REMINDER ⏰', style: AuraTypography.screenHeader),
+              Text('SNOOZE REMINDER', style: AuraTypography.screenHeader),
               IconButton(
                 icon: const Icon(LucideIcons.x, color: AuraColors.textPrimary),
                 onPressed: () => Navigator.of(context).pop(),

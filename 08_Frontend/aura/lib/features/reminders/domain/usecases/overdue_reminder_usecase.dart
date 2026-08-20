@@ -40,7 +40,7 @@ class OverdueReminderUseCase {
 
     await _notificationService.showInstantNotification(
       id: 'overdue_summary_$todayKey'.hashCode.abs(),
-      title: 'Overdue Task Alert ⚠️',
+      title: 'Overdue Task Alert',
       body: count == 1
           ? 'Overdue: "$firstTitle"'
           : '$count tasks overdue. First up: "$firstTitle"',

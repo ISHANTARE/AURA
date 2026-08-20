@@ -49,7 +49,7 @@ class TaskDeadlineCard extends StatelessWidget {
 
     if (isOverdue) {
       chipColor = AuraColors.accentRed;
-      chipText = '🔴 Overdue by ${_formatDiff(now.difference(deadline!))}';
+      chipText = 'Overdue by ${_formatDiff(now.difference(deadline!))}';
     } else if (diff.inHours < 24) {
       chipColor = AuraColors.accentRed;
       chipText = 'Due in ${diff.inHours} hours';

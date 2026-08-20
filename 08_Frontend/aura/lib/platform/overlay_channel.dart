@@ -97,4 +97,13 @@ class OverlayChannel {
     }
     return null;
   }
+
+  /// Update dynamic accent color of floating orb
+  static Future<void> updateOrbColor(String colorHex) async {
+    try {
+      await _channel.invokeMethod('updateOrbColor', {'colorHex': colorHex});
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error updating orb color: $e');
+    }
+  }
 }

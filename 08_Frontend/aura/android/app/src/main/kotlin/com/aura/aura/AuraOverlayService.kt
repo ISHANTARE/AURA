@@ -40,15 +40,18 @@ class AuraOverlayService : Service() {
         const val KEY_ORB_X = "orb_x"
         const val KEY_ORB_Y = "orb_y"
         const val KEY_ORB_DISMISSED = "orb_user_dismissed"
+        const val KEY_ORB_COLOR_HEX = "orb_color_hex"
 
         var methodChannel: MethodChannel? = null
         var isServiceRunning = false
+        var instance: AuraOverlayService? = null
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification())
@@ -142,6 +145,13 @@ class AuraOverlayService : Service() {
                 val cx = width / 2f
                 val cy = height / 2f
                 val r = width / 2f - 2 * density
+
+                val savedHex = prefs.getString(KEY_ORB_COLOR_HEX, "#7B6FF0") ?: "#7B6FF0"
+                try {
+                    ringPaint.color = Color.parseColor(savedHex)
+                } catch (_: Exception) {
+                    ringPaint.color = Color.parseColor("#7B6FF0")
+                }
 
                 // Dark background circle
                 canvas.drawCircle(cx, cy, r, bgPaint)
@@ -249,6 +259,13 @@ class AuraOverlayService : Service() {
         methodChannel?.invokeMethod("onOrbTapped", null)
     }
 
+    fun updateOrbColor(colorHex: String) {
+        prefs.edit().putString(KEY_ORB_COLOR_HEX, colorHex).apply()
+        Handler(Looper.getMainLooper()).post {
+            floatingView?.invalidate()
+        }
+    }
+
     fun dismissAndStop() {
         prefs.edit().putBoolean(KEY_ORB_DISMISSED, true).apply()
         stopSelf()
@@ -257,6 +274,7 @@ class AuraOverlayService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isServiceRunning = false
+        instance = null
         if (floatingView != null) {
             windowManager?.removeView(floatingView)
             floatingView = null

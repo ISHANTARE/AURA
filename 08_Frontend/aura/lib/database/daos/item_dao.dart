@@ -24,6 +24,13 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
         ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
       .watch();
 
+  /// Get all active (non-deleted) items
+  Future<List<Item>> getAllActive() =>
+      (select(items)
+        ..where((t) => t.deletedAt.isNull())
+        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+      .get();
+
   /// Watch items by Category ('alarm' | 'reminder')
   Stream<List<Item>> watchByCategory(String category) =>
       (select(items)
@@ -95,6 +102,10 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
   /// Insert single item
   Future<int> insertItem(ItemsCompanion companion) =>
       into(items).insert(companion);
+
+  /// Insert or update single item on primary key conflict
+  Future<int> upsertItem(ItemsCompanion companion) =>
+      into(items).insertOnConflictUpdate(companion);
 
   /// Insert item along with optional sub-reminders inside a transaction
   Future<void> insertItemWithReminders(

@@ -110,14 +110,14 @@ class OrbMenuActivity : Activity() {
 
         // Menu items
         val items = listOf(
-            Triple("🔔", "Add Reminder", "reminder"),
-            Triple("📅", "Add Event", "event"),
-            Triple("📝", "Add Note", "note"),
-            Triple("⏰", "Add Alarm", "alarm"),
+            Triple("•", "Add Reminder", "reminder"),
+            Triple("•", "Add Event", "event"),
+            Triple("•", "Add Note", "note"),
+            Triple("•", "Add Alarm", "alarm"),
         )
 
-        for ((emoji, label, type) in items) {
-            card.addView(buildMenuItem(emoji, label) {
+        for ((symbol, label, type) in items) {
+            card.addView(buildMenuItem(symbol, label) {
                 launchCapture(type)
                 finish()
             })
@@ -134,7 +134,7 @@ class OrbMenuActivity : Activity() {
         card.addView(divider2)
 
         // Close item
-        card.addView(buildMenuItem("✕", "Close Floating Icon", color = "#FF6B6B") {
+        card.addView(buildMenuItem("X", "Close Floating Icon", color = "#FF6B6B") {
             val prefs = getSharedPreferences(AuraOverlayService.PREFS_NAME, Context.MODE_PRIVATE)
             prefs.edit().putBoolean(AuraOverlayService.KEY_ORB_DISMISSED, true).apply()
             stopService(Intent(this, AuraOverlayService::class.java))

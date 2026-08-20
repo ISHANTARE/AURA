@@ -8,6 +8,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../domain/entities/intent_result.dart';
 import '../providers/capture_provider.dart';
+import 'voice_capture_overlay.dart';
 
 /// Dedicated Confirmation Card for Plain Notes (Sprint 8)
 class NoteConfirmationCard extends ConsumerStatefulWidget {
@@ -81,7 +82,7 @@ class _NoteConfirmationCardState extends ConsumerState<NoteConfirmationCard> {
                 onTap: () async {
                   HapticFeedback.selectionClick();
                   await ref.read(captureProvider.notifier).cancelCapture();
-                  if (context.mounted) Navigator.of(context).pop();
+                  if (context.mounted) VoiceCaptureOverlay.closeOverlay(context);
                 },
                 child: const Icon(LucideIcons.x, size: 20, color: AuraColors.textSecondary),
               ),
@@ -157,7 +158,6 @@ class _NoteConfirmationCardState extends ConsumerState<NoteConfirmationCard> {
               onPressed: () {
                 HapticFeedback.mediumImpact();
                 ref.read(captureProvider.notifier).confirmAndSave();
-                Navigator.of(context).pop();
               },
               child: Text(
                 'SAVE NOTE',

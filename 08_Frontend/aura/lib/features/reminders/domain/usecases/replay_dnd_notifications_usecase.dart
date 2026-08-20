@@ -27,14 +27,14 @@ class ReplayDndNotificationsUseCase {
 
         await _notificationService.showInstantNotification(
           id: 'dnd_${log.id}'.hashCode.abs(),
-          title: 'DND Replay: Missed Reminder 🌙',
+          title: 'DND Replay: Missed Reminder',
           body: 'Scheduled $timeAgo · Tap to view task details',
           payload: 'item:${log.reminderId}',
         );
       } else {
         await _notificationService.showInstantNotification(
           id: 'dnd_summary_$nowMs'.hashCode.abs(),
-          title: 'DND Catchup 🌙',
+          title: 'DND Catchup',
           body:
               'You missed ${unreplayedLogs.length} reminders while Do Not Disturb was active.',
           payload: 'route:/briefing',
@@ -61,7 +61,7 @@ class ReplayDndNotificationsUseCase {
 
     await _notificationService.showInstantNotification(
       id: 'dnd_catchup_items'.hashCode.abs(),
-      title: 'Missed Reminders Catchup 💡',
+      title: 'Missed Reminders Catchup',
       body:
           'You have ${missedDndItems.length} pending items from earlier today.',
       payload: 'route:/briefing',

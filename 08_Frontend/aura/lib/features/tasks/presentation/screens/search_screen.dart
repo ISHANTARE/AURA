@@ -26,6 +26,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadInitialItems();
+    });
+  }
+
+  Future<void> _loadInitialItems() async {
+    setState(() => _isLoading = true);
+    final itemDao = ref.read(itemDaoProvider);
+    final allItems = await itemDao.getAllActive();
+    if (mounted) {
+      setState(() {
+        _rawResults = allItems;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -33,10 +53,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   void _onSearchChanged(String query) async {
     if (query.trim().isEmpty) {
-      setState(() {
-        _rawResults = [];
-        _isLoading = false;
-      });
+      _loadInitialItems();
       return;
     }
 
@@ -56,12 +73,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   List<Item> get _filteredResults {
     switch (_selectedFilter) {
       case SearchFilter.tasks:
-        return _rawResults.where((i) => i.kind == 'task').toList();
+        return _rawResults.where((i) => i.kind == 'task' || (i.category == 'reminder' && i.kind != 'event' && i.kind != 'note')).toList();
       case SearchFilter.events:
         return _rawResults.where((i) => i.kind == 'event').toList();
       case SearchFilter.notes:
         return _rawResults
-            .where((i) => i.kind == 'generic' || (i.notes != null && i.notes!.isNotEmpty))
+            .where((i) => i.kind == 'note' || i.category == 'note')
             .toList();
       case SearchFilter.all:
         return _rawResults;
@@ -166,7 +183,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ? Center(
                           child: Text(
                             _searchController.text.isEmpty
-                                ? 'Type keywords to search AURA...'
+                                ? 'No items found in this category.'
                                 : 'No matching items found.',
                             style: AuraTypography.body,
                           ),

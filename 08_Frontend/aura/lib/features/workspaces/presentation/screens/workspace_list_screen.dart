@@ -25,12 +25,6 @@ class WorkspaceListScreen extends ConsumerWidget {
         title: Text('WORKSPACES', style: AuraTypography.screenHeader),
         backgroundColor: AuraColors.bgBase,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(LucideIcons.plus, color: primaryColor),
-            onPressed: () => CreateWorkspaceModal.show(context),
-          ),
-        ],
       ),
       body: workspacesAsync.when(
         data: (workspaces) {

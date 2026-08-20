@@ -15,6 +15,7 @@ import 'workspace_confirmation_card.dart';
 import 'delete_confirmation_card.dart';
 import 'note_confirmation_card.dart';
 import 'alarm_confirmation_card.dart';
+import 'voice_capture_overlay.dart';
 
 class ConfirmationBox extends ConsumerStatefulWidget {
   final CaptureState state;
@@ -102,7 +103,7 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                   onTap: () async {
                     HapticFeedback.selectionClick();
                     await ref.read(captureProvider.notifier).cancelCapture();
-                    if (context.mounted) Navigator.of(context).pop();
+                    if (context.mounted) VoiceCaptureOverlay.closeOverlay(context);
                   },
                   child: const Icon(LucideIcons.x, size: 20, color: AuraColors.textSecondary),
                 ),

@@ -84,6 +84,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
           _titleController.text = item.title;
         }
 
+        final isNote = item.kind == 'note' || item.category == 'note';
+        if (isNote) {
+          return _NoteDetailView(item: item);
+        }
+
         final isCompleted = item.status == 'completed';
 
         return Scaffold(
@@ -150,7 +155,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
                     ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text('Task marked done ✓'),
+                        content: const Text('Task marked done'),
                         duration: const Duration(seconds: 10),
                         action: SnackBarAction(
                           label: 'UNDO',
@@ -366,7 +371,7 @@ class _DetailsTab extends StatelessWidget {
                       ),
                       onPressed: onToggleStatus,
                       child: Text(
-                        isCompleted ? 'MARK AS PENDING ↺' : 'MARK AS DONE ✓',
+                        isCompleted ? 'MARK AS PENDING' : 'MARK AS DONE',
                         style: AuraTypography.label.copyWith(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,
@@ -521,7 +526,7 @@ class _NotesTabState extends State<_NotesTab> {
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Notes saved successfully ✓'),
+                      content: Text('Notes saved successfully.'),
                       duration: Duration(seconds: 2),
                     ),
                   );
@@ -601,6 +606,169 @@ class _Tag extends StatelessWidget {
           color: c,
           fontSize: 10,
           fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _NoteDetailView extends ConsumerStatefulWidget {
+  const _NoteDetailView({required this.item});
+  final Item item;
+
+  @override
+  ConsumerState<_NoteDetailView> createState() => _NoteDetailViewState();
+}
+
+class _NoteDetailViewState extends ConsumerState<_NoteDetailView> {
+  late TextEditingController _titleController;
+  late TextEditingController _contentController;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.item.title);
+    _contentController = TextEditingController(
+      text: (widget.item.notes != null && widget.item.notes!.isNotEmpty)
+          ? widget.item.notes
+          : widget.item.title,
+    );
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final itemDao = ref.watch(itemDaoProvider);
+    final dtStr = DateFormat('EEE, MMM d, yyyy · h:mm a').format(
+      DateTime.fromMillisecondsSinceEpoch(widget.item.createdAt),
+    );
+
+    return Scaffold(
+      backgroundColor: AuraColors.bgBase,
+      appBar: AppBar(
+        backgroundColor: AuraColors.bgBase,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft, color: AuraColors.textPrimary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text('NOTE', style: AuraTypography.screenHeader),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.moreVertical, color: AuraColors.textPrimary),
+            onPressed: () => TaskOptionsSheet.show(
+              context,
+              taskId: widget.item.id,
+              taskTitle: widget.item.title,
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AuraSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Created timestamp badge
+              Row(
+                children: [
+                  Icon(LucideIcons.fileText, size: 14, color: primaryColor),
+                  const SizedBox(width: 6),
+                  Text(dtStr, style: AuraTypography.overline),
+                ],
+              ),
+              const SizedBox(height: AuraSpacing.md),
+
+              // Title input
+              TextField(
+                controller: _titleController,
+                style: AuraTypography.display.copyWith(fontSize: 22),
+                decoration: const InputDecoration(
+                  hintText: 'Note Title',
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const SizedBox(height: AuraSpacing.sm),
+              const Divider(color: AuraColors.border, height: 1),
+              const SizedBox(height: AuraSpacing.md),
+
+              // Notes content editor / viewer
+              Container(
+                constraints: const BoxConstraints(minHeight: 250),
+                padding: const EdgeInsets.all(AuraSpacing.md),
+                decoration: BoxDecoration(
+                  color: AuraColors.bgCard,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AuraColors.border, width: 1),
+                ),
+                child: TextField(
+                  controller: _contentController,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  style: AuraTypography.bodyPrimary.copyWith(height: 1.5, fontSize: 15),
+                  decoration: const InputDecoration(
+                    hintText: 'Type or speak your note content...',
+                    border: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AuraSpacing.lg),
+
+              // Save button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  icon: const Icon(LucideIcons.save, size: 18),
+                  label: Text(_isSaving ? 'SAVING...' : 'SAVE NOTE'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: _isSaving
+                      ? null
+                      : () async {
+                          setState(() => _isSaving = true);
+                          HapticFeedback.lightImpact();
+                          final newTitle = _titleController.text.trim().isEmpty
+                              ? 'Untitled Note'
+                              : _titleController.text.trim();
+                          final newNotes = _contentController.text.trim();
+
+                          await UpdateTaskDetailUseCase(itemDao).execute(
+                            itemId: widget.item.id,
+                            title: newTitle,
+                            notes: newNotes,
+                          );
+
+                          if (context.mounted) {
+                            setState(() => _isSaving = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Note saved successfully.')),
+                            );
+                          }
+                        },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

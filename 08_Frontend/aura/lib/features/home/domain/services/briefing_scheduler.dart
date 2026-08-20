@@ -86,7 +86,7 @@ class BriefingSchedulerService {
 
     await _notifications.scheduleNotification(
       id: _briefingNotificationId,
-      title: 'AURA Morning Briefing ☀️',
+      title: 'AURA Morning Briefing',
       body: greetingLine,
       scheduledDate: target,
       payload: 'route:/briefing',

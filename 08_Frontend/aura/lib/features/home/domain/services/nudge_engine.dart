@@ -38,7 +38,7 @@ class NudgeEngine {
 
     await _notificationService.showNotification(
       id: 'nudge_${targetItem.id}'.hashCode.abs(),
-      title: 'Proactive Nudge 💡',
+      title: 'Proactive Nudge',
       body: 'Focus time: Ready to complete "${targetItem.title}"?',
       channelId: NotificationService.channelNudgesId,
       payload: 'route:/item/${targetItem.id}',

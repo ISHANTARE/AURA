@@ -8,6 +8,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../domain/entities/intent_result.dart';
 import '../providers/capture_provider.dart';
+import 'voice_capture_overlay.dart';
 
 /// Dedicated Confirmation Card for Deletion Actions (Sprint 8)
 class DeleteConfirmationCard extends ConsumerWidget {
@@ -61,7 +62,7 @@ class DeleteConfirmationCard extends ConsumerWidget {
                 onTap: () async {
                   HapticFeedback.selectionClick();
                   await ref.read(captureProvider.notifier).cancelCapture();
-                  if (context.mounted) Navigator.of(context).pop();
+                  if (context.mounted) VoiceCaptureOverlay.closeOverlay(context);
                 },
                 child: const Icon(LucideIcons.x, size: 20, color: AuraColors.textSecondary),
               ),
@@ -115,7 +116,6 @@ class DeleteConfirmationCard extends ConsumerWidget {
                     onPressed: () {
                       HapticFeedback.mediumImpact();
                       ref.read(captureProvider.notifier).confirmAndSave();
-                      Navigator.of(context).pop();
                     },
                     child: Text(
                       'CONFIRM DELETE',
@@ -137,7 +137,7 @@ class DeleteConfirmationCard extends ConsumerWidget {
                 onPressed: () async {
                   HapticFeedback.selectionClick();
                   await ref.read(captureProvider.notifier).cancelCapture();
-                  if (context.mounted) Navigator.of(context).pop();
+                  if (context.mounted) VoiceCaptureOverlay.closeOverlay(context);
                 },
                 child: Text('CANCEL', style: AuraTypography.label),
               ),

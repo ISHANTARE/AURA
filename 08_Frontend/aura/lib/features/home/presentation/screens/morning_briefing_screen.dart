@@ -46,7 +46,7 @@ class MorningBriefingScreen extends ConsumerWidget {
             children: [
               // ── Greeting ───────────────────────────────────────────────
               Text(
-                'Good morning, $firstName! 🌅',
+                'Good morning, $firstName.',
                 style: AuraTypography.display.copyWith(fontSize: 22),
               ),
               const SizedBox(height: 4),
@@ -137,7 +137,7 @@ class MorningBriefingScreen extends ConsumerWidget {
                   data: (items) {
                     if (items.isEmpty) {
                       return Text(
-                        'No urgent items. 🎉',
+                        'No urgent items.',
                         style: AuraTypography.body.copyWith(
                           fontStyle: FontStyle.italic,
                         ),

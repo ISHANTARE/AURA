@@ -16,6 +16,20 @@ import 'waveform_widget.dart';
 class VoiceCaptureOverlay extends ConsumerStatefulWidget {
   const VoiceCaptureOverlay({super.key});
 
+  /// Helper to dismiss/close the overlay cleanly regardless of whether
+  /// it is presented inside a modal bottom sheet or in FloatingCaptureOverlayScreen Activity.
+  static void closeOverlay(BuildContext context) {
+    final routeName = ModalRoute.of(context)?.settings.name;
+    if (routeName == '/capture-overlay' || !Navigator.of(context).canPop()) {
+      SystemNavigator.pop();
+    } else {
+      Navigator.of(context).pop();
+      if (ModalRoute.of(context)?.settings.name == '/capture-overlay') {
+        SystemNavigator.pop();
+      }
+    }
+  }
+
   /// Helper to display this modal overlay sheet.
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet<void>(
@@ -136,11 +150,7 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
                         ),
                         onPressed: () {
                           ref.read(captureProvider.notifier).reset();
-                          if (Navigator.of(context).canPop()) {
-                            Navigator.of(context).pop();
-                          } else {
-                            SystemNavigator.pop();
-                          }
+                          VoiceCaptureOverlay.closeOverlay(context);
                         },
                         child: const Text('DONE', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
@@ -238,11 +248,7 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
             HapticFeedback.lightImpact();
             await ref.read(captureProvider.notifier).cancelCapture();
             if (mounted) {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              } else {
-                SystemNavigator.pop();
-              }
+              VoiceCaptureOverlay.closeOverlay(context);
             }
           },
           child: Container(
