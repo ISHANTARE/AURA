@@ -1,101 +1,133 @@
-# AURA
+# AURA — AI-Unified Reality Assistant
 
-> **AI-Unified Reality Assistant**
-> *One tap. You speak. Life organizes itself.*
+> **One tap. You speak. Life organizes itself.**
 
----
-
-## What is AURA?
-
-AURA is a voice-first, AI-native life management system. It acts as your personal executive assistant — capturing anything you say, understanding context, and automatically creating tasks, reminders, calendar events, and daily plans.
-
-Built with privacy and offline-first principles: your data lives on your device.
+AURA is a voice-first, AI-native personal executive assistant built for mobile. It captures unstructured voice thoughts, extracts actionable intents (tasks, reminders, alarms, notes, calendar events), automatically routes them into contextual workspaces, and builds an optimal daily focus schedule — all while maintaining an offline-first, local-first privacy architecture.
 
 ---
 
-## Core Features (Planned)
+## 🌟 Core Features
 
-- **One-tap voice capture** — press a button, speak, AURA handles the rest
-- **AI-powered intent extraction** — understands natural language with full context
-- **Layered reminders** — "remind me 3 days before, 1 day before, and 2 hours before"
-- **Morning briefing** — daily AI-generated plan based on your tasks and deadlines
-- **Workspace system** — separate contexts (College, IIT Prep, Internship, Personal)
-- **Unified timeline** — every task, event, and deadline in one view
-- **Multiple calendar views** — Daily, Weekly, Monthly, Kanban, Priority, Deadline
-- **Offline-first** — works without internet for all core features
-- **Privacy-first** — no cloud account required, local encrypted storage
+### 🎙️ One-Tap Voice Capture & Overlay
+- **Floating Overlay / App Bar Button**: Trigger voice recording anywhere within the app or system-wide via Android platform overlay.
+- **Natural Language Parsing**: High-accuracy intent extraction converting spoken sentences ("remind me tomorrow at 9am to submit assignment") into structured database records.
+- **Confirmation Card**: Interactive confirmation popup allowing inline editing of title, due date, workspace, and reminder priority before finalizing.
+
+### 📱 Bento Grid Home Dashboard
+- **Quick Stats Row**: Real-time counters for pending tasks, upcoming alarms, active reminders, and workspaces.
+- **Today's Focus**: Chronologically ordered view combining alarms, scheduled tasks, and due reminders for the current day.
+- **Quick Actions**: One-touch creation for tasks, notes, alarms, and workspaces.
+
+### ⏰ Advanced Alarm & Reminder System
+- **Flexible Scheduling**: Set alarms for specific calendar dates or recurring days of the week (Mon–Sun).
+- **Ringtone Picker**: Native Android audio picker integration to choose custom alarm ringtones.
+- **Dynamic Theme Integration**: Adapts seamlessly to the active theme primary color.
+- **Layered Reminders**: Support for multi-stage alerts (3 days before, 1 day before, 2 hours before).
+
+### 🗂️ Workspace Context System
+- **Context Separation**: Keep personal life, college, projects, and work organized in isolated workspaces.
+- **Pending vs. Completed Sections**: Clean division between actionable items and completed task history without visually cluttering titles.
+- **Workspace Actions**: Archive, edit, or color-code workspaces dynamically.
+
+### 🌅 Morning Briefing
+- **AI Daily Briefing**: Smart morning summary outlining top priorities, upcoming deadlines, and recommended focus areas for the day.
+
+### 📝 Task & Subtask Management
+- **Hierarchical Subtasks**: Create and track subtasks directly within parent task views.
+- **Priority & Status**: Manage task priorities (`high`, `medium`, `low`) and reactive status transitions.
 
 ---
 
-## Documentation
+## 🛠️ Architecture & Tech Stack
 
-| File | Description |
-|------|-------------|
-| [VISION.md](./VISION.md) | Why AURA exists — the core purpose and long-term ambition |
-| [PRINCIPLES.md](./PRINCIPLES.md) | Non-negotiable design and product principles |
-| [CONTEXT.md](./CONTEXT.md) | Full project backstory, decisions, and AI context memory |
-| [DECISIONS.md](./DECISIONS.md) | Architecture Decision Records (ADRs) |
-| [ROADMAP.md](./ROADMAP.md) | Phase-by-phase development plan |
-| [CHANGELOG.md](./CHANGELOG.md) | Version and update history |
+| Layer | Technology | Description |
+|-------|-----------|-------------|
+| **Frontend Framework** | Flutter (Dart 3.x) | Single codebase targeting Android & cross-platform |
+| **State Management** | Riverpod | Reactive state management with code generation |
+| **Local Database** | SQLite via Drift ORM | Offline-first relational storage with reactive streams |
+| **Platform Channels** | Android MethodChannels | Floating voice overlay, audio picker, and system permissions |
+| **Notifications** | Flutter Local Notifications | Exact alarms, notification channels, and DND replay |
+| **Routing** | GoRouter | Declarative route management (`/`, `/tasks/:id`, `/alarms`, etc.) |
 
 ---
 
-## Project Structure
+## 📁 Repository Structure
 
 ```
 AURA/
-├── VISION.md
-├── PRINCIPLES.md
-├── CONTEXT.md
-├── DECISIONS.md
-├── ROADMAP.md
-├── CHANGELOG.md
-├── 01_Product/         ← User research, discovery, friction mapping
-├── 02_PRD/             ← Product Requirements Document
-├── 03_UX/              ← Wireframes, flows, design system
-├── 04_Architecture/    ← System architecture and tech decisions
-├── 05_AI/              ← AI agents, prompts, memory design
-├── 06_Database/        ← ER diagram and SQL schema
-├── 07_API/             ← API contracts
-├── 08_Frontend/        ← Mobile app (Flutter)
-├── 09_Backend/         ← Backend services (FastAPI)
-├── 10_Testing/         ← Test plans and results
-├── 11_Docs/            ← Public documentation
-├── 12_Roadmap/         ← Sprint planning
-└── 13_Research/        ← Competitive analysis and research
+├── docs/                       ← Product specifications, system architecture, & design docs
+│   ├── flows/                  ← User flow diagrams and state transitions
+│   │   └── user_flows.md
+│   ├── wireframes/             ← Detailed screen-by-screen wireframe specifications
+│   ├── AI_ARCHITECTURE.md      ← Intent extraction pipeline & LLM prompt designs
+│   ├── ARCHITECTURE.md         ← System architecture, Riverpod providers, & Drift database
+│   ├── CHANGELOG.md            ← Version update history and feature log
+│   ├── CONTEXT.md              ← Project history, principles, and AI context memory
+│   ├── DECISIONS.md            ← Architecture Decision Records (ADRs)
+│   ├── PRD.md                  ← Product Requirements Document (PRD v2.0)
+│   ├── PRINCIPLES.md           ← Non-negotiable product & design guidelines
+│   ├── ROADMAP.md              ← Phase development roadmap
+│   ├── SCHEMA.md               ← Database ER model & Drift table schemas
+│   ├── VISION.md               ← Core vision and executive summary
+│   └── design_system.md        ← Color palette, typography, & component tokens
+├── lib/                        ← Main Flutter application source code
+│   ├── core/                   ← Constants, theme, router, providers, & global widgets
+│   ├── database/               ← Drift database initialization, tables, and DAOs
+│   ├── features/               ← Feature modules (home, tasks, alarms, capture, workspaces)
+│   ├── platform/               ← Android platform channel implementations
+│   └── main.dart               ← Application entry point
+├── android/                    ← Android native application shell & platform channels
+├── ios/                        ← iOS native application shell
+├── assets/                     ← Graphic assets and icons
+├── pubspec.yaml                ← Flutter dependencies and package manifest
+└── README.md                   ← Master project documentation
 ```
 
 ---
 
-## Current Phase
+## 📚 Documentation Index
 
-**Phase 0 — Vision** (Complete)
-**Next: Phase 1 — Product Discovery**
-
-See [ROADMAP.md](./ROADMAP.md) for full breakdown.
-
----
-
-## Development Philosophy
-
-> Antigravity IDE implements. Documentation decides.
-
-Every feature starts as a documented requirement before any code is written.
-AI tools are used to implement from specs, not to invent the product.
+| Document | Purpose |
+|----------|---------|
+| [VISION.md](./docs/VISION.md) | Executive summary, core purpose, and long-term vision |
+| [PRD.md](./docs/PRD.md) | Product Requirements Document — feature specifications & acceptance criteria |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Technical architecture, data flow, and Flutter module breakdown |
+| [SCHEMA.md](./docs/SCHEMA.md) | Database tables, indexes, relationships, and Drift DAO queries |
+| [AI_ARCHITECTURE.md](./docs/AI_ARCHITECTURE.md) | Voice pipeline, intent parser, prompt schemas, and briefings |
+| [DESIGN_SYSTEM.md](./docs/design_system.md) | Typography, color tokens, dynamic themes, and UI primitives |
+| [DECISIONS.md](./docs/DECISIONS.md) | Architectural Decision Records (ADRs) |
+| [ROADMAP.md](./docs/ROADMAP.md) | Phase execution roadmap and milestone timeline |
+| [CHANGELOG.md](./docs/CHANGELOG.md) | Version history and feature implementation log |
 
 ---
 
-## Tech Stack (Tentative)
+## 🚀 Development & Build Instructions
 
-| Layer | Technology |
-|-------|-----------|
-| Mobile | Flutter (Android + iOS + Desktop) |
-| Local DB | SQLite via Drift ORM |
-| Backend | FastAPI (Python) — when needed |
-| AI / NLP | OpenAI GPT-4o + Whisper |
-| Voice | Device speech recognition (offline) + Whisper (online) |
+### Prerequisites
+- **Flutter SDK**: 3.22.x or higher
+- **Dart SDK**: 3.4.x or higher
+- **Android SDK**: API 34+ (Build-Tools 34.0.0+)
+- **Java JDK**: JDK 17 or JDK 21
+
+### Running Locally
+```bash
+# 1. Fetch dependencies
+flutter pub get
+
+# 2. Run static analysis (verify zero warnings/errors)
+flutter analyze
+
+# 3. Run on connected Android device
+flutter run
+```
+
+### Database Code Generation
+If you modify Drift table definitions (`lib/database/tables/`):
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
 
 ---
 
-*Personal project by Ishant — BTech CSE*
-*Started: July 2026*
+*Personal project by Ishant — BTech CSE*  
+*License: Proprietary / Personal Project*
