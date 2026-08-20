@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/config/app_config.dart';
 import '../../domain/entities/intent_result.dart';
 
@@ -18,6 +19,32 @@ class RateLimiter {
     Future.delayed(const Duration(seconds: 60), () {
       if (_requestsThisMinute > 0) _requestsThisMinute--;
     });
+  }
+}
+
+/// Runtime config loaded from SharedPreferences.
+/// Falls back to AppConfig compile-time constants if not set by user.
+class _RuntimeConfig {
+  final String apiKey;
+  final String baseUrl;
+  final String model;
+
+  const _RuntimeConfig({
+    required this.apiKey,
+    required this.baseUrl,
+    required this.model,
+  });
+
+  static Future<_RuntimeConfig> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = prefs.getString('LLM_API_KEY') ?? '';
+    final url = prefs.getString('LLM_BASE_URL') ?? '';
+    final model = prefs.getString('LLM_MODEL') ?? '';
+    return _RuntimeConfig(
+      apiKey: key.isNotEmpty ? key : AppConfig.llmApiKey,
+      baseUrl: url.isNotEmpty ? url : AppConfig.llmBaseUrl,
+      model: model.isNotEmpty ? model : AppConfig.llmModel,
+    );
   }
 }
 
@@ -89,11 +116,21 @@ OUTPUT SCHEMA:
 ''';
 
   /// Extracts structured intent from a voice/text transcript.
+  /// Reads API key, base URL, and model from SharedPreferences at call time
+  /// so that Settings changes take effect immediately without restarting the app.
   Future<IntentResult> extractIntent({
     required String transcript,
     List<String> userWorkspaces = const [],
   }) async {
     await _rateLimiter.throttle();
+
+    // Load runtime config from SharedPreferences (respects user Settings changes)
+    final config = await _RuntimeConfig.load();
+
+    if (config.apiKey.isEmpty) {
+      throw Exception(
+          'No API key configured. Go to Settings → AI Engine and enter your API key.');
+    }
 
     final now = DateTime.now();
     final nowIso = now.toIso8601String();
@@ -110,10 +147,10 @@ Voice transcript:
 Extract the intent and return JSON only. Ensure deadline_iso is correctly resolved relative to Current datetime.
 ''';
 
-    final uri = Uri.parse('${AppConfig.llmBaseUrl}/chat/completions');
+    final uri = Uri.parse('${config.baseUrl}/chat/completions');
 
     final body = {
-      'model': AppConfig.llmModel,
+      'model': config.model,
       'messages': [
         {'role': 'system', 'content': _systemPrompt},
         {'role': 'user', 'content': userPrompt},
@@ -128,11 +165,16 @@ Extract the intent and return JSON only. Ensure deadline_iso is correctly resolv
             uri,
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': 'Bearer ${AppConfig.llmApiKey}',
+              'Authorization': 'Bearer ${config.apiKey}',
             },
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        throw Exception(
+            'Invalid API key (${response.statusCode}). Update your key in Settings → AI Engine.');
+      }
 
       if (response.statusCode != 200) {
         throw Exception(
@@ -151,7 +193,8 @@ Extract the intent and return JSON only. Ensure deadline_iso is correctly resolv
 
       return IntentResult.fromJson(parsedMap);
     } on TimeoutException {
-      throw Exception('Request timed out. Please try again.');
+      throw Exception(
+          'Request timed out after 30s. Check your internet connection or try a different model in Settings.');
     } catch (e) {
       rethrow;
     }

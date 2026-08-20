@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +6,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
-import '../../../../core/providers/providers.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../tasks/presentation/widgets/manual_task_sheet.dart';
 import '../providers/workspace_providers.dart';
 
 /// Workspace Detail Screen — AURA v2 Workspace Detail View
@@ -140,107 +139,9 @@ class WorkspaceDetailScreen extends ConsumerWidget {
             foregroundColor: Colors.white,
             elevation: 4,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            onPressed: () => _showCreateTaskModal(context, ref, workspaceId),
+            onPressed: () => ManualTaskSheet.show(context, workspaceId: workspaceId),
             child: const Icon(LucideIcons.plus, size: 24),
           ),
-        );
-      },
-    );
-  }
-
-  void _showCreateTaskModal(BuildContext context, WidgetRef ref, String wsId) {
-    final titleCtrl = TextEditingController();
-    String selectedPriority = 'medium';
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AuraColors.bgElevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      isScrollControlled: true,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: AuraSpacing.md,
-                right: AuraSpacing.md,
-                top: AuraSpacing.md,
-                bottom: MediaQuery.of(context).viewInsets.bottom + AuraSpacing.md,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('NEW TASK', style: AuraTypography.cardTitle),
-                  const SizedBox(height: AuraSpacing.md),
-                  TextField(
-                    controller: titleCtrl,
-                    autofocus: true,
-                    style: AuraTypography.bodyPrimary,
-                    decoration: InputDecoration(
-                      hintText: 'Task title...',
-                      filled: true,
-                      fillColor: AuraColors.bgCard,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AuraColors.border),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AuraSpacing.md),
-                  Row(
-                    children: [
-                      Text('PRIORITY: ', style: AuraTypography.label),
-                      const SizedBox(width: 8),
-                      ...['low', 'medium', 'high'].map((p) {
-                        final isSel = selectedPriority == p;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: ChoiceChip(
-                            label: Text(p.toUpperCase()),
-                            selected: isSel,
-                            onSelected: (_) => setModalState(() => selectedPriority = p),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: AuraSpacing.lg),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final title = titleCtrl.text.trim();
-                        if (title.isEmpty) return;
-
-                        final itemDao = ref.read(itemDaoProvider);
-                        final nowEpoch = DateTime.now().millisecondsSinceEpoch;
-
-                        await itemDao.insertItem(
-                          ItemsCompanion.insert(
-                            id: 'task_$nowEpoch',
-                            workspaceId: Value(wsId),
-                            title: title,
-                            category: 'reminder',
-                            kind: 'task',
-                            priority: Value(selectedPriority),
-                            createdAt: nowEpoch,
-                            updatedAt: nowEpoch,
-                          ),
-                        );
-
-                        if (context.mounted) Navigator.pop(context);
-                      },
-                      child: const Text('CREATE TASK'),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
         );
       },
     );

@@ -15,7 +15,7 @@ class UpdateTaskDetailUseCase {
     DateTime? deadline,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _itemDao.updateItem(
+    await _itemDao.updateItemPartial(
       ItemsCompanion(
         id: Value(itemId),
         title: title != null ? Value(title) : const Value.absent(),

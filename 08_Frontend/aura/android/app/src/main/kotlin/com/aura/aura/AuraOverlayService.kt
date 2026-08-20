@@ -7,19 +7,22 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.PixelFormat
+import android.graphics.RectF
 import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.provider.Settings
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.FrameLayout
-import android.widget.TextView
+import android.widget.PopupMenu
 import androidx.core.app.NotificationCompat
 import io.flutter.plugin.common.MethodChannel
 
@@ -36,6 +39,7 @@ class AuraOverlayService : Service() {
         const val PREFS_NAME = "aura_orb_prefs"
         const val KEY_ORB_X = "orb_x"
         const val KEY_ORB_Y = "orb_y"
+        const val KEY_ORB_DISMISSED = "orb_user_dismissed"
 
         var methodChannel: MethodChannel? = null
         var isServiceRunning = false
@@ -76,7 +80,7 @@ class AuraOverlayService : Service() {
     private fun buildNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("AURA Active")
-            .setContentText("Tap floating orb to capture voice")
+            .setContentText("Tap orb to capture · Long-press for options")
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
@@ -87,7 +91,7 @@ class AuraOverlayService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
         val density = resources.displayMetrics.density
-        val orbSizePx = (56 * density).toInt()
+        val orbSizePx = (60 * density).toInt()
 
         val savedX = prefs.getInt(KEY_ORB_X, -1)
         val savedY = prefs.getInt(KEY_ORB_Y, -1)
@@ -107,41 +111,66 @@ class AuraOverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = if (savedX != -1) savedX else (resources.displayMetrics.widthPixels / 2 - orbSizePx / 2)
-            y = if (savedY != -1) savedY else (resources.displayMetrics.heightPixels - (200 * density).toInt())
+            x = if (savedX != -1) savedX else (resources.displayMetrics.widthPixels - orbSizePx - (16 * density).toInt())
+            y = if (savedY != -1) savedY else (resources.displayMetrics.heightPixels - (220 * density).toInt())
         }
 
-        // Create Neubrutalist Lime Orb view programmatically
-        val container = FrameLayout(this)
-        val drawable = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(Color.parseColor("#C8FF00")) // Lime accent
-            setStroke((3 * density).toInt(), Color.BLACK)
-        }
-        container.background = drawable
+        // Premium dark orb drawn on a custom canvas view
+        val orbView = object : View(this) {
+            private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#1A1A2E")
+                style = Paint.Style.FILL
+            }
+            private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#7B6FF0")
+                style = Paint.Style.STROKE
+                strokeWidth = 3f * density
+            }
+            private val innerGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#3D35A0")
+                style = Paint.Style.FILL
+                alpha = 80
+            }
+            private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.WHITE
+                textSize = 22f * density
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textAlign = Paint.Align.CENTER
+            }
 
-        val textView = TextView(this).apply {
-            text = "A"
-            setTextColor(Color.BLACK)
-            textSize = 22f
-            setTypeface(null, Typeface.BOLD)
-            gravity = Gravity.CENTER
-        }
-        container.addView(
-            textView,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-        )
+            override fun onDraw(canvas: Canvas) {
+                val cx = width / 2f
+                val cy = height / 2f
+                val r = width / 2f - 2 * density
 
-        // Drag and tap touch listener
-        container.setOnTouchListener(object : View.OnTouchListener {
+                // Dark background circle
+                canvas.drawCircle(cx, cy, r, bgPaint)
+
+                // Inner glow
+                canvas.drawCircle(cx, cy, r * 0.7f, innerGlowPaint)
+
+                // Accent ring
+                val inset = ringPaint.strokeWidth / 2f
+                canvas.drawOval(RectF(inset, inset, width - inset, height - inset), ringPaint)
+
+                // "A" text
+                val textY = cy - (textPaint.descent() + textPaint.ascent()) / 2f
+                canvas.drawText("A", cx, textY, textPaint)
+            }
+        }
+
+        // Long-press detection via handler
+        val longPressHandler = Handler(Looper.getMainLooper())
+        var longPressRunnable: Runnable? = null
+        val longPressMs = 600L
+
+        orbView.setOnTouchListener(object : View.OnTouchListener {
             private var initialX = 0
             private var initialY = 0
             private var initialTouchX = 0f
             private var initialTouchY = 0f
-            private var isClick = false
+            private var isDragging = false
+            private var longPressTriggered = false
 
             override fun onTouch(v: View?, event: MotionEvent): Boolean {
                 when (event.action) {
@@ -150,25 +179,38 @@ class AuraOverlayService : Service() {
                         initialY = params!!.y
                         initialTouchX = event.rawX
                         initialTouchY = event.rawY
-                        isClick = true
+                        isDragging = false
+                        longPressTriggered = false
+
+                        // Schedule long-press
+                        longPressRunnable = Runnable {
+                            if (!isDragging) {
+                                longPressTriggered = true
+                                showLongPressMenu(v!!)
+                            }
+                        }
+                        longPressHandler.postDelayed(longPressRunnable!!, longPressMs)
                         return true
                     }
                     MotionEvent.ACTION_MOVE -> {
                         val dx = (event.rawX - initialTouchX).toInt()
                         val dy = (event.rawY - initialTouchY).toInt()
-                        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-                            isClick = false
+                        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                            isDragging = true
+                            longPressRunnable?.let { longPressHandler.removeCallbacks(it) }
                         }
-                        params!!.x = initialX + dx
-                        params!!.y = initialY + dy
-                        windowManager?.updateViewLayout(floatingView, params)
+                        if (isDragging) {
+                            params!!.x = initialX + dx
+                            params!!.y = initialY + dy
+                            windowManager?.updateViewLayout(floatingView, params)
+                        }
                         return true
                     }
                     MotionEvent.ACTION_UP -> {
-                        if (isClick) {
+                        longPressRunnable?.let { longPressHandler.removeCallbacks(it) }
+                        if (!isDragging && !longPressTriggered) {
                             onOrbTapped()
-                        } else {
-                            // Save orb position on drag end
+                        } else if (isDragging) {
                             prefs.edit()
                                 .putInt(KEY_ORB_X, params!!.x)
                                 .putInt(KEY_ORB_Y, params!!.y)
@@ -176,24 +218,40 @@ class AuraOverlayService : Service() {
                         }
                         return true
                     }
+                    MotionEvent.ACTION_CANCEL -> {
+                        longPressRunnable?.let { longPressHandler.removeCallbacks(it) }
+                        return true
+                    }
                 }
                 return false
             }
         })
 
-        floatingView = container
+        floatingView = orbView
         windowManager?.addView(floatingView, params)
     }
 
+    private fun showLongPressMenu(anchor: View) {
+        // Use a PopupMenu anchored to the floating orb view position
+        val intent = Intent(this, OrbMenuActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            putExtra("orb_x", params?.x ?: 0)
+            putExtra("orb_y", params?.y ?: 0)
+        }
+        startActivity(intent)
+    }
+
     private fun onOrbTapped() {
-        // Launch translucent floating capture window over current app
         val captureIntent = Intent(this, AuraCaptureActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         startActivity(captureIntent)
-
-        // Send method channel callback to Flutter if connected
         methodChannel?.invokeMethod("onOrbTapped", null)
+    }
+
+    fun dismissAndStop() {
+        prefs.edit().putBoolean(KEY_ORB_DISMISSED, true).apply()
+        stopSelf()
     }
 
     override fun onDestroy() {

@@ -141,6 +141,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Orb Long-Press Popup Menu (transparent overlay activity) -->
+        <activity
+            android:name=".OrbMenuActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
+            android:launchMode="singleTop" />
+
         <!-- System Floating Orb Overlay Service -->
         <service
             android:name=".AuraFloatingService"

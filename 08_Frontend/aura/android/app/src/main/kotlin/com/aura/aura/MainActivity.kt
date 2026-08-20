@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -18,6 +19,11 @@ class MainActivity : FlutterActivity() {
     private var speechChannel: AuraSpeechChannel? = null
     private var dndEventSink: EventChannel.EventSink? = null
     private var dndReceiver: BroadcastReceiver? = null
+    private var pendingRingtoneResult: MethodChannel.Result? = null
+
+    companion object {
+        private const val REQUEST_RINGTONE_PICKER = 9922
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -74,6 +80,25 @@ class MainActivity : FlutterActivity() {
                 "isOverlayRunning" -> {
                     result.success(AuraOverlayService.isServiceRunning)
                 }
+                "pickAlarmSound" -> {
+                    pendingRingtoneResult = result
+                    val currentUriStr = call.argument<String>("currentUri")
+                    val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                        putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE)
+                        putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
+                        putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                        putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                        if (!currentUriStr.isNullOrEmpty()) {
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(currentUriStr))
+                        }
+                    }
+                    try {
+                        startActivityForResult(intent, REQUEST_RINGTONE_PICKER)
+                    } catch (e: Exception) {
+                        pendingRingtoneResult?.error("ERROR", "Failed to launch ringtone picker: ${e.message}", null)
+                        pendingRingtoneResult = null
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
@@ -125,6 +150,40 @@ class MainActivity : FlutterActivity() {
                 dndReceiver = null
             }
         })
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_RINGTONE_PICKER) {
+            if (resultCode == RESULT_OK) {
+                val uri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+                } else {
+                    data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                }
+
+                val title = if (uri != null) {
+                    try {
+                        val ringtone = RingtoneManager.getRingtone(applicationContext, uri)
+                        ringtone.getTitle(applicationContext) ?: "Custom Alarm"
+                    } catch (e: Exception) {
+                        "Custom Alarm"
+                    }
+                } else {
+                    "Default Alarm"
+                }
+
+                val resultMap = mapOf(
+                    "uri" to (uri?.toString() ?: ""),
+                    "title" to title
+                )
+                pendingRingtoneResult?.success(resultMap)
+            } else {
+                pendingRingtoneResult?.success(null)
+            }
+            pendingRingtoneResult = null
+        }
     }
 
     override fun onDestroy() {

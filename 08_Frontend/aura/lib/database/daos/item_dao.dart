@@ -109,9 +109,14 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
     });
   }
 
-  /// Update item
+  /// Replace entire item
   Future<bool> updateItem(ItemsCompanion companion) =>
       update(items).replace(companion);
+
+  /// Partial update of specified fields on an item
+  Future<int> updateItemPartial(ItemsCompanion companion) {
+    return (update(items)..where((t) => t.id.equals(companion.id.value))).write(companion);
+  }
 
   /// Soft delete item by ID
   Future<int> softDelete(String id) async {

@@ -452,7 +452,7 @@ class _DetailsTab extends StatelessWidget {
   }
 }
 
-class _NotesTab extends StatelessWidget {
+class _NotesTab extends StatefulWidget {
   const _NotesTab({
     required this.notesController,
     required this.onSaveNotes,
@@ -462,17 +462,33 @@ class _NotesTab extends StatelessWidget {
   final ValueChanged<String> onSaveNotes;
 
   @override
+  State<_NotesTab> createState() => _NotesTabState();
+}
+
+class _NotesTabState extends State<_NotesTab> {
+  bool _isSaving = false;
+
+  @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     return Padding(
       padding: const EdgeInsets.all(AuraSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('NOTES', style: AuraTypography.label.copyWith(color: AuraColors.textSecondary)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('NOTES & DETAILS', style: AuraTypography.label.copyWith(color: AuraColors.textSecondary)),
+              if (_isSaving)
+                Text('Saving...', style: AuraTypography.caption.copyWith(color: primaryColor)),
+            ],
+          ),
           const SizedBox(height: AuraSpacing.xs),
           Expanded(
             child: TextField(
-              controller: notesController,
+              controller: widget.notesController,
               maxLines: null,
               expands: true,
               style: AuraTypography.bodyPrimary,
@@ -480,7 +496,37 @@ class _NotesTab extends StatelessWidget {
                 hintText: 'Type notes, ideas, or key details here...',
                 contentPadding: EdgeInsets.all(AuraSpacing.md),
               ),
-              onChanged: onSaveNotes,
+              onChanged: widget.onSaveNotes,
+            ),
+          ),
+          const SizedBox(height: AuraSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: const Icon(LucideIcons.save, size: 18),
+              label: const Text('SAVE NOTES', style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () async {
+                setState(() => _isSaving = true);
+                HapticFeedback.mediumImpact();
+                widget.onSaveNotes(widget.notesController.text);
+                await Future.delayed(const Duration(milliseconds: 300));
+                if (mounted) {
+                  setState(() => _isSaving = false);
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Notes saved successfully ✓'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
             ),
           ),
         ],

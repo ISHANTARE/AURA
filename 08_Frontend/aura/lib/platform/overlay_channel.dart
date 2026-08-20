@@ -82,4 +82,19 @@ class OverlayChannel {
       }
     });
   }
+
+  /// Open system ringtone picker to select custom alarm audio on device
+  static Future<Map<String, String>?> pickAlarmSound({String? currentUri}) async {
+    try {
+      final res = await _channel.invokeMethod<Map>('pickAlarmSound', {
+        'currentUri': currentUri ?? '',
+      });
+      if (res != null) {
+        return Map<String, String>.from(res);
+      }
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error picking alarm sound: $e');
+    }
+    return null;
+  }
 }

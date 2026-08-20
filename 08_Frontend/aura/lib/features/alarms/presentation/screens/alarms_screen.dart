@@ -11,6 +11,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../platform/overlay_channel.dart';
 import '../../../reminders/data/services/notification_service.dart';
 
 /// Alarms Screen — AURA v2 Redesigned Alarms Screen
@@ -150,6 +151,8 @@ class AlarmsScreen extends ConsumerWidget {
   void _showCreateAlarmModal(BuildContext context, WidgetRef ref) {
     final titleCtrl = TextEditingController(text: 'Alarm');
     TimeOfDay selectedTime = TimeOfDay.now();
+    String selectedSoundTitle = 'System Default Alarm';
+    String selectedSoundUri = '';
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     showModalBottomSheet(
@@ -258,6 +261,61 @@ class AlarmsScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: AuraSpacing.md),
+
+                  // Alarm Sound Picker Row
+                  Container(
+                    padding: const EdgeInsets.all(AuraSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AuraColors.bgCard,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AuraColors.border, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Ringtone Audio', style: AuraTypography.caption),
+                              const SizedBox(height: 2),
+                              Text(
+                                selectedSoundTitle,
+                                style: AuraTypography.bodyPrimary.copyWith(fontSize: 14),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          icon: const Icon(LucideIcons.music, size: 16),
+                          label: const Text('PICK SOUND'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: primaryColor,
+                            side: BorderSide(color: primaryColor),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final soundMap = await OverlayChannel.pickAlarmSound(
+                              currentUri: selectedSoundUri,
+                            );
+                            if (soundMap != null) {
+                              setModalState(() {
+                                selectedSoundTitle = soundMap['title'] ?? 'Custom Audio';
+                                selectedSoundUri = soundMap['uri'] ?? '';
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: AuraSpacing.lg),
                   SizedBox(
                     width: double.infinity,
@@ -299,6 +357,7 @@ class AlarmsScreen extends ConsumerWidget {
                           body: 'Alarm: ${DateFormat('h:mm a').format(targetDt)}',
                           scheduledDate: targetDt,
                           payload: alarmId,
+                          soundUri: selectedSoundUri,
                         );
 
                         if (context.mounted) Navigator.pop(context);

@@ -214,12 +214,13 @@ class NotificationService {
     required String body,
     required DateTime scheduledDate,
     String? payload,
+    String? soundUri,
   }) async {
     final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
 
     if (tzScheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       alarmChannelId,
       alarmChannelName,
       channelDescription: alarmChannelDescription,
@@ -227,6 +228,10 @@ class NotificationService {
       priority: Priority.max,
       color: AuraColors.accentLime,
       audioAttributesUsage: AudioAttributesUsage.alarm,
+      sound: soundUri != null && soundUri.isNotEmpty
+          ? UriAndroidNotificationSound(soundUri)
+          : null,
+      playSound: true,
       fullScreenIntent: true,
       category: AndroidNotificationCategory.alarm,
       visibility: NotificationVisibility.public,
@@ -241,7 +246,7 @@ class NotificationService {
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );

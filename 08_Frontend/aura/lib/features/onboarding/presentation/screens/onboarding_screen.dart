@@ -222,66 +222,68 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget _buildPermissionsSlide() {
     return Padding(
       padding: const EdgeInsets.all(AuraSpacing.xl),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(LucideIcons.shieldCheck, size: 48, color: AuraColors.accentBlue),
-          const SizedBox(height: 16),
-          Text('Permissions for AURA', style: AuraTypography.display.copyWith(fontSize: 26)),
-          const SizedBox(height: 8),
-          Text(
-            'AURA works as a voice assistant. To unlock its full power, please grant permissions below.',
-            style: AuraTypography.bodySmall,
-          ),
-          const SizedBox(height: 32),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(LucideIcons.shieldCheck, size: 48, color: AuraColors.accentBlue),
+            const SizedBox(height: 16),
+            Text('Permissions for AURA', style: AuraTypography.display.copyWith(fontSize: 26)),
+            const SizedBox(height: 8),
+            Text(
+              'AURA works as a voice assistant. To unlock its full power, please grant permissions below.',
+              style: AuraTypography.bodySmall,
+            ),
+            const SizedBox(height: 24),
 
-          _PermissionItem(
-            icon: LucideIcons.layers,
-            title: 'Floating Orb Overlay',
-            desc: 'Allows the AURA orb to float above all apps.',
-            onRequest: () async {
-              await Permission.systemAlertWindow.request();
-            },
-          ),
-          const SizedBox(height: 16),
-          _PermissionItem(
-            icon: LucideIcons.mic,
-            title: 'Microphone Access',
-            desc: 'Required for real-time voice capture.',
-            onRequest: () async {
-              await Permission.microphone.request();
-            },
-          ),
-          const SizedBox(height: 16),
-          _PermissionItem(
-            icon: LucideIcons.bell,
-            title: 'Notifications & Alarms',
-            desc: 'Ensures deadlines and reminders fire on time.',
-            onRequest: () async {
-              await Permission.notification.request();
-            },
-          ),
-          const Spacer(),
+            _PermissionItem(
+              icon: LucideIcons.layers,
+              title: 'Floating Orb Overlay',
+              desc: 'Allows the AURA orb to float above all apps.',
+              onRequest: () async {
+                await Permission.systemAlertWindow.request();
+              },
+            ),
+            const SizedBox(height: 16),
+            _PermissionItem(
+              icon: LucideIcons.mic,
+              title: 'Microphone Access',
+              desc: 'Required for real-time voice capture.',
+              onRequest: () async {
+                await Permission.microphone.request();
+              },
+            ),
+            const SizedBox(height: 16),
+            _PermissionItem(
+              icon: LucideIcons.bell,
+              title: 'Notifications & Alarms',
+              desc: 'Ensures deadlines and reminders fire on time.',
+              onRequest: () async {
+                await Permission.notification.request();
+              },
+            ),
+            const SizedBox(height: 24),
 
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _nextPage,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              child: Text(
-                'CONTINUE →',
-                style: AuraTypography.buttonText.copyWith(fontWeight: FontWeight.bold),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _nextPage,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: Text(
+                  'CONTINUE →',
+                  style: AuraTypography.buttonText.copyWith(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

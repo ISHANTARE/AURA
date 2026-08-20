@@ -9,6 +9,7 @@ import 'package:aura/core/constants/typography.dart';
 import 'package:aura/core/router/app_router.dart';
 import 'package:aura/core/theme/theme_provider.dart';
 import 'package:aura/core/providers/providers.dart';
+import 'package:aura/platform/overlay_channel.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -132,7 +133,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             TextField(
                               controller: _userNameController,
                               style: AuraTypography.cardTitle,
-                              onChanged: (_) => setState(() {}),
+                              onChanged: (val) {
+                                setState(() {});
+                                final trimmed = val.trim();
+                                if (trimmed.isNotEmpty) {
+                                  ref.read(userNameProvider.notifier).setName(trimmed);
+                                }
+                              },
                               decoration: const InputDecoration(
                                 isDense: true,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -193,6 +200,65 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   );
                 }).toList(),
               ),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Floating Orb Control ──────────────────────────────────────────
+            const _SettingsSectionHeader(title: 'FLOATING ASSISTANT ORB'),
+            const SizedBox(height: 12),
+
+            FutureBuilder<bool>(
+              future: OverlayChannel.isRunning(),
+              builder: (context, snapshot) {
+                final isRunning = snapshot.data ?? false;
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AuraColors.bgCard,
+                    border: Border.all(color: AuraColors.border, width: 2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('System Floating Orb', style: AuraTypography.cardTitle),
+                          const SizedBox(height: 4),
+                          Text(
+                            isRunning ? 'Active on screen' : 'Inactive / Dismissed',
+                            style: AuraTypography.bodySmall.copyWith(
+                              color: isRunning ? activeAccent.color : AuraColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isRunning ? AuraColors.bgElevated : activeAccent.color,
+                          foregroundColor: isRunning ? AuraColors.textPrimary : Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () async {
+                          if (isRunning) {
+                            await OverlayChannel.stopOverlay();
+                          } else {
+                            final granted = await OverlayChannel.isPermissionGranted();
+                            if (!granted) {
+                              await OverlayChannel.requestPermission();
+                            } else {
+                              await OverlayChannel.startOverlay();
+                            }
+                          }
+                          setState(() {});
+                        },
+                        child: Text(isRunning ? 'HIDE ORB' : 'SHOW ORB'),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
 
