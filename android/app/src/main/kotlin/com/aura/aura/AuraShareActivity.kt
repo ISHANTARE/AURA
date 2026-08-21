@@ -48,32 +48,32 @@ class AuraShareActivity : FlutterActivity() {
                         "mimeType" to type
                     )
                 }
-            } else if (type.startsWith("image/")) {
-                val imageUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            } else {
+                val fileUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
                 } else {
                     @Suppress("DEPRECATION")
                     intent.getParcelableExtra(Intent.EXTRA_STREAM)
                 }
-                if (imageUri != null) {
-                    val localPath = copyUriToCache(imageUri, "shared_image.jpg")
+                if (fileUri != null) {
+                    val mediaCategory = when {
+                        type.startsWith("image/") -> "image"
+                        type.startsWith("video/") -> "video"
+                        type.startsWith("audio/") -> "audio"
+                        type == "application/pdf" -> "pdf"
+                        else -> "document"
+                    }
+                    val ext = when {
+                        type.startsWith("image/") -> "jpg"
+                        type.startsWith("video/") -> "mp4"
+                        type.startsWith("audio/") -> "mp3"
+                        type == "application/pdf" -> "pdf"
+                        type.contains("word") || type.contains("document") -> "docx"
+                        else -> "bin"
+                    }
+                    val localPath = copyUriToCache(fileUri, "shared_media.$ext")
                     sharedPayload = mapOf(
-                        "type" to "image",
-                        "filePath" to localPath,
-                        "mimeType" to type
-                    )
-                }
-            } else if (type == "application/pdf") {
-                val pdfUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    intent.getParcelableExtra(Intent.EXTRA_STREAM)
-                }
-                if (pdfUri != null) {
-                    val localPath = copyUriToCache(pdfUri, "shared_doc.pdf")
-                    sharedPayload = mapOf(
-                        "type" to "pdf",
+                        "type" to mediaCategory,
                         "filePath" to localPath,
                         "mimeType" to type
                     )

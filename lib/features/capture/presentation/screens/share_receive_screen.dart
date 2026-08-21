@@ -157,6 +157,7 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
         workspaceId: Value(wsId),
         title: Value(title),
         notes: Value(notes.isNotEmpty ? notes : null),
+        category: const Value('reminder'),
         kind: Value(notes.isNotEmpty ? 'generic' : 'task'),
         status: const Value('pending'),
         createdAt: Value(nowEpoch),

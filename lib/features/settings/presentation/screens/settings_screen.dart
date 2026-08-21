@@ -22,8 +22,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final TextEditingController _userNameController = TextEditingController(text: 'Ishant');
   final TextEditingController _apiKeyController = TextEditingController();
   final TextEditingController _baseUrlController = TextEditingController();
+  final TextEditingController _modelController = TextEditingController();
 
-  String _selectedModel = 'z-ai/glm-5.2';
+  String _selectedProviderPreset = 'NVIDIA NIM (Recommended)';
   String _selectedReminderDefault = '1 day & 6 hours before';
   String _selectedAlarmSound = 'System Alarm';
   String _selectedNotificationSound = 'Soft Chime';
@@ -42,7 +43,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _userNameController.text = prefs.getString('USER_NAME') ?? 'Ishant';
       _apiKeyController.text = prefs.getString('LLM_API_KEY') ?? '';
       _baseUrlController.text = prefs.getString('LLM_BASE_URL') ?? 'https://integrate.api.nvidia.com/v1';
-      _selectedModel = prefs.getString('LLM_MODEL') ?? 'z-ai/glm-5.2';
+      _modelController.text = prefs.getString('LLM_MODEL') ?? 'meta/llama-3.3-70b-instruct';
       _selectedReminderDefault = prefs.getString('REMINDER_DEFAULT') ?? '1 day & 6 hours before';
       _selectedAlarmSound = prefs.getString('ALARM_SOUND') ?? 'System Alarm';
       _selectedNotificationSound = prefs.getString('NOTIF_SOUND') ?? 'Soft Chime';
@@ -56,7 +57,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('LLM_API_KEY', _apiKeyController.text.trim());
     await prefs.setString('LLM_BASE_URL', _baseUrlController.text.trim());
-    await prefs.setString('LLM_MODEL', _selectedModel);
+    await prefs.setString('LLM_MODEL', _modelController.text.trim());
     await prefs.setString('REMINDER_DEFAULT', _selectedReminderDefault);
     await prefs.setString('ALARM_SOUND', _selectedAlarmSound);
     await prefs.setString('NOTIF_SOUND', _selectedNotificationSound);
@@ -73,7 +74,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _userNameController.dispose();
     _apiKeyController.dispose();
     _baseUrlController.dispose();
+    _modelController.dispose();
     super.dispose();
+  }
+
+  List<String> _getQuickModelSuggestions() {
+    if (_selectedProviderPreset == 'NVIDIA NIM (Recommended)') {
+      return [
+        'meta/llama-3.3-70b-instruct',
+        'nvidia/nemotron-4-340b-instruct',
+        'mistralai/mixtral-8x7b-instruct',
+        'deepseek-ai/deepseek-r1',
+      ];
+    } else if (_selectedProviderPreset == 'Google Gemini') {
+      return ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+    } else if (_selectedProviderPreset == 'Groq Cloud') {
+      return ['llama-3.3-70b-versatile', 'llama3-70b-8192', 'mixtral-8x7b-32768'];
+    } else if (_selectedProviderPreset == 'OpenRouter') {
+      return ['google/gemini-2.0-flash-001', 'anthropic/claude-3.5-haiku', 'meta-llama/llama-3.3-70b-instruct'];
+    } else if (_selectedProviderPreset == 'Local LLM (Ollama / LM Studio)') {
+      return ['llama3.2', 'qwen2.5:3b', 'mistral'];
+    }
+    return ['meta/llama-3.3-70b-instruct', 'gemini-2.0-flash', 'llama3.2'];
   }
 
   @override
@@ -167,6 +189,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               decoration: BoxDecoration(
                 color: AuraColors.bgCard,
                 border: Border.all(color: AuraColors.border, width: 2),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -271,6 +294,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               decoration: BoxDecoration(
                 color: AuraColors.bgCard,
                 border: Border.all(color: AuraColors.border, width: 2),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,6 +356,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               decoration: BoxDecoration(
                 color: AuraColors.bgCard,
                 border: Border.all(color: AuraColors.border, width: 2),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,14 +396,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               decoration: BoxDecoration(
                 color: AuraColors.bgCard,
                 border: Border.all(color: AuraColors.border, width: 2),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Model Target', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  Text('Provider Preset (Auto-fill)',
+                      style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: _selectedModel,
+                    value: _selectedProviderPreset,
                     dropdownColor: AuraColors.bgElevated,
                     style: AuraTypography.bodyPrimary,
                     decoration: const InputDecoration(
@@ -387,11 +414,52 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'z-ai/glm-5.2', child: Text('NVIDIA NIM — z-ai/glm-5.2 (Fast)')),
-                      DropdownMenuItem(value: 'gemini-2.0-flash', child: Text('Google Gemini 2.0 Flash')),
+                      DropdownMenuItem(
+                        value: 'NVIDIA NIM (Recommended)',
+                        child: Text('NVIDIA NIM (Recommended)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Google Gemini',
+                        child: Text('Google Gemini (OpenAI Format)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Groq Cloud',
+                        child: Text('Groq Cloud (Superfast)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'OpenRouter',
+                        child: Text('OpenRouter (Universal Gateway)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Local LLM (Ollama / LM Studio)',
+                        child: Text('Local LLM (Ollama / PC Server)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Custom / Other Provider',
+                        child: Text('Custom Provider'),
+                      ),
                     ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedModel = val);
+                    onChanged: (preset) {
+                      if (preset == null) return;
+                      setState(() {
+                        _selectedProviderPreset = preset;
+                        if (preset == 'NVIDIA NIM (Recommended)') {
+                          _baseUrlController.text = 'https://integrate.api.nvidia.com/v1';
+                          _modelController.text = 'meta/llama-3.3-70b-instruct';
+                        } else if (preset == 'Google Gemini') {
+                          _baseUrlController.text = 'https://generativelanguage.googleapis.com/v1beta/openai/';
+                          _modelController.text = 'gemini-2.0-flash';
+                        } else if (preset == 'Groq Cloud') {
+                          _baseUrlController.text = 'https://api.groq.com/openai/v1';
+                          _modelController.text = 'llama-3.3-70b-versatile';
+                        } else if (preset == 'OpenRouter') {
+                          _baseUrlController.text = 'https://openrouter.ai/api/v1';
+                          _modelController.text = 'google/gemini-2.0-flash-001';
+                        } else if (preset == 'Local LLM (Ollama / LM Studio)') {
+                          _baseUrlController.text = 'http://10.0.2.2:11434/v1';
+                          _modelController.text = 'llama3.2';
+                        }
+                      });
                     },
                   ),
                   const SizedBox(height: 16),
@@ -405,7 +473,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       filled: true,
                       fillColor: AuraColors.bgElevated,
                       border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                      hintText: 'e.g. https://integrate.api.nvidia.com/v1',
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Text('Model Target (Editable)', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _modelController,
+                    style: AuraTypography.bodyPrimary,
+                    decoration: const InputDecoration(
+                      filled: true,
+                      fillColor: AuraColors.bgElevated,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                      hintText: 'e.g. meta/llama-3.3-70b-instruct or nvidia/nemotron-4-340b-instruct',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  Text('Quick Model Suggestions:', style: AuraTypography.caption.copyWith(color: AuraColors.textSecondary)),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: _getQuickModelSuggestions().map((m) {
+                      final isSelected = _modelController.text.trim() == m;
+                      return ChoiceChip(
+                        label: Text(m, style: AuraTypography.bodySmall.copyWith(
+                          color: isSelected ? Colors.white : AuraColors.textPrimary,
+                          fontSize: 11,
+                        )),
+                        selected: isSelected,
+                        selectedColor: activeAccent.color,
+                        backgroundColor: AuraColors.bgElevated,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          side: BorderSide(color: isSelected ? activeAccent.color : AuraColors.border),
+                        ),
+                        onSelected: (_) {
+                          setState(() => _modelController.text = m);
+                        },
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 16),
 
@@ -418,6 +528,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: AuraColors.bgElevated,
+                      hintText: 'Paste API Key (nvapi-..., gsk_..., etc.)',
                       border: const OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -432,16 +543,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   SizedBox(
                     width: double.infinity,
-                    height: 44,
+                    height: 52,
                     child: ElevatedButton(
                       onPressed: _saveSettings,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: activeAccent.color,
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text('SAVE ALL SETTINGS', style: AuraTypography.buttonText.copyWith(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'SAVE ALL SETTINGS',
+                        style: AuraTypography.buttonText.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          height: 1.2,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -462,6 +581,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     decoration: BoxDecoration(
                       color: AuraColors.bgCard,
                       border: Border.all(color: AuraColors.border, width: 2),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,6 +624,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               decoration: BoxDecoration(
                 color: AuraColors.bgCard,
                 border: Border.all(color: AuraColors.border, width: 2),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 children: [

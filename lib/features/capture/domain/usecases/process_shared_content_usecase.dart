@@ -50,8 +50,20 @@ class ProcessSharedContentUseCase {
 
     if (payload.type == 'image' && payload.filePath != null) {
       imagePath = payload.filePath;
-      title = 'Shared Screenshot / Image';
+      title = 'Shared Image / Screenshot';
       extractedText = await _ocrDataSource.processImage(payload.filePath!);
+    } else if (payload.type == 'video' && payload.filePath != null) {
+      title = 'Shared Video';
+      extractedText = 'Attached video: ${payload.filePath!.split('/').last}';
+    } else if (payload.type == 'audio' && payload.filePath != null) {
+      title = 'Shared Audio Recording';
+      extractedText = 'Attached audio: ${payload.filePath!.split('/').last}';
+    } else if (payload.type == 'pdf' && payload.filePath != null) {
+      title = 'Shared PDF Document';
+      extractedText = 'Attached PDF: ${payload.filePath!.split('/').last}';
+    } else if (payload.filePath != null) {
+      title = 'Shared File / Document';
+      extractedText = 'Attached file: ${payload.filePath!.split('/').last}';
     } else if (payload.type == 'text' && payload.content != null) {
       final textContent = payload.content!;
       if (textContent.startsWith('http://') || textContent.startsWith('https://')) {

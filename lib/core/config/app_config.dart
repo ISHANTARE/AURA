@@ -12,6 +12,6 @@ class AppConfig {
 
   static const String llmModel = String.fromEnvironment(
     'LLM_MODEL',
-    defaultValue: 'meta/llama-3.1-8b-instruct',
+    defaultValue: 'meta/llama-3.3-70b-instruct',
   );
 }

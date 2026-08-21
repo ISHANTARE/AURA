@@ -62,7 +62,7 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
         ..orderBy([(t) => OrderingTerm.asc(t.deadline)]))
       .watch();
 
-  /// Watch today's focus items
+  /// Watch today's focus items (pending items due today, overdue, or created today)
   Stream<List<Item>> watchTodayFocus() {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
@@ -72,11 +72,15 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
       ..where((t) =>
           t.deletedAt.isNull() &
           t.status.equals('pending') &
-          ((t.deadline.isBiggerOrEqualValue(startOfDay) & t.deadline.isSmallerOrEqualValue(endOfDay)) |
-           (t.fireAt.isBiggerOrEqualValue(startOfDay) & t.fireAt.isSmallerOrEqualValue(endOfDay)) |
-           (t.startTime.isBiggerOrEqualValue(startOfDay) & t.startTime.isSmallerOrEqualValue(endOfDay))))
+          (
+            (t.deadline.isNotNull() & t.deadline.isSmallerOrEqualValue(endOfDay)) |
+            (t.fireAt.isNotNull() & t.fireAt.isSmallerOrEqualValue(endOfDay)) |
+            (t.startTime.isNotNull() & t.startTime.isSmallerOrEqualValue(endOfDay)) |
+            (t.createdAt.isBiggerOrEqualValue(startOfDay) & t.createdAt.isSmallerOrEqualValue(endOfDay))
+          )
+      )
       ..orderBy([
-        (t) => OrderingTerm.asc(coalesce([t.fireAt, t.startTime, t.deadline]))
+        (t) => OrderingTerm.asc(coalesce([t.fireAt, t.startTime, t.deadline, t.createdAt]))
       ]))
     .watch();
   }

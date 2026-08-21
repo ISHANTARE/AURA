@@ -176,6 +176,11 @@ Extract the intent and return JSON only. Ensure deadline_iso is correctly resolv
             'Invalid API key (${response.statusCode}). Update your key in Settings → AI Engine.');
       }
 
+      if (response.statusCode == 400 || response.statusCode == 404) {
+        throw Exception(
+            'Model "${config.model}" not found or deprecated by provider (${response.statusCode}). Go to Settings → AI Engine to pick an active model (e.g. meta/llama-3.3-70b-instruct).');
+      }
+
       if (response.statusCode != 200) {
         throw Exception(
             'LLM API failed with status ${response.statusCode}: ${response.body}');
