@@ -1,5 +1,5 @@
 import '../../../../database/app_database.dart';
-import '../../../notifications/services/notification_service.dart';
+import '../../data/services/notification_service.dart';
 
 /// Schedules notifications for a given item (task/event).
 class ScheduleReminderUseCase {

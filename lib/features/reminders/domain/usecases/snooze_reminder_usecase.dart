@@ -1,5 +1,5 @@
 import '../../../../database/app_database.dart';
-import '../../../notifications/services/notification_service.dart';
+import '../../data/services/notification_service.dart';
 import '../entities/reminder_models.dart';
 
 /// Snoozes an active reminder by cancelling and re-scheduling it.
@@ -26,7 +26,7 @@ class SnoozeReminderUseCase {
 
     // Cancel old notification if pending
     final notifId = reminderId.hashCode.abs();
-    await _notificationService.cancelNotification(notifId);
+    await _notificationService.cancel(notifId);
 
     // Schedule re-fire notification at targetTime
     await _notificationService.scheduleNotification(

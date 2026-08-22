@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../database/daos/item_dao.dart';
-import '../../../notifications/services/notification_service.dart';
+import '../../../reminders/data/services/notification_service.dart';
 
 class NudgeEngine {
   final ItemDao _itemDao;
@@ -36,12 +36,11 @@ class NudgeEngine {
 
     final targetItem = highPriority.first;
 
-    await _notificationService.showNotification(
+    await _notificationService.showInstantNotification(
       id: 'nudge_${targetItem.id}'.hashCode.abs(),
       title: 'Proactive Nudge',
       body: 'Focus time: Ready to complete "${targetItem.title}"?',
-      channelId: NotificationService.channelNudgesId,
-      payload: 'route:/item/${targetItem.id}',
+      payload: 'item:${targetItem.id}',
     );
 
     await prefs.setInt(todayKey, currentCount + 1);
