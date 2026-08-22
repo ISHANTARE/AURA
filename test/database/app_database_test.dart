@@ -67,7 +67,7 @@ void main() {
       expect(activeList.any((i) => i.id == 'item-1'), isFalse);
     });
 
-    test('Searches items by keyword', () async {
+    test('Searches items by keyword correctly', () async {
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       await itemDao.insertItem(
         ItemsCompanion.insert(

@@ -172,7 +172,7 @@ class _MainShellState extends ConsumerState<_MainShell> {
     // Derive the active tab purely from the current router location so that
     // deep links and programmatic pushes always keep the nav bar in sync.
     final location = GoRouterState.of(context).matchedLocation;
-    final idx = _routes.indexWhere((r) => location.startsWith(r));
+    final idx = _routes.indexWhere((r) => r == '/' ? location == '/' : location.startsWith(r));
     final effectiveIndex = idx < 0 ? 0 : idx;
 
     return Scaffold(

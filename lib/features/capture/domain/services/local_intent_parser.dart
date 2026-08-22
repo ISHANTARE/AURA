@@ -119,10 +119,12 @@ class LocalIntentParser {
     }
 
     final isReminder = lower.contains('remind') || lower.contains('reminder');
+    final safeTitle = titleText.trim().isEmpty ? 'Untitled Voice Task' : titleText.trim();
+    final formattedTitle = safeTitle[0].toUpperCase() + safeTitle.substring(1);
 
     return IntentResult(
       intentType: isReminder ? 'create_reminder' : 'create_task',
-      title: titleText[0].toUpperCase() + titleText.substring(1),
+      title: formattedTitle,
       deadline: deadlineDate,
       workspaceHint: matchedWorkspace,
       priority: lower.contains('urgent') || lower.contains('important') ? 'high' : 'medium',

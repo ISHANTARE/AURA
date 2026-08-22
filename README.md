@@ -9,30 +9,36 @@ AURA is a voice-first, AI-native personal executive assistant built for mobile. 
 ## 🌟 Core Features
 
 ### 🎙️ One-Tap Voice Capture & Overlay
+
 - **Floating Overlay / App Bar Button**: Trigger voice recording anywhere within the app or system-wide via Android platform overlay.
 - **Natural Language Parsing**: High-accuracy intent extraction converting spoken sentences ("remind me tomorrow at 9am to submit assignment") into structured database records.
 - **Confirmation Card**: Interactive confirmation popup allowing inline editing of title, due date, workspace, and reminder priority before finalizing.
 
 ### 📱 Bento Grid Home Dashboard
+
 - **Quick Stats Row**: Real-time counters for pending tasks, upcoming alarms, active reminders, and workspaces.
 - **Today's Focus**: Chronologically ordered view combining alarms, scheduled tasks, and due reminders for the current day.
 - **Quick Actions**: One-touch creation for tasks, notes, alarms, and workspaces.
 
 ### ⏰ Advanced Alarm & Reminder System
+
 - **Flexible Scheduling**: Set alarms for specific calendar dates or recurring days of the week (Mon–Sun).
 - **Ringtone Picker**: Native Android audio picker integration to choose custom alarm ringtones.
 - **Dynamic Theme Integration**: Adapts seamlessly to the active theme primary color.
 - **Layered Reminders**: Support for multi-stage alerts (3 days before, 1 day before, 2 hours before).
 
 ### 🗂️ Workspace Context System
+
 - **Context Separation**: Keep personal life, college, projects, and work organized in isolated workspaces.
 - **Pending vs. Completed Sections**: Clean division between actionable items and completed task history without visually cluttering titles.
 - **Workspace Actions**: Archive, edit, or color-code workspaces dynamically.
 
 ### 🌅 Morning Briefing
+
 - **AI Daily Briefing**: Smart morning summary outlining top priorities, upcoming deadlines, and recommended focus areas for the day.
 
 ### 📝 Task & Subtask Management
+
 - **Hierarchical Subtasks**: Create and track subtasks directly within parent task views.
 - **Priority & Status**: Manage task priorities (`high`, `medium`, `low`) and reactive status transitions.
 
@@ -41,7 +47,7 @@ AURA is a voice-first, AI-native personal executive assistant built for mobile. 
 ## 🛠️ Architecture & Tech Stack
 
 | Layer | Technology | Description |
-|-------|-----------|-------------|
+| ------- | ----------- | ------------- |
 | **Frontend Framework** | Flutter (Dart 3.x) | Single codebase targeting Android & cross-platform |
 | **State Management** | Riverpod | Reactive state management with code generation |
 | **Local Database** | SQLite via Drift ORM | Offline-first relational storage with reactive streams |
@@ -88,7 +94,7 @@ AURA/
 ## 📚 Documentation Index
 
 | Document | Purpose |
-|----------|---------|
+| ---------- | --------- |
 | [VISION.md](./docs/VISION.md) | Executive summary, core purpose, and long-term vision |
 | [PRD.md](./docs/PRD.md) | Product Requirements Document — feature specifications & acceptance criteria |
 | [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Technical architecture, data flow, and Flutter module breakdown |
@@ -104,12 +110,14 @@ AURA/
 ## 🚀 Development & Build Instructions
 
 ### Prerequisites
+
 - **Flutter SDK**: 3.22.x or higher
 - **Dart SDK**: 3.4.x or higher
 - **Android SDK**: API 34+ (Build-Tools 34.0.0+)
 - **Java JDK**: JDK 17 or JDK 21
 
 ### Running Locally
+
 ```bash
 # 1. Fetch dependencies
 flutter pub get
@@ -122,12 +130,14 @@ flutter run
 ```
 
 ### Database Code Generation
+
 If you modify Drift table definitions (`lib/database/tables/`):
+
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
 ---
 
-*Personal project by Ishant — BTech CSE*  
+*Personal project by Ishan T — BTech CSE*  
 *License: Proprietary / Personal Project*

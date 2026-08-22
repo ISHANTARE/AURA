@@ -224,20 +224,24 @@ Rationale: Gemini free tier is sufficient for MVP-scale NLP. No credit card need
 **Status:** Accepted
 
 ### Decision
+
 AURA does not ship with a fixed list of workspaces. Workspaces are created
 on-the-fly from user conversation and voice input.
 
 ### Context
+
 It's impossible to predefine every context of a person's life. A student's life
 includes VIT, IIT prep, internship, placements, health, personal projects, and more
 — and this changes every semester.
 
 ### Rationale
+
 - Flexible: adapts to any user's life without manual setup
 - AI-native: AURA detects context from language ("I'm preparing for GATE" → creates GATE workspace)
 - Less friction: no onboarding wizard asking you to set up workspaces
 
 ### Consequences
+
 - Workspace creation logic must be in the AI pipeline (not just CRUD)
 - Need a smart keyword → workspace classifier
 - Workspace names must be fuzzy-searchable ("IIT" and "GATE" might be the same workspace)
@@ -251,24 +255,28 @@ includes VIT, IIT prep, internship, placements, health, personal projects, and m
 **Status:** Accepted
 
 ### Decision
+
 AURA registers as a share target on Android. Any content — screenshots, links,
 documents, media — can be shared into AURA from any app.
 
 ### Behavior by content type
+
 | Content | Behavior |
-|---------|----------|
+| --------- | ---------- |
 | Screenshot | Show image, ask "What do you want to do with this?" → voice response |
 | Link | AURA opens and reads it, saves full context, searchable later |
 | Document/PDF | Extract key info, classify, attach to workspace |
 | Media | Classify and store with description |
 
 ### Rationale
-- Screenshots are Ishant's current primary capture method
+
+- Screenshots are Ishan T's current primary capture method
 - Many deadlines arrive via WhatsApp images, portal screenshots, social media
 - Links to forms/events carry more info than a manually typed task
 - Everything shared to AURA must be organized and searchable later
 
 ### Consequences
+
 - Requires Android Sharesheet integration
 - Requires OCR for screenshots (ML Kit Document Scanner or similar, free)
 - Requires link reading/scraping capability
@@ -283,21 +291,25 @@ documents, media — can be shared into AURA from any app.
 **Status:** Accepted
 
 ### Decision
+
 AURA respects Android's Do Not Disturb mode. When DND is lifted,
 all AURA notifications that fired during DND are replayed immediately.
 No notification is ever silently dropped.
 
 ### Context
-Ishant uses DND during interviews, coding assessments, strict classes.
+
+Ishan T uses DND during interviews, coding assessments, strict classes.
 These are exactly the moments when important reminders might fire.
 Silently dropping them defeats the purpose of the reminder.
 
 ### Rationale
+
 - A missed reminder during DND is worse than no reminder — you think it fired
 - Replay-on-lift ensures guaranteed delivery
 - Matches user mental model: "I'll check when I'm free"
 
 ### Consequences
+
 - Need a notification queue/log in the database
 - Must monitor DND state changes (Android BroadcastReceiver for DND change)
 - Replay should be batched (one summary notification listing all missed, not spam)
@@ -312,10 +324,11 @@ Silently dropping them defeats the purpose of the reminder.
 **Status:** Accepted
 
 ### Screenshot OCR
+
 **Decision: Google ML Kit Document Scanner / Text Recognition (free, on-device)**
 
 | Option | Cost | Offline | Quality |
-|--------|------|---------|---------|
+| -------- | ------ | --------- | --------- |
 | Google ML Kit | Free | Yes | Excellent for Android |
 | Tesseract (open source) | Free | Yes | Lower quality |
 | Cloud Vision API | Paid | No | Overkill |
@@ -324,6 +337,7 @@ Rationale: ML Kit is built for Android, works entirely on-device, free, no API k
 handles screenshots including handwriting and printed text.
 
 ### Link Reading
+
 **Decision: Smart length-based strategy**
 
 ```
@@ -348,10 +362,11 @@ summarization of long content (one free API call per link).
 **Status:** Accepted
 
 ### Decision
+
 Flutter is the single codebase for all current and future platforms.
 
 | Platform | Support | Timeline |
-|----------|---------|----------|
+| ---------- | --------- | ---------- |
 | Android | Primary | Phase 8 (now) |
 | iOS | Secondary | After Android MVP |
 | Windows | Future | Post-launch |
@@ -359,6 +374,7 @@ Flutter is the single codebase for all current and future platforms.
 | Web | Future | Post-launch |
 
 ### Rationale
+
 - One codebase, all platforms — zero extra cost for desktop later
 - Dart is learnable and well-documented
 - Flutter's rendering engine gives full UI control (no native component constraints)
@@ -366,12 +382,12 @@ Flutter is the single codebase for all current and future platforms.
 - Flutter has mature Android overlay/accessibility support needed for floating button
 
 ### Consequence
+
 - All architecture decisions must be platform-agnostic from day one
 - Native Android code (Accessibility Service for floating button, BroadcastReceiver for DND)
   will be in a thin platform channel layer, keeping core logic in Dart
 
-
-## ADR-012 — No emojis. Lucide Icons as the single icon system.
+## ADR-012 — No emojis. Lucide Icons as the single icon system
 
 **Date:** 2026-07-24
 **Status:** Accepted
@@ -386,6 +402,7 @@ All icons throughout the app use **Lucide Icons** as the single, uniform icon se
 Emojis are OS-rendered glyphs. They look different on every device, every Android version, every OEM skin (Samsung, OnePlus, stock Android all render emojis differently). They carry an inherently casual, consumer-app personality that conflicts with AURA's sharp, premium, neubrutalist identity.
 
 We need one icon set that:
+
 - Looks identical on every device
 - Matches the visual weight of neubrutalism's 2px borders
 - Has consistent stroke width across all icons (no mixing filled + outline + rounded + flat)
@@ -394,7 +411,7 @@ We need one icon set that:
 ### Options Considered
 
 | Option | Stroke | Consistency | Flutter package | Notes |
-|--------|--------|-------------|-----------------|-------|
+| -------- | -------- | ------------- | ----------------- | ------- |
 | **Lucide Icons** | 2px, consistent | Excellent | lucide_icons | Geometric, modern, 1500+ icons |
 | Phosphor Icons | Variable weights | Good | phosphor_flutter | Multiple weight options — good but overkill |
 | Material Icons | Variable | Moderate | built-in Flutter | Mix of filled/outlined styles |
@@ -413,19 +430,21 @@ We need one icon set that:
 ### Icon Usage Spec
 
 All icons in AURA:
-- Color: white (#FFFFFF) for primary, gba(255,255,255,0.6) for secondary
+
+- Color: white (#FFFFFF) for primary,
+gba(255,255,255,0.6) for secondary
 - Size: 20dp standard UI, 24dp app bar / nav bar, 16dp inline / labels, 32dp empty states
 - Stroke: always rendered as lucide_icons provides — do not scale icon weight artificially
 - Never mix with emojis or other icon sets
 - Workspace identifiers: use Lucide icons (not emojis). Map:
-    - VIT / College         → LucideIcons.graduationCap
-    - GATE Prep             → LucideIcons.target
-    - Internship            → LucideIcons.briefcase
-    - Personal              → LucideIcons.user
-    - Health                → LucideIcons.heart
-    - Finance               → LucideIcons.creditCard
-    - Projects              → LucideIcons.layoutGrid
-    - Custom (user-created) → LucideIcons.folder
+  - VIT / College         → LucideIcons.graduationCap
+  - GATE Prep             → LucideIcons.target
+  - Internship            → LucideIcons.briefcase
+  - Personal              → LucideIcons.user
+  - Health                → LucideIcons.heart
+  - Finance               → LucideIcons.creditCard
+  - Projects              → LucideIcons.layoutGrid
+  - Custom (user-created) → LucideIcons.folder
 
 ### Consequences
 
@@ -472,4 +491,3 @@ During development and sprint testing, hardcoded sample tasks (e.g. "ML Assignme
 
 *Created: 2026-07-23*
 *Living document — add new ADRs as decisions are made*
-

@@ -45,5 +45,15 @@ void main() {
       expect(result.deadline, isNotNull);
       expect(result.reminders, isNotEmpty);
     });
+
+    test('Safely handles empty and whitespace-only transcripts without crashing', () {
+      final resultEmpty = LocalIntentParser.parse('');
+      expect(resultEmpty.title, equals('Untitled Voice Task'));
+      expect(resultEmpty.intentType, equals('create_task'));
+
+      final resultSpaces = LocalIntentParser.parse('   ');
+      expect(resultSpaces.title, equals('Untitled Voice Task'));
+      expect(resultSpaces.intentType, equals('create_task'));
+    });
   });
 }

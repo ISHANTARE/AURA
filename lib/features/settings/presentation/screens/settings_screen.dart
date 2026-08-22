@@ -24,7 +24,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final TextEditingController _userNameController = TextEditingController(text: 'Ishant');
+  final TextEditingController _userNameController = TextEditingController(text: 'Ishan T');
   final TextEditingController _apiKeyController = TextEditingController();
   final TextEditingController _baseUrlController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
@@ -45,7 +45,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userNameController.text = prefs.getString('USER_NAME') ?? 'Ishant';
+      _userNameController.text = prefs.getString('USER_NAME') ?? 'Ishan T';
       _apiKeyController.text = prefs.getString('LLM_API_KEY') ?? '';
       _baseUrlController.text = prefs.getString('LLM_BASE_URL') ?? 'https://integrate.api.nvidia.com/v1';
       _modelController.text = prefs.getString('LLM_MODEL') ?? 'meta/llama-3.3-70b-instruct';

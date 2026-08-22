@@ -146,7 +146,7 @@ over past 7 days
             │
             ▼
      Push notification fires:
-     "Good morning, Ishant. ☀️
+     "Good morning, Ishan T. ☀️
       2 urgent deadlines today..."
             │
      User taps notification

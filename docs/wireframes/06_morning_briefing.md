@@ -13,7 +13,7 @@
 │  STATUS BAR                              [✕ Dismiss]│ ← Top bar (48dp) — minimal
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│  Good morning, Ishant.                              │ ← 32sp ExtraBold white
+│  Good morning, Ishan T.                              │ ← 32sp ExtraBold white
 │  Thursday, July 24                                  │ ← 16sp secondary
 │                                                     │
 │  ── 2 tasks due today. Yesterday: 3/5 done. ──      │ ← AI summary line (14sp secondary, italic)
@@ -57,14 +57,16 @@
 ## Component Breakdown
 
 ### Header
+
 ```
-Greeting:  "Good morning, Ishant." — 32sp ExtraBold, white
+Greeting:  "Good morning, Ishan T." — 32sp ExtraBold, white
            Changes by time: "Good afternoon" / "Good evening"
 Date:      "Thursday, July 24" — 16sp Regular, secondary
 Spacing:   24dp below header before summary line
 ```
 
 ### AI Summary Line
+
 ```
 Font:      14sp Regular, secondary, italic
 Format:    "N tasks due today. Yesterday: X/Y done. [motivational note]."
@@ -78,6 +80,7 @@ Examples:
 ### Section Cards (all follow same bento card pattern)
 
 **URGENT section**
+
 ```
 Label:     "🔴 URGENT" — 11sp ALL CAPS, red (#FF3B3B)
 Criteria:  Tasks/events due within 48 hours
@@ -87,6 +90,7 @@ Empty:     Hidden entirely (section not shown if nothing urgent)
 ```
 
 **TODAY'S FOCUS section**
+
 ```
 Label:     "🎯 TODAY'S FOCUS" — 11sp ALL CAPS, lime (#C8FF00)
 Badge:     "AI suggested  🤖" — 11sp secondary, right-aligned in header
@@ -96,6 +100,7 @@ Tap row:   Opens task detail
 ```
 
 **UPCOMING section**
+
 ```
 Label:     "📅 UPCOMING" — 11sp ALL CAPS, blue (#4DFFFF)
 Subtitle:  "Next 7 days" — secondary
@@ -105,6 +110,7 @@ Tasks:     White left indicator
 ```
 
 **HABITS section**
+
 ```
 Label:     "🔁 HABITS" — 11sp ALL CAPS, purple (#B57BFF)
 Item row:  Habit name + completion status indicator
@@ -118,6 +124,7 @@ Tap ✗ row: Quick-marks habit done for today (green flash + haptic)
 ---
 
 ## "START MY DAY" Button
+
 ```
 Style:     Full width lime CTA (standard primary button spec)
 Label:     "▶  START MY DAY"
@@ -126,6 +133,7 @@ Tap:       Dismisses briefing → navigates to Home screen
 ```
 
 ## Dismiss [✕]
+
 ```
 Position:  Top right
 Style:     Small secondary button
@@ -139,7 +147,7 @@ Tap:       Dismisses full screen, goes to Home
 
 ```
 Notification:
-  Title:   "Good morning, Ishant. ☀️"
+  Title:   "Good morning, Ishan T. ☀️"
   Body:    "2 urgent deadlines today. Daily DSA missed yesterday. Tap to see your plan."
   Action:  [Open Briefing] — opens this screen
   Style:   Expandable notification showing top 3 items inline
@@ -151,7 +159,7 @@ Notification:
 ## Edge Cases
 
 | Situation | Behavior |
-|-----------|---------|
+| ----------- | --------- |
 | Nothing due, all done | Section: "✨ Clear Day — Nothing urgent today." Shows upcoming only |
 | All tasks done | "All caught up! Here's what's coming next week." |
 | First morning (no data) | Shows onboarding message instead of briefing |
@@ -174,6 +182,7 @@ Shown only when DND was active and reminders fired during DND:
 ```
 
 Time-sensitive items reworded:
+
 - "Interview in 15 min" (fired 2 hrs ago) → "You had a reminder 2 hrs ago: Interview at VIT Placement Cell"
 
 ---
@@ -181,7 +190,7 @@ Time-sensitive items reworded:
 ## Animations
 
 | Event | Animation |
-|-------|-----------|
+| ------- | ----------- |
 | Screen enters | Slides up from bottom, full screen, 350ms ease-out |
 | Section cards | Stagger in: slide up 8dp + fade, 50ms delay each |
 | Summary line | Typewriter effect (optional — if feels premium, not gimmicky) |

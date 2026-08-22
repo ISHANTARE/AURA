@@ -16,7 +16,7 @@ before any code is written. This is Phase 2 of the 12-phase AURA development pro
 ## PRD Philosophy
 
 - PRD decides. Code implements. Never the other way around.
-- Every feature must solve a REAL problem for Ishant (User #1).
+- Every feature must solve a REAL problem for Ishan T (User #1).
 - MVP is not an excuse for bad design. Premium feel is required from day one.
 - Edge cases are not optional. Document them all.
 
@@ -30,7 +30,7 @@ Each feature or section should follow this format:
 What exact friction or pain does this feature eliminate?
 
 **User Story**
-As Ishant, I want to [action] so that [outcome].
+As Ishan T, I want to [action] so that [outcome].
 
 **Trigger / Entry Points**
 How does the user reach this feature? (floating button, widget, share sheet, etc.)
@@ -39,6 +39,7 @@ How does the user reach this feature? (floating button, widget, share sheet, etc
 Step-by-step numbered list of what happens in the ideal scenario.
 
 **UI Requirements**
+
 - Screen name and layout description
 - Each component and its behavior
 - Animations and transitions required
@@ -46,17 +47,20 @@ Step-by-step numbered list of what happens in the ideal scenario.
 - Haptic feedback requirements
 
 **AI Behavior**
+
 - What the AI understands / extracts
 - Confidence thresholds
 - What happens when AI is uncertain
 - The confirmation step (ALWAYS required per ADR-004)
 
 **Offline Behavior**
+
 - What works without internet (MUST be core functionality per ADR-002)
 - What is queued for later
 - What is simply unavailable offline
 
 **Error States**
+
 - Network unavailable
 - AI parsing failure
 - Permission denied
@@ -92,6 +96,7 @@ What is explicitly deferred.
 ## Core Data Model Reference
 
 A Task in AURA contains:
+
 - ID, Name, Deadline, Estimated Hours
 - Priority (AI-assigned + user override)
 - Workspace (exactly one, non-nullable)

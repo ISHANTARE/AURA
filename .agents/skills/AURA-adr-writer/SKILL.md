@@ -16,6 +16,7 @@ must be documented in DECISIONS.md BEFORE implementation begins. This is non-neg
 ## When to Write an ADR
 
 Write an ADR when:
+
 - Choosing between two or more technology options
 - Making a decision that affects the data model
 - Making a decision that affects offline behavior
@@ -24,6 +25,7 @@ Write an ADR when:
 - Making any decision that will be hard to reverse
 
 Do NOT write an ADR for:
+
 - Trivial implementation details (which variable name to use)
 - Style choices covered by the design system
 - Decisions that are obviously correct and have no real alternatives
@@ -54,7 +56,7 @@ All ADRs go into `DECISIONS.md`. Append new ADRs at the bottom. Never delete old
 ### Rationale
 - Bullet points explaining WHY this option was chosen over alternatives
 - Reference relevant AURA principles (e.g., "Aligns with offline-first principle")
-- Reference user needs (e.g., "Ishant needs this to work without internet")
+- Reference user needs (e.g., "Ishan T needs this to work without internet")
 
 ### Consequences
 - What becomes easier because of this decision
@@ -74,7 +76,7 @@ Next new ADR should be: **ADR-012**
 ## Existing ADRs Summary (Do Not Contradict Without New ADR)
 
 | ADR | Decision | Status |
-|-----|----------|--------|
+| ----- | ---------- | -------- |
 | ADR-001 | AURA owns data model. External services are sync targets. | Accepted |
 | ADR-002 | Offline-first architecture. Cloud is opt-in. | Accepted |
 | ADR-003 | Voice is primary input method. | Accepted |
@@ -105,7 +107,7 @@ When evaluating options for an ADR, always ask:
 4. **Cost**: What does this cost at MVP scale? At 1000 users? At 100k users?
 5. **Complexity**: How much implementation effort does this add?
 6. **Reversibility**: How hard is it to change this decision later?
-7. **Ishant's life**: Does this actually solve Ishant's real-world problem?
+7. **Ishan T's life**: Does this actually solve Ishan T's real-world problem?
 
 ## Writing Quality Standards
 

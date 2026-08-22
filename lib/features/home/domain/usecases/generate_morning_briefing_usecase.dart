@@ -27,8 +27,8 @@ class GenerateMorningBriefingUseCase {
     final now = DateTime.now();
     final hour = now.hour;
     final String greeting = hour < 12
-        ? 'Good morning, Ishan.'
-        : (hour < 17 ? 'Good afternoon, Ishan.' : 'Good evening, Ishan.');
+        ? 'Good morning, Ishant.'
+        : (hour < 17 ? 'Good afternoon, Ishant.' : 'Good evening, Ishant.');
 
     final dateFormatted =
         '${_weekdayName(now.weekday)}, ${_monthName(now.month)} ${now.day}';

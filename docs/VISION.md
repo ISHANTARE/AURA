@@ -17,6 +17,7 @@ You mentally note a project task.
 And then you forget. Or you scramble. Or you miss it.
 
 The existing solutions all require YOU to do the organizing work:
+
 - Open Google Calendar. Manually type the event.
 - Open Todoist. Manually add the task.
 - Set 3 separate reminders in your Clock app.
@@ -35,6 +36,7 @@ You press one button.
 You say: *"ML assignment due August 3rd, midnight. Remind me 3 days before, 1 day before, and 2 hours before. Add 'Complete EDA' for tomorrow."*
 
 AURA:
+
 - Creates the task with all metadata
 - Sets the deadline
 - Creates 3 layered reminders automatically
@@ -89,9 +91,10 @@ Every important thing flows into AURA because **you choose to send it there**.
 
 ## Target User (v1)
 
-**Ishant** — BTech CSE student (VIT + IIT prep + internship + personal projects + health).
+**Ishan T** — BTech CSE student (VIT + IIT prep + internship + personal projects + health).
 
 A person who:
+
 - Has multiple parallel responsibilities across contexts
 - Is highly intelligent but loses things in the chaos of modern app fragmentation
 - Values privacy and owning their own data

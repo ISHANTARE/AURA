@@ -22,7 +22,7 @@ It shows today's urgent tasks, AI-suggested focus, upcoming events, habits, and 
 │  STATUS BAR (system)                                │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│  Good morning, Ishant.            [🔍] [👤]         │ ← Header bar (56dp)
+│  Good morning, Ishan T.            [🔍] [👤]         │ ← Header bar (56dp)
 │  Thursday, July 24                                  │
 │                                                     │
 ├──────────────────────────┬──────────────────────────┤
@@ -70,9 +70,10 @@ It shows today's urgent tasks, AI-suggested focus, upcoming events, habits, and 
 ## Component Breakdown
 
 ### Header Bar
+
 ```
 Height: 56dp
-Left:   "Good morning, Ishant." — 22sp Bold white
+Left:   "Good morning, Ishan T." — 22sp Bold white
         "Thursday, July 24"     — 13sp secondary
 Right:  [🔍] Search icon  [👤] Profile icon  (each 24dp, 48dp tap target)
 Background: transparent (shows base bg)
@@ -82,6 +83,7 @@ No border on header
 ### Bento Row 1 — URGENT + ORB (2 columns)
 
 **Left cell — URGENT (60% width)**
+
 ```
 Label:     "URGENT" — ALL CAPS, 11sp, secondary
 Indicator: 🔴 dot (overdue/today count)
@@ -93,6 +95,7 @@ Tap:       Opens All Tasks filtered to urgent
 ```
 
 **Right cell — ORB CELL (40% width)**
+
 ```
 Background: #141414 + 2px white border + 4px 4px white shadow
 Content:    AURA orb centered
@@ -102,6 +105,7 @@ Tap:        Activates voice capture (same as floating orb tap)
 ```
 
 ### Bento Row 2 — TODAY'S FOCUS (full width)
+
 ```
 Label:   "TODAY'S FOCUS" — ALL CAPS, 11sp, secondary
 Content: 2–3 AI-suggested tasks with:
@@ -117,6 +121,7 @@ Empty:   "Add some tasks to get focus suggestions."
 ### Bento Row 3 — NEXT UP + HABITS (2 columns)
 
 **Left cell — NEXT UP (50% width)**
+
 ```
 Label:   "NEXT UP" — ALL CAPS, 11sp, secondary
 Counter: count badge (white number on black, 2px white border)
@@ -127,6 +132,7 @@ Tap:     Opens calendar / upcoming view
 ```
 
 **Right cell — HABITS (50% width)**
+
 ```
 Label:   "HABITS" — ALL CAPS, 11sp, secondary
 Content: Today's recurring tasks, each line:
@@ -137,6 +143,7 @@ Tap cell: Opens recurring tasks list
 ```
 
 ### Bento Row 4 — WORKSPACES (full width)
+
 ```
 Label:   "WORKSPACES" — ALL CAPS, 11sp, secondary
 Content: Horizontal scroll of workspace chips
@@ -147,6 +154,7 @@ Tap chip: Navigates to workspace screen filtered to that workspace
 ```
 
 ### Floating Orb
+
 ```
 Position: Floating, above bottom nav bar, default center-bottom
           Saved position persists across app restarts
@@ -158,6 +166,7 @@ Long press: Quick action menu appears above orb
 ```
 
 ### Bottom Navigation
+
 ```
 Height: 56dp + system nav bar height
 Items:  Home | Calendar | Workspaces | Settings
@@ -171,16 +180,19 @@ Inactive: secondary color
 ## States
 
 ### Loading State
+
 - Bento cells shimmer with `rgba(255,255,255,0.05)` animated highlight
 - Cells load with stagger animation (40ms each) once data arrives
 
 ### Empty State (no tasks at all)
+
 ```
 Shows only the orb cell (full width in that row) with:
 "Nothing here yet. Tap the orb and tell me what's on your mind."
 ```
 
 ### Error State
+
 ```
 Small snackbar at bottom: "Couldn't load some items. Tap to retry."
 2px white border, black bg, white text
@@ -191,7 +203,7 @@ Small snackbar at bottom: "Couldn't load some items. Tap to retry."
 ## Interactions & Animations
 
 | Interaction | Animation |
-|-------------|-----------|
+| ------------- | ----------- |
 | App launch | Bento cells slide up 8dp + fade in, 40ms stagger |
 | Cell tap | Scale 0.97 + shadow shrinks, 100ms |
 | Habit tap (mark done) | Green flash on row + checkmark bounce + haptic |

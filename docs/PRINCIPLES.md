@@ -112,7 +112,7 @@
 
 ## 9. Build for Yourself First
 
-**Ishant is User #1. Build what you would actually use every day.**
+**Ishan T is User #1. Build what you would actually use every day.**
 
 - If you wouldn't use a feature yourself, don't build it
 - Test everything in real daily usage before marking it complete

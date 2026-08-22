@@ -18,21 +18,24 @@ A conversation with ChatGPT explored existing options (ChatGPT + Google Calendar
 
 The conversation then evolved into designing AURA from scratch.
 
-**ChatGPT conversation reference:** https://chatgpt.com/share/6a613942-5c78-83e8-8067-76007b3a648d
+**ChatGPT conversation reference:** <https://chatgpt.com/share/6a613942-5c78-83e8-8067-76007b3a648d>
 
 ---
 
 ## Key Design Decisions Made in the Origin Conversation
 
 ### Decision 1: Build from scratch, not integrate
+
 Rather than patching together 4-5 existing apps, AURA should be built as a unified product.
 
 **Rationale:** Existing apps require you to do the organizing. AURA should do it for you.
 
 ### Decision 2: AURA is not an actual OS — it's a life OS on top of Android
+
 AURA is an Android app that becomes your **primary interface** for organizing your life. It lives alongside WhatsApp, Gmail, Chrome — but becomes the brain that coordinates all of it.
 
 Android capabilities being leveraged:
+
 - Floating button (Overlay/Accessibility permission)
 - Home screen widget
 - Background service
@@ -42,15 +45,18 @@ Android capabilities being leveraged:
 - Quick Settings tile
 
 Android limitations respected:
+
 - Cannot secretly monitor WhatsApp or Gmail
 - Cannot bypass Android permissions
 - Cannot control other apps without explicit permission
 - (This is by design — matches privacy philosophy)
 
 ### Decision 3: No Google Calendar required — AURA builds its own
+
 The calendar view is just **one view** of the underlying AURA data model.
 
 The model-first thinking:
+
 ```
 Task object in AURA:
 - Name
@@ -70,12 +76,15 @@ Task object in AURA:
 The calendar event is **one property** of the task, not the task itself.
 
 Google Calendar integration is a later, optional sync layer:
+
 ```
 AURA Database → Sync Engine → Google Calendar (compatibility layer)
 ```
 
 ### Decision 4: Multiple views of the same data
+
 The same underlying data should be viewable as:
+
 - Daily (Google Calendar style)
 - Weekly (Outlook style)
 - Monthly (traditional calendar)
@@ -86,7 +95,9 @@ The same underlying data should be viewable as:
 - Kanban (Todo / Doing / Done)
 
 ### Decision 5: Offline and cloud-independent MVP
+
 The MVP works with:
+
 - No Google account
 - No Microsoft account
 - No internet connection for core features
@@ -95,6 +106,7 @@ The MVP works with:
 Cloud sync, cross-device, Google Calendar sync — all opt-in features added later.
 
 ### Decision 6: AURA owns the data model
+>
 > "External services are merely mirrors when you choose to sync."
 
 This is a product and technical principle that affects every architectural decision.
@@ -106,7 +118,7 @@ This is a product and technical principle that affects every architectural decis
 The development methodology agreed upon in the origin conversation:
 
 | Phase | Name | Description |
-|-------|------|-------------|
+| ------- | ------ | ------------- |
 | 0 | Vision | Why AURA exists. Core principles. What's out of scope. |
 | 1 | Product Discovery | Map user's actual daily life, workflow, friction points |
 | 2 | Product Requirements | Full PRD — every feature, screen, button, workflow, edge case |
@@ -157,13 +169,15 @@ Decisions are made in documentation first, then implemented.
 
 ## Roles
 
-**Ishant (you):**
+**Ishan T (you):**
+
 - Founder (decides vision)
 - Product Owner (decides priorities)
 - User #1 (provides real-world feedback)
 - Engineer (integrates and tests)
 
 **AI assistant (Antigravity / ChatGPT):**
+
 - Product Manager (requirements and roadmap)
 - Solutions Architect (system design)
 - AI Architect (LLM workflows and prompt design)
@@ -234,6 +248,7 @@ AURA/
 **Next: Phase 2** — Product Requirements Document (PRD)
 
 **Completed:**
+
 - VISION.md
 - PRINCIPLES.md
 - CONTEXT.md (this file)
@@ -246,7 +261,7 @@ AURA/
 ## Resolved Decisions (from Phase 1)
 
 | # | Question | Decision |
-|---|----------|----------|
+| --- | ---------- | ---------- |
 | 1 | Task vs Event distinction | Both supported architecturally in DB and UI |
 | 2 | Morning briefing timing | Auto-detect from phone unlock pattern + manual override |
 | 3 | OCR provider | Google ML Kit — free, on-device, offline, Android-native |
@@ -259,5 +274,3 @@ AURA/
 *Created: 2026-07-23*
 *Last Updated: 2026-07-23*
 *Status: Living document — update after every significant conversation or decision*
-
-

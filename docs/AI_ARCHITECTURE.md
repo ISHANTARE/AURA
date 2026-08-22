@@ -13,7 +13,7 @@ and failure path in AURA's AI system. During Phase 8, implement exactly from thi
 
 ## AI Design Principles (Non-Negotiable)
 
-1. **AI suggests. Ishant decides.** (ADR-004) — Every AI output goes to a confirm screen. No silent writes.
+1. **AI suggests. Ishan T decides.** (ADR-004) — Every AI output goes to a confirm screen. No silent writes.
 2. **Speed over perfection.** — 2 second response target. Use streaming where the API supports it.
 3. **Graceful degradation.** — If AI fails, the app still works. Manual entry is always available.
 4. **Minimal data sent.** — Never send more than needed. No full task history in every call.
@@ -25,7 +25,7 @@ and failure path in AURA's AI system. During Phase 8, implement exactly from thi
 ## AI Stack (Per ADR-006)
 
 | Component | Provider | Cost | Fallback |
-|-----------|----------|------|---------|
+| ----------- | ---------- | ------ | --------- |
 | Intent extraction | Gemini 2.0 Flash | Free (15 req/min) | Manual entry form |
 | Workspace classifier | Built into intent extraction call | — | Prompt user to select |
 | Morning briefing line | Gemini 2.0 Flash | Free | Static template |
@@ -107,6 +107,7 @@ Extract the intent and return JSON only.
 ### Few-Shot Examples (included in system prompt)
 
 **Example 1 — Simple task with layered reminders:**
+
 ```
 Input: "ML assignment due Friday at 11:59 PM, remind me day before and 6 hours before"
 Output: {
@@ -125,6 +126,7 @@ Output: {
 ```
 
 **Example 2 — Event with location:**
+
 ```
 Input: "Interview at TCS tomorrow at 3 PM at VIT placement cell"
 Output: {
@@ -146,6 +148,7 @@ Output: {
 ```
 
 **Example 3 — Recurring task:**
+
 ```
 Input: "Add daily DSA practice, every day, remind me at 9 PM"
 Output: {
@@ -164,6 +167,7 @@ Output: {
 ```
 
 **Example 4 — Ambiguous / low confidence:**
+
 ```
 Input: "Remind me about that thing Rahul mentioned"
 Output: {
@@ -238,7 +242,7 @@ WorkspaceMatchResult routeWorkspace(
 ### Confidence → UI Mapping
 
 | Workspace confidence | UI treatment |
-|---------------------|-------------|
+| --------------------- | ------------- |
 | ≥ 0.85 | Pre-filled with `[auto]` badge — user can change |
 | 0.5–0.84 | Pre-filled with amber `[auto?]` badge — prompt to verify |
 | < 0.5 | Empty — "Select workspace" prompt (mandatory before save) |
@@ -385,7 +389,7 @@ Future<VoiceCaptureResult> processSharedScreenshot({
 ### Overall Confidence Thresholds
 
 | Score | Meaning | UI behavior |
-|-------|---------|-------------|
+| ------- | --------- | ------------- |
 | ≥ 0.85 | High confidence | All fields pre-filled. `[auto]` badges shown. One-tap confirm. |
 | 0.65–0.84 | Medium confidence | Most fields pre-filled. Uncertain fields highlighted amber. |
 | 0.40–0.64 | Low confidence | Fields filled but flagged. "AURA isn't sure — please review." |
@@ -433,7 +437,7 @@ When rate limited → show: *"AI is a bit busy right now. Processing in a moment
 ## Error Handling Matrix
 
 | Error | Cause | User sees | System does |
-|-------|-------|-----------|-------------|
+| ------- | ------- | ----------- | ------------- |
 | Timeout (>8s) | Slow network / API | "Taking longer than expected. Try again?" | Log failure, offer retry |
 | API 429 | Rate limit | "AI is busy. Processing shortly..." | Queue request, retry in 60s |
 | Malformed JSON | Gemini hallucination | "Couldn't parse — fill manually" | Log malformed response, retry once |
