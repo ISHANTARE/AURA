@@ -167,8 +167,8 @@ class _WorkspaceItemList extends StatelessWidget {
             child: Row(
               children: [
                 if (isCompletedList)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 10),
+                  const Padding(
+                    padding: EdgeInsets.only(right: 10),
                     child: Icon(LucideIcons.checkCircle2, color: AuraColors.accentGreen, size: 20),
                   ),
                 Expanded(

@@ -510,11 +510,13 @@ class _NotesTabState extends State<_NotesTab> {
                 setState(() => _isSaving = true);
                 HapticFeedback.mediumImpact();
                 widget.onSaveNotes(widget.notesController.text);
+                // Capture messenger before the async gap.
+                final messenger = ScaffoldMessenger.of(context);
                 await Future.delayed(const Duration(milliseconds: 300));
                 if (mounted) {
                   setState(() => _isSaving = false);
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.clearSnackBars();
+                  messenger.showSnackBar(
                     const SnackBar(
                       content: Text('Notes saved successfully.'),
                       duration: Duration(seconds: 2),

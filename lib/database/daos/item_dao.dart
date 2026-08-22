@@ -85,12 +85,15 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
     .watch();
   }
 
-  /// Search items by title query
+  /// Search items by title, notes body, or AI transcript
   Future<List<Item>> search(String query) =>
       (select(items)
         ..where((t) =>
-            t.title.like('%$query%') & t.deletedAt.isNull())
-        ..limit(20))
+            (t.title.like('%$query%') |
+             t.notes.like('%$query%') |
+             t.aiTranscript.like('%$query%')) &
+            t.deletedAt.isNull())
+        ..limit(30))
       .get();
 
   // ── Sub-Reminders Schedule Queries ─────────────────────────────────────────

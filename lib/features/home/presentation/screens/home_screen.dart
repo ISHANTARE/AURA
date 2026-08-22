@@ -155,7 +155,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 flex: 60,
                                 child: UrgentCell(
                                   items: urgentItems,
-                                  onTap: () {},
+                                  onTap: () => context.push(Routes.search),
                                 ),
                               ),
                               const SizedBox(width: AuraSpacing.sm),

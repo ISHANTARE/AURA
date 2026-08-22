@@ -27,6 +27,7 @@ class ConfirmationBox extends ConsumerStatefulWidget {
 }
 
 class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
+  // ignore: prefer_final_fields — toggled inside setState, so must remain mutable
   bool _isEditingAll = false;
   late TextEditingController _titleController;
   late TextEditingController _notesController;

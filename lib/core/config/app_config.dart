@@ -2,7 +2,7 @@
 class AppConfig {
   static const String llmApiKey = String.fromEnvironment(
     'LLM_API_KEY',
-    defaultValue: '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',
+    defaultValue: '',
   );
 
   static const String llmBaseUrl = String.fromEnvironment(

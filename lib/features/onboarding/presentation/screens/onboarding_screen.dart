@@ -1,9 +1,11 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:aura/core/constants/colors.dart';
 import 'package:aura/core/constants/spacing.dart';
@@ -20,11 +22,11 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
-  final TextEditingController _nameController = TextEditingController(text: 'Ishant');
+  final TextEditingController _nameController = TextEditingController(text: 'your name');
   int _currentPage = 0;
 
   // Selected workspaces for Screen 3
-  final Set<String> _selectedWorkspaces = {'VIT', 'GATE Prep'};
+  final Set<String> _selectedWorkspaces = {'College', 'Academics'};
 
   @override
   void dispose() {
@@ -38,6 +40,34 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (name.isNotEmpty) {
       await ref.read(userNameProvider.notifier).setName(name);
     }
+
+    // Persist selected workspaces into SQLite so they appear in the Workspaces tab.
+    if (_selectedWorkspaces.isNotEmpty) {
+      const uuid = Uuid();
+      final workspaceDao = ref.read(workspaceDaoProvider);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      // Colour palette cycled for visual variety
+      const colours = ['#C8FF00', '#00D4FF', '#FF6B6B', '#A78BFA', '#34D399', '#FBBF24'];
+      int colourIdx = 0;
+      for (final wsName in _selectedWorkspaces) {
+        try {
+          await workspaceDao.insertWorkspace(
+            WorkspacesCompanion.insert(
+              id: uuid.v4(),
+              name: wsName,
+              colorHex: Value(colours[colourIdx % colours.length]),
+              iconKey: const Value('folder'),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+          colourIdx++;
+        } catch (_) {
+          // Workspace may already exist — skip silently.
+        }
+      }
+    }
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
     if (mounted) context.go(Routes.home);
@@ -290,7 +320,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   // Slide 3: First Workspaces
   Widget _buildWorkspacesSlide() {
-    const suggestions = ['VIT', 'GATE Prep', 'Internship', 'Personal', 'Health', 'Placements'];
+    const suggestions = ['College', 'Academics', 'Internship', 'Personal', 'Health', 'Placements'];
 
     return Padding(
       padding: const EdgeInsets.all(AuraSpacing.xl),

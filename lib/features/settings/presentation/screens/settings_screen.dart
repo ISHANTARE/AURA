@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aura/core/constants/colors.dart';
@@ -632,10 +637,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     leading: const Icon(LucideIcons.download, color: AuraColors.accentBlue),
                     title: Text('Export App Data', style: AuraTypography.cardTitle),
                     subtitle: Text('Export local SQLite database to JSON file', style: AuraTypography.bodySmall),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Database export ready')),
-                      );
+                    onTap: () async {
+                      try {
+                        // Fetch data from both DAOs
+                        final allItems = await ref.read(itemDaoProvider).watchAllActive().first;
+                        final allWorkspaces = await ref.read(workspaceDaoProvider).getAll();
+
+                        final exportMap = {
+                          'exportedAt': DateTime.now().toIso8601String(),
+                          'version': 1,
+                          'items': allItems.map((i) => {
+                            'id': i.id,
+                            'title': i.title,
+                            'category': i.category,
+                            'kind': i.kind,
+                            'status': i.status,
+                            'notes': i.notes,
+                            'priority': i.priority,
+                            'workspaceId': i.workspaceId,
+                            'deadline': i.deadline,
+                            'fireAt': i.fireAt,
+                            'createdAt': i.createdAt,
+                            'updatedAt': i.updatedAt,
+                          }).toList(),
+                          'workspaces': allWorkspaces.map((w) => {
+                            'id': w.id,
+                            'name': w.name,
+                            'colorHex': w.colorHex,
+                            'iconKey': w.iconKey,
+                            'createdAt': w.createdAt,
+                          }).toList(),
+                        };
+
+                        final dir = await getApplicationDocumentsDirectory();
+                        final ts = DateTime.now().millisecondsSinceEpoch;
+                        final file = File('${dir.path}/aura_export_$ts.json');
+                        await file.writeAsString(jsonEncode(exportMap));
+
+                        await Share.shareXFiles(
+                          [XFile(file.path)],
+                          text: 'AURA Data Export — ${DateTime.now().toLocal()}',
+                        );
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Export failed: $e')),
+                          );
+                        }
+                      }
                     },
                   ),
                   const Divider(color: AuraColors.borderMuted, height: 1),
@@ -662,8 +711,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       );
 
                       if (confirm == true && context.mounted) {
+                        // 1. Wipe all SQLite tables in FK-safe order
+                        final db = ref.read(databaseProvider);
+                        await db.customStatement('DELETE FROM reminders_schedule');
+                        await db.customStatement('DELETE FROM notes');
+                        await db.customStatement('DELETE FROM shared_contents');
+                        await db.customStatement('DELETE FROM notification_logs');
+                        await db.customStatement('DELETE FROM ai_actions_logs');
+                        await db.customStatement('DELETE FROM offline_queues');
+                        await db.customStatement('DELETE FROM daily_logs');
+                        await db.customStatement('DELETE FROM sync_queues');
+                        await db.customStatement('DELETE FROM items');
+                        await db.customStatement('DELETE FROM workspace_sections');
+                        await db.customStatement('DELETE FROM workspaces');
+
+                        // 2. Clear SharedPreferences
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.clear();
+
                         if (context.mounted) context.go(Routes.onboarding);
                       }
                     },
