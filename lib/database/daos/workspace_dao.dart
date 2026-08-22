@@ -106,15 +106,23 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
     );
   }
 
-  /// Soft delete a workspace.
-  Future<void> softDelete(String id) {
+  /// Soft delete a workspace and cascade soft-delete to all child items.
+  Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    return (update(workspaces)..where((w) => w.id.equals(id))).write(
-      WorkspacesCompanion(
-        deletedAt: Value(now),
-        updatedAt: Value(now),
-      ),
-    );
+    await transaction(() async {
+      await (update(workspaces)..where((w) => w.id.equals(id))).write(
+        WorkspacesCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+      await (update(items)..where((t) => t.workspaceId.equals(id) & t.deletedAt.isNull())).write(
+        ItemsCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+    });
   }
 
   /// Insert a section.

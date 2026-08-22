@@ -15,6 +15,7 @@ import 'package:aura/core/router/app_router.dart';
 import 'package:aura/core/theme/theme_provider.dart';
 import 'package:aura/core/providers/providers.dart';
 import 'package:aura/platform/overlay_channel.dart';
+import 'package:aura/features/reminders/data/services/notification_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -711,6 +712,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       );
 
                       if (confirm == true && context.mounted) {
+                        // 0. Cancel all scheduled system notifications & alarms
+                        await NotificationService().cancelAll();
+
                         // 1. Wipe all SQLite tables in FK-safe order
                         final db = ref.read(databaseProvider);
                         await db.customStatement('DELETE FROM reminders_schedule');

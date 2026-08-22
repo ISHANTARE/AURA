@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:drift/drift.dart' hide Column;
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
@@ -9,10 +10,10 @@ import '../../../../core/constants/typography.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../tasks/presentation/widgets/manual_task_sheet.dart';
-import '../../../../database/app_database.dart';
+import '../../../../core/providers/providers.dart';
 import '../providers/workspace_providers.dart';
 
-/// Workspace Detail Screen — AURA v2 Workspace Detail View
+/// Workspace Detail Screen — AURA v2 Redesigned 3-Tab Workspace View
 class WorkspaceDetailScreen extends ConsumerWidget {
   const WorkspaceDetailScreen({super.key, required this.workspaceId});
 
@@ -22,6 +23,7 @@ class WorkspaceDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final workspaceAsync = ref.watch(workspaceByIdProvider(workspaceId));
     final itemsAsync = ref.watch(workspaceItemsProvider(workspaceId));
+    final sharedItemsAsync = ref.watch(workspaceSharedItemsProvider(workspaceId));
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return workspaceAsync.when(
@@ -43,11 +45,13 @@ class WorkspaceDetailScreen extends ConsumerWidget {
 
         return itemsAsync.when(
           data: (items) {
-            final pendingItems = items.where((i) => i.status != 'completed').toList();
-            final completedItems = items.where((i) => i.status == 'completed').toList();
+            final sharedItems = sharedItemsAsync.value ?? [];
+            final nonSharedItems = items.where((i) => i.kind != 'shared' && i.category != 'shared').toList();
+            final pendingItems = nonSharedItems.where((i) => i.status != 'completed').toList();
+            final completedItems = nonSharedItems.where((i) => i.status == 'completed').toList();
 
             return DefaultTabController(
-              length: 2,
+              length: 3,
               child: Scaffold(
                 backgroundColor: AuraColors.bgBase,
                 appBar: AppBar(
@@ -62,10 +66,11 @@ class WorkspaceDetailScreen extends ConsumerWidget {
                     indicatorColor: primaryColor,
                     labelColor: primaryColor,
                     unselectedLabelColor: AuraColors.textMuted,
-                    labelStyle: AuraTypography.label.copyWith(fontSize: 12, fontWeight: FontWeight.bold),
+                    labelStyle: AuraTypography.label.copyWith(fontSize: 11, fontWeight: FontWeight.bold),
                     tabs: [
                       Tab(text: 'PENDING (${pendingItems.length})'),
                       Tab(text: 'COMPLETED (${completedItems.length})'),
+                      Tab(text: 'SHARED (${sharedItems.length})'),
                     ],
                   ),
                 ),
@@ -86,6 +91,11 @@ class WorkspaceDetailScreen extends ConsumerWidget {
                       workspaceName: workspace.name,
                       primaryColor: primaryColor,
                       isCompletedList: true,
+                    ),
+                    _WorkspaceSharedList(
+                      workspaceId: workspaceId,
+                      workspaceName: workspace.name,
+                      primaryColor: primaryColor,
                     ),
                   ],
                 ),
@@ -219,6 +229,144 @@ class _WorkspaceItemList extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _WorkspaceSharedList extends ConsumerWidget {
+  const _WorkspaceSharedList({
+    required this.workspaceId,
+    required this.workspaceName,
+    required this.primaryColor,
+  });
+
+  final String workspaceId;
+  final String workspaceName;
+  final Color primaryColor;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sharedAsync = ref.watch(workspaceSharedItemsProvider(workspaceId));
+
+    return sharedAsync.when(
+      data: (items) {
+        if (items.isEmpty) {
+          return AuraEmptyState(
+            icon: LucideIcons.share2,
+            title: 'No shared content',
+            subtitle:
+                'Web links, OCR screenshots, and documents shared to $workspaceName will appear here.',
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(AuraSpacing.md),
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const SizedBox(height: AuraSpacing.sm),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            final isUrl = item.location != null && (item.location!.startsWith('http://') || item.location!.startsWith('https://'));
+            final hasNotes = item.notes != null && item.notes!.isNotEmpty;
+
+            return Container(
+              padding: const EdgeInsets.all(AuraSpacing.md),
+              decoration: BoxDecoration(
+                color: AuraColors.bgCard,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AuraColors.border, width: 1),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AuraColors.shadow,
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          isUrl ? LucideIcons.link : LucideIcons.fileText,
+                          color: primaryColor,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: AuraTypography.cardTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (hasNotes) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      item.notes!,
+                      style: AuraTypography.bodySmall.copyWith(color: AuraColors.textSecondary),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton.icon(
+                        icon: const Icon(LucideIcons.plus, size: 14),
+                        label: const Text('CONVERT TO TASK'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () async {
+                          final itemDao = ref.read(itemDaoProvider);
+                          await itemDao.updateItemPartial(
+                            ItemsCompanion(
+                              id: Value(item.id),
+                              kind: const Value('task'),
+                              category: const Value('reminder'),
+                              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+                            ),
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Converted to task in Pending tab!')),
+                            );
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(LucideIcons.trash2, size: 18, color: AuraColors.textMuted),
+                        onPressed: () async {
+                          final itemDao = ref.read(itemDaoProvider);
+                          await itemDao.softDelete(item.id);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Center(child: Text('Error: $err', style: AuraTypography.body)),
     );
   }
 }

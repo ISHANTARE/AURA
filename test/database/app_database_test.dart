@@ -85,5 +85,43 @@ void main() {
       expect(searchResults.length, equals(1));
       expect(searchResults.first.title, contains('GATE Algo'));
     });
+
+    test('Cascades soft-delete to child items when soft deleting workspace', () async {
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      await workspaceDao.insertWorkspace(
+        WorkspacesCompanion.insert(
+          id: 'ws-cascade',
+          name: 'Cascade Project',
+          colorHex: const Value('#3B82F6'),
+          createdAt: nowMs,
+          updatedAt: nowMs,
+        ),
+      );
+      await itemDao.insertItem(
+        ItemsCompanion.insert(
+          id: 'item-cascade-1',
+          workspaceId: const Value('ws-cascade'),
+          title: 'Child Task 1',
+          category: 'task',
+          kind: 'generic',
+          createdAt: nowMs,
+          updatedAt: nowMs,
+        ),
+      );
+
+      // Verify active
+      final activeBefore = await itemDao.getAllActive();
+      expect(activeBefore.any((i) => i.id == 'item-cascade-1'), isTrue);
+
+      // Soft delete workspace
+      await workspaceDao.softDelete('ws-cascade');
+
+      // Verify workspace and child items soft deleted
+      final activeWs = await workspaceDao.getAll();
+      expect(activeWs.any((w) => w.id == 'ws-cascade'), isFalse);
+
+      final activeAfter = await itemDao.getAllActive();
+      expect(activeAfter.any((i) => i.id == 'item-cascade-1'), isFalse);
+    });
   });
 }

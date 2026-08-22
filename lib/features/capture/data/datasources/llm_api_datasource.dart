@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,7 +25,7 @@ class RateLimiter {
 }
 
 /// Runtime config loaded from SharedPreferences.
-/// Falls back to AppConfig compile-time constants if not set by user.
+/// Falls back to dotenv and AppConfig compile-time constants if not set by user.
 class _RuntimeConfig {
   final String apiKey;
   final String baseUrl;
@@ -41,10 +42,19 @@ class _RuntimeConfig {
     final key = prefs.getString('LLM_API_KEY') ?? '';
     final url = prefs.getString('LLM_BASE_URL') ?? '';
     final model = prefs.getString('LLM_MODEL') ?? '';
+
+    final dotenvKey = dotenv.env['GEMINI_API_KEY'] ?? dotenv.env['LLM_API_KEY'] ?? '';
+    final dotenvUrl = dotenv.env['GEMINI_BASE_URL'] ?? dotenv.env['LLM_BASE_URL'] ?? '';
+    final dotenvModel = dotenv.env['GEMINI_MODEL'] ?? dotenv.env['LLM_MODEL'] ?? '';
+
+    final effectiveKey = key.isNotEmpty ? key : (AppConfig.llmApiKey.isNotEmpty ? AppConfig.llmApiKey : dotenvKey);
+    final effectiveUrl = url.isNotEmpty ? url : (dotenvUrl.isNotEmpty ? dotenvUrl : AppConfig.llmBaseUrl);
+    final effectiveModel = model.isNotEmpty ? model : (dotenvModel.isNotEmpty ? dotenvModel : AppConfig.llmModel);
+
     return _RuntimeConfig(
-      apiKey: key.isNotEmpty ? key : AppConfig.llmApiKey,
-      baseUrl: url.isNotEmpty ? url : AppConfig.llmBaseUrl,
-      model: model.isNotEmpty ? model : AppConfig.llmModel,
+      apiKey: effectiveKey,
+      baseUrl: effectiveUrl,
+      model: effectiveModel,
     );
   }
 }

@@ -42,6 +42,8 @@ abstract final class Routes {
   static String taskRoute(String id) => '/task/$id';
 }
 
+bool _onboardingCompleteChecked = false;
+
 /// Riverpod provider for the go_router instance.
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -49,11 +51,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: false,
     redirect: (context, state) async {
       // Only guard the root route on cold start
-      if (state.matchedLocation != Routes.home) return null;
+      if (_onboardingCompleteChecked || state.matchedLocation != Routes.home) return null;
       final prefs = await SharedPreferences.getInstance();
       final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
-      if (!onboardingDone) return Routes.onboarding;
-      return null;
+      if (onboardingDone) {
+        _onboardingCompleteChecked = true;
+        return null;
+      }
+      return Routes.onboarding;
     },
     routes: [
       // ── Main shell ────────────────────────────────────────────────────────

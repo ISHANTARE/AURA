@@ -25,6 +25,14 @@ final workspaceItemsProvider =
   return itemDao.watchByWorkspace(workspaceId);
 });
 
+/// Stream of shared content items for a workspace.
+final workspaceSharedItemsProvider =
+    StreamProvider.family<List<Item>, String>((ref, workspaceId) {
+  final itemDao = ref.watch(itemDaoProvider);
+  return itemDao.watchByWorkspace(workspaceId).map((items) =>
+      items.where((i) => i.kind == 'shared' || i.category == 'shared').toList());
+});
+
 /// Single workspace info by ID.
 final workspaceByIdProvider =
     FutureProvider.family<Workspace?, String>((ref, workspaceId) {
