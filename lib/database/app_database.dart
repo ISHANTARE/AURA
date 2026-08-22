@@ -79,11 +79,22 @@ class AppDatabase extends _$AppDatabase {
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
-            await m.createAll();
+            // Safely create any missing tables introduced in schema v2
+            for (final table in allTables) {
+              try {
+                await m.createTable(table);
+              } catch (_) {
+                // Table already exists from previous schema
+              }
+            }
           }
           if (from < 3) {
             // Add parentId column for subtask support
-            await m.addColumn(items, items.parentId);
+            try {
+              await m.addColumn(items, items.parentId);
+            } catch (_) {
+              // Column parent_id already exists
+            }
           }
         },
         beforeOpen: (details) async {

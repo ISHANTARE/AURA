@@ -37,7 +37,7 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
     // Listen for global floating orb taps from native system overlay
     OverlayChannel.listenToOrbTaps(() {
       final router = ref.read(appRouterProvider);
-      router.push(Routes.home);
+      router.push('/capture-overlay');
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

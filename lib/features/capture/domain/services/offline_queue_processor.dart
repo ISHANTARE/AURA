@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../../../core/services/connectivity_service.dart';
+import '../../../reminders/data/services/notification_service.dart';
 import '../../data/datasources/llm_api_datasource.dart';
 import '../usecases/execute_ai_action_usecase.dart';
 
@@ -84,20 +85,40 @@ class OfflineQueueProcessor {
         }
 
         try {
-          // 1. Extract intent using LLM API.
+          // 1. Extract intent using LLM API or local fallback.
           final intent = await _llmDataSource.extractIntent(
             transcript: item.content,
           );
 
-          // 2. Dispatch via ExecuteAiActionUseCase — handles ALL intent types
-          //    (create_task, create_alarm, create_workspace, delete_task, etc.)
-          await _executeAiActionUseCase.execute(
+          // 2. Safeguard: Destructive intents (delete_task, delete_workspace) captured offline
+          // MUST NOT execute silently in the background (ADR-004 compliance).
+          if (intent.intentType == 'delete_task' || intent.intentType == 'delete_workspace') {
+            await NotificationService().showInstantNotification(
+              id: item.id.hashCode.abs(),
+              title: 'Pending Offline Action Review',
+              body: 'Voice request "${item.content}" requires your confirmation to execute.',
+              payload: 'route:/search',
+            );
+            await _queueDao.markProcessed(item.id);
+            continue;
+          }
+
+          // 3. Execute creation intent (creates task/alarm/workspace/note)
+          final resultMsg = await _executeAiActionUseCase.execute(
             intent: intent,
             workspaceId: defaultWorkspace.id,
             originalTranscript: item.content,
           );
 
-          // 3. Mark item as successfully processed.
+          // 4. Notify user that offline voice capture was processed (Human-in-the-Loop)
+          await NotificationService().showInstantNotification(
+            id: item.id.hashCode.abs(),
+            title: 'Offline Voice Capture Processed',
+            body: '$resultMsg. Tap to review.',
+            payload: 'route:/',
+          );
+
+          // 5. Mark item as successfully processed.
           await _queueDao.markProcessed(item.id);
         } catch (_) {
           // On failure, increment the attempt counter.

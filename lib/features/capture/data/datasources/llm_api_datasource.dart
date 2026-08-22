@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/config/app_config.dart';
 import '../../domain/entities/intent_result.dart';
+import '../../domain/services/local_intent_parser.dart';
 
 /// Rate limiter ensuring max 12 AI requests/minute to respect API limits.
 class RateLimiter {
@@ -128,8 +129,7 @@ OUTPUT SCHEMA:
     final config = await _RuntimeConfig.load();
 
     if (config.apiKey.isEmpty) {
-      throw Exception(
-          'No API key configured. Go to Settings → AI Engine and enter your API key.');
+      return LocalIntentParser.parse(transcript, userWorkspaces: userWorkspaces);
     }
 
     final now = DateTime.now();
@@ -197,11 +197,9 @@ Extract the intent and return JSON only. Ensure deadline_iso is correctly resolv
       final parsedMap = jsonDecode(cleanedJson) as Map<String, dynamic>;
 
       return IntentResult.fromJson(parsedMap);
-    } on TimeoutException {
-      throw Exception(
-          'Request timed out after 30s. Check your internet connection or try a different model in Settings.');
-    } catch (e) {
-      rethrow;
+    } catch (_) {
+      // Fallback to local offline rule-based intent parser on error/timeout
+      return LocalIntentParser.parse(transcript, userWorkspaces: userWorkspaces);
     }
   }
 

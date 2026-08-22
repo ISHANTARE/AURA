@@ -13,6 +13,7 @@ import '../../features/tasks/presentation/screens/search_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/alarms/presentation/screens/alarms_screen.dart';
 import '../../features/notes/presentation/screens/notes_screen.dart';
+import '../../features/reminders/presentation/screens/reminders_screen.dart';
 import '../../features/capture/presentation/screens/share_receive_screen.dart';
 import '../../features/capture/presentation/screens/floating_capture_overlay_screen.dart';
 
@@ -120,6 +121,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.search,
         builder: (context, state) => const SearchScreen(),
+      ),
+      GoRoute(
+        path: Routes.reminders,
+        builder: (context, state) => const RemindersScreen(),
       ),
       GoRoute(
         path: Routes.share,

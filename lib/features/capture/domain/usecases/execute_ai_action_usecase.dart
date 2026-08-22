@@ -79,32 +79,66 @@ class ExecuteAiActionUseCase {
         if (searchTerm.isEmpty) return 'No task specified for deletion';
 
         final matches = await _itemDao.search(searchTerm);
-        int count = 0;
-        for (final t in matches) {
-          await _itemDao.softDelete(t.id);
-          count++;
+        if (matches.isEmpty) {
+          return 'No active item found matching "$searchTerm"';
         }
-        return count > 0
-            ? 'Deleted $count item(s) matching "$searchTerm"'
-            : 'No active item found matching "$searchTerm"';
+
+        // 1. Check for exact title match (case-insensitive)
+        final exactMatches = matches
+            .where((t) => t.title.trim().toLowerCase() == searchTerm.trim().toLowerCase())
+            .toList();
+
+        if (exactMatches.length == 1) {
+          await _itemDao.softDelete(exactMatches.first.id);
+          return 'Deleted task "${exactMatches.first.title}"';
+        }
+
+        if (exactMatches.length > 1) {
+          final sorted = List<Item>.from(exactMatches)
+            ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+          await _itemDao.softDelete(sorted.first.id);
+          return 'Deleted task "${sorted.first.title}" (${exactMatches.length} matches found)';
+        }
+
+        // 2. If no exact title match, delete only if single fuzzy match found
+        if (matches.length == 1) {
+          await _itemDao.softDelete(matches.first.id);
+          return 'Deleted task "${matches.first.title}"';
+        }
+
+        return 'Multiple tasks matched "$searchTerm" (${matches.length} found). Please specify the exact task title.';
 
       case 'delete_workspace':
         final searchTerm = intent.targetName ?? intent.title ?? '';
         if (searchTerm.isEmpty) return 'No workspace specified for deletion';
 
         final allWorkspaces = await _workspaceDao.getAll();
-        final matches = allWorkspaces.where((w) =>
-            w.name.toLowerCase().contains(searchTerm.toLowerCase()) &&
-            w.deletedAt == null);
+        final matches = allWorkspaces
+            .where((w) =>
+                w.deletedAt == null &&
+                w.name.toLowerCase().contains(searchTerm.toLowerCase()))
+            .toList();
 
-        int count = 0;
-        for (final w in matches) {
-          await _workspaceDao.softDelete(w.id);
-          count++;
+        if (matches.isEmpty) {
+          return 'No active workspace found matching "$searchTerm"';
         }
-        return count > 0
-            ? 'Deleted $count workspace(s) matching "$searchTerm"'
-            : 'No active workspace found matching "$searchTerm"';
+
+        final exactMatches = matches
+            .where((w) => w.name.trim().toLowerCase() == searchTerm.trim().toLowerCase())
+            .toList();
+
+        if (exactMatches.isNotEmpty) {
+          final target = exactMatches.first;
+          await _workspaceDao.softDelete(target.id);
+          return 'Deleted workspace "${target.name}"';
+        }
+
+        if (matches.length == 1) {
+          await _workspaceDao.softDelete(matches.first.id);
+          return 'Deleted workspace "${matches.first.name}"';
+        }
+
+        return 'Multiple workspaces matched "$searchTerm" (${matches.length} found). Please specify the exact workspace name.';
 
       case 'add_note':
       case 'create_task':
