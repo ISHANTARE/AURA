@@ -3,9 +3,16 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Minimal contract for online/offline monitoring — lets services and
+/// use cases stay testable without touching platform channels.
+abstract class ConnectivityMonitor {
+  Stream<bool> get onConnectivityChanged;
+  Future<bool> isOnline();
+}
+
 /// Network Connectivity Monitor Service (Sprint 7)
 /// Uses connectivity_plus to stream online/offline network status.
-class ConnectivityService {
+class ConnectivityService implements ConnectivityMonitor {
   final Connectivity _connectivity = Connectivity();
   final StreamController<bool> _isOnlineController =
       StreamController<bool>.broadcast();
@@ -17,10 +24,10 @@ class ConnectivityService {
     _checkInitialState();
   }
 
-  /// Stream emitting `true` when online, `false` when offline.
+  @override
   Stream<bool> get onConnectivityChanged => _isOnlineController.stream;
 
-  /// Check current online status asynchronously.
+  @override
   Future<bool> isOnline() async {
     final results = await _connectivity.checkConnectivity();
     return _isOnline(results);
@@ -46,14 +53,11 @@ class ConnectivityService {
 }
 
 // ── Riverpod Providers ────────────────────────────────────────────────────────
+// The canonical reactive online/offline providers live in
+// core/providers/connectivity_provider.dart (built on this service).
 
 final connectivityServiceProvider = Provider<ConnectivityService>((ref) {
   final service = ConnectivityService();
   ref.onDispose(service.dispose);
   return service;
-});
-
-final isOnlineProvider = StreamProvider<bool>((ref) {
-  final service = ref.watch(connectivityServiceProvider);
-  return service.onConnectivityChanged;
 });

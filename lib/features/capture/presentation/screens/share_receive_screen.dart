@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
@@ -44,8 +47,8 @@ class _ShareState {
 
 /// Share-to-AURA Receive Screen for v2.
 /// Receives shared content (text/links/images), processes them via
-/// ProcessSharedContentUseCase, and routes to VoiceCaptureOverlay
-/// for intent confirmation.
+/// ProcessSharedContentUseCase (OCR / link read), and saves the extracted
+/// content as a shared item after user review.
 class ShareReceiveScreen extends ConsumerStatefulWidget {
   const ShareReceiveScreen({super.key});
 
@@ -57,18 +60,26 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
   _ShareState _state = const _ShareState(status: _ShareStatus.loading);
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  StreamSubscription<void>? _shareEventSub;
 
   @override
   void dispose() {
     _titleController.dispose();
     _notesController.dispose();
+    _shareEventSub?.cancel();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    // Cold start: consume the persisted payload file.
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadSharePayload());
+    // Warm shares arriving while this screen is already open.
+    _shareEventSub = ref
+        .read(shareChannelProvider)
+        .onShareReceived
+        .listen((_) => _loadSharePayload());
   }
 
   Future<void> _loadSharePayload() async {
@@ -147,14 +158,17 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
 
     try {
       final db = ref.read(databaseProvider);
+      // FK-safe: never write a dangling workspace reference. On fresh
+      // installs with no workspaces, leave it null instead of crashing.
       final workspaces = await db.workspaceDao.getAll();
-      final wsId = workspaces.isNotEmpty ? workspaces.first.id : 'default';
+      final wsId = workspaces.isNotEmpty ? Value(workspaces.first.id) : const Value<String?>(null);
+      const uuid = Uuid();
       final nowEpoch = DateTime.now().millisecondsSinceEpoch;
-      final itemId = 'shared_${nowEpoch}_${title.hashCode.abs()}';
+      final itemId = uuid.v4();
 
       final companion = ItemsCompanion(
         id: Value(itemId),
-        workspaceId: Value(wsId),
+        workspaceId: wsId,
         title: Value(title),
         notes: Value(notes.isNotEmpty ? notes : null),
         location: Value(_state.result?.url),

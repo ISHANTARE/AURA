@@ -1,24 +1,31 @@
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../database/app_database.dart';
-import '../../../reminders/data/services/notification_service.dart';
+import '../../../reminders/domain/services/reminder_scheduling_service.dart';
 import '../entities/intent_result.dart';
 import 'create_task_usecase.dart';
 
 /// Single Action Dispatcher Engine for AURA.
 /// Executes confirmed actions based on intentType:
-///   • create_task / create_alarm / create_workspace / delete_task / delete_workspace
+///   • create_task / create_reminder / create_event / create_alarm
+///   • create_workspace / delete_task / delete_workspace / add_note
 class ExecuteAiActionUseCase {
   final ItemDao _itemDao;
   final WorkspaceDao _workspaceDao;
   final CreateTaskUseCase _createTaskUseCase;
+  final ReminderSchedulingService _scheduling;
   static const Uuid _uuid = Uuid();
 
-  ExecuteAiActionUseCase(AppDatabase db)
+  ExecuteAiActionUseCase(AppDatabase db, {ReminderSchedulingService? scheduling})
+      : this._(db, scheduling ?? ReminderSchedulingService(db: db));
+
+  ExecuteAiActionUseCase._(AppDatabase db, ReminderSchedulingService scheduling)
       : _itemDao = ItemDao(db),
         _workspaceDao = WorkspaceDao(db),
-        _createTaskUseCase = CreateTaskUseCase(db);
+        _scheduling = scheduling,
+        _createTaskUseCase = CreateTaskUseCase(db, scheduling: scheduling);
 
   Future<String> execute({
     required IntentResult intent,
@@ -30,7 +37,8 @@ class ExecuteAiActionUseCase {
 
     switch (intent.intentType) {
       case 'create_alarm':
-        final fireTime = intent.deadline ?? DateTime.now().add(const Duration(minutes: 30));
+        final fireTime =
+            intent.deadline ?? DateTime.now().add(const Duration(minutes: 30));
         final alarmId = _uuid.v4();
 
         await _itemDao.insertItem(
@@ -38,21 +46,20 @@ class ExecuteAiActionUseCase {
             id: alarmId,
             title: intent.title ?? 'Alarm ${_formatTime(fireTime)}',
             category: 'alarm',
-            kind: 'generic',
+            kind: 'alarm',
             status: const Value('pending'),
             fireAt: Value(fireTime.millisecondsSinceEpoch),
+            confidence: Value(intent.confidence),
+            aiTranscript: Value(originalTranscript),
             createdAt: nowEpoch,
             updatedAt: nowEpoch,
           ),
         );
 
-        await NotificationService().scheduleAlarm(
-          id: alarmId.hashCode.abs(),
-          title: intent.title ?? 'Alarm',
-          body: 'Alarm: ${_formatTime(fireTime)}',
-          scheduledDate: fireTime,
-          payload: alarmId,
-        );
+        final item = await _itemDao.getById(alarmId);
+        if (item != null) {
+          await _scheduling.syncForItem(item);
+        }
 
         return 'Set alarm for ${_formatTime(fireTime)}';
 
@@ -89,20 +96,20 @@ class ExecuteAiActionUseCase {
             .toList();
 
         if (exactMatches.length == 1) {
-          await _itemDao.softDelete(exactMatches.first.id);
+          await _softDeleteWithNotifications(exactMatches.first.id);
           return 'Deleted task "${exactMatches.first.title}"';
         }
 
         if (exactMatches.length > 1) {
           final sorted = List<Item>.from(exactMatches)
             ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-          await _itemDao.softDelete(sorted.first.id);
+          await _softDeleteWithNotifications(sorted.first.id);
           return 'Deleted task "${sorted.first.title}" (${exactMatches.length} matches found)';
         }
 
         // 2. If no exact title match, delete only if single fuzzy match found
         if (matches.length == 1) {
-          await _itemDao.softDelete(matches.first.id);
+          await _softDeleteWithNotifications(matches.first.id);
           return 'Deleted task "${matches.first.title}"';
         }
 
@@ -142,15 +149,55 @@ class ExecuteAiActionUseCase {
 
       case 'add_note':
       case 'create_task':
+        await _dispatchTimed(intent, workspaceId, workspaceNameToCreate, originalTranscript);
+        return 'Saved task "${intent.title ?? 'Untitled'}"';
+
+      case 'create_reminder':
+        await _dispatchTimed(intent, workspaceId, workspaceNameToCreate, originalTranscript);
+        return _timedConfirmation(intent, 'Reminder set');
+
+      case 'create_event':
+        await _dispatchTimed(intent, workspaceId, workspaceNameToCreate, originalTranscript);
+        return _timedConfirmation(intent, 'Event scheduled');
+
       default:
-        await _createTaskUseCase.execute(
-          intent: intent,
-          workspaceId: workspaceId,
-          workspaceNameToCreate: workspaceNameToCreate,
-          originalTranscript: originalTranscript,
-        );
+        await _dispatchTimed(intent, workspaceId, workspaceNameToCreate, originalTranscript);
         return 'Saved task "${intent.title ?? 'Untitled'}"';
     }
+  }
+
+  /// Tasks/reminders/events all persist through [CreateTaskUseCase], which
+  /// also schedules their notifications — one path, no split-brain.
+  Future<void> _dispatchTimed(
+    IntentResult intent,
+    String workspaceId,
+    String? workspaceNameToCreate,
+    String originalTranscript,
+  ) async {
+    await _createTaskUseCase.execute(
+      intent: intent,
+      workspaceId: workspaceId,
+      workspaceNameToCreate: workspaceNameToCreate,
+      originalTranscript: originalTranscript,
+    );
+  }
+
+  String _timedConfirmation(IntentResult intent, String prefix) {
+    final title = intent.title ?? 'Untitled';
+    final when = intent.eventStart ?? intent.deadline;
+    if (when == null) return '$prefix "$title"';
+    return '$prefix "$title" for ${_formatTime(when)}';
+  }
+
+  /// Soft-delete an item and remove any notifications still queued for it so
+  /// deleted reminders never ring from the grave.
+  Future<void> _softDeleteWithNotifications(String itemId) async {
+    try {
+      await _scheduling.cancelForItem(itemId);
+    } catch (e) {
+      debugPrint('Failed cancelling notifications for $itemId: $e');
+    }
+    await _itemDao.softDelete(itemId);
   }
 
   String _formatTime(DateTime dt) {

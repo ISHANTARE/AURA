@@ -25,19 +25,11 @@ class WorkspaceCard extends StatefulWidget {
 class _WorkspaceCardState extends State<WorkspaceCard> {
   bool _isPressed = false;
 
-  Color _parseColor(String hex) {
-    try {
-      final cleanHex = hex.replaceFirst('#', '');
-      return Color(int.parse('FF$cleanHex', radix: 16));
-    } catch (_) {
-      return AuraColors.accentLime;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final ws = widget.item.workspace;
-    final iconColor = _parseColor(ws.colorHex);
+    final iconColor =
+        hexToColor(ws.colorHex, fallback: AuraColors.accentLime);
     final iconData = AuraIcons.forWorkspace(ws.name);
 
     return GestureDetector(

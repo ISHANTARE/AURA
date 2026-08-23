@@ -71,13 +71,32 @@ class SpeechChannel {
   }
 
   /// Start speech recognition listening session.
-  Future<bool> startListening() async {
+  ///
+  /// [localeId] is a BCP-47 tag (e.g. "en-US", "hi-IN"). When null the
+  /// recognizer follows the device's default locale.
+  Future<bool> startListening({String? localeId}) async {
     try {
-      final result = await _methodChannel.invokeMethod<bool>('startListening');
+      final result = await _methodChannel.invokeMethod<bool>(
+        'startListening',
+        localeId == null ? null : {'localeId': localeId},
+      );
       return result ?? false;
     } on PlatformException catch (e) {
       _errorController.add(e.message ?? 'Failed to start listening');
       return false;
+    }
+  }
+
+  /// BCP-47 tags of languages the on-device recognizer supports.
+  Future<List<String>> availableLocales() async {
+    try {
+      final result =
+          await _methodChannel.invokeMethod<List<dynamic>>('getAvailableLocales');
+      return result?.cast<String>() ?? const [];
+    } on PlatformException {
+      return const [];
+    } on MissingPluginException {
+      return const [];
     }
   }
 

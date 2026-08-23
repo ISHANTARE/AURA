@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:path_provider/path_provider.dart';
@@ -12,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aura/core/constants/colors.dart';
 import 'package:aura/core/constants/typography.dart';
 import 'package:aura/core/router/app_router.dart';
+import 'package:aura/core/security/secret_store.dart';
 import 'package:aura/core/theme/theme_provider.dart';
 import 'package:aura/core/providers/providers.dart';
 import 'package:aura/platform/overlay_channel.dart';
@@ -30,8 +32,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final TextEditingController _baseUrlController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
 
-  String _selectedProviderPreset = 'NVIDIA NIM (Recommended)';
+  static const String _defaultProviderPreset = 'Google Gemini (Recommended)';
+  String _selectedProviderPreset = _defaultProviderPreset;
   String _selectedReminderDefault = '1 day & 6 hours before';
+
+  /// '' ⇒ follow the device locale (recognizer default).
+  String _selectedVoiceLocale = '';
+
+  int _selectedBriefingHour = 7;
+  static const List<(String, String)> _voiceLocales = [
+    ('', 'Device default'),
+    ('en-US', 'English (US)'),
+    ('en-GB', 'English (UK)'),
+    ('en-IN', 'English (India)'),
+    ('hi-IN', 'Hindi'),
+    ('es-ES', 'Spanish'),
+    ('fr-FR', 'French'),
+    ('de-DE', 'German'),
+    ('pt-BR', 'Portuguese (Brazil)'),
+    ('ar-SA', 'Arabic'),
+    ('ja-JP', 'Japanese'),
+    ('ko-KR', 'Korean'),
+    ('zh-CN', 'Chinese (Mandarin)'),
+  ];
+
   String _selectedAlarmSound = 'System Alarm';
   String _selectedNotificationSound = 'Soft Chime';
   bool _obscureKey = true;
@@ -45,12 +69,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final apiKey = await SecretStore().readApiKey();
     setState(() {
-      _userNameController.text = prefs.getString('USER_NAME') ?? 'Ishan T';
-      _apiKeyController.text = prefs.getString('LLM_API_KEY') ?? '';
-      _baseUrlController.text = prefs.getString('LLM_BASE_URL') ?? 'https://integrate.api.nvidia.com/v1';
-      _modelController.text = prefs.getString('LLM_MODEL') ?? 'meta/llama-3.3-70b-instruct';
+      _userNameController.text = prefs.getString('USER_NAME') ?? '';
+      _apiKeyController.text = apiKey;
+      _baseUrlController.text = prefs.getString('LLM_BASE_URL') ?? 'https://generativelanguage.googleapis.com/v1beta/openai/';
+      _modelController.text = prefs.getString('LLM_MODEL') ?? 'gemini-2.0-flash';
       _selectedReminderDefault = prefs.getString('REMINDER_DEFAULT') ?? '1 day & 6 hours before';
+      _selectedVoiceLocale = prefs.getString('VOICE_LOCALE') ?? '';
+      _selectedBriefingHour = prefs.getInt('BRIEFING_HOUR') ?? 7;
+      _selectedProviderPreset =
+          prefs.getString('LLM_PROVIDER_PRESET') ?? _defaultProviderPreset;
       _selectedAlarmSound = prefs.getString('ALARM_SOUND') ?? 'System Alarm';
       _selectedNotificationSound = prefs.getString('NOTIF_SOUND') ?? 'Soft Chime';
       _isLoading = false;
@@ -61,10 +90,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final newName = _userNameController.text.trim();
     await ref.read(userNameProvider.notifier).setName(newName);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('LLM_API_KEY', _apiKeyController.text.trim());
+    // API key goes to encrypted storage, never plaintext prefs.
+    await SecretStore().writeApiKey(_apiKeyController.text.trim());
     await prefs.setString('LLM_BASE_URL', _baseUrlController.text.trim());
     await prefs.setString('LLM_MODEL', _modelController.text.trim());
     await prefs.setString('REMINDER_DEFAULT', _selectedReminderDefault);
+    await prefs.setString('VOICE_LOCALE', _selectedVoiceLocale);
+    await prefs.setString('LLM_PROVIDER_PRESET', _selectedProviderPreset);
     await prefs.setString('ALARM_SOUND', _selectedAlarmSound);
     await prefs.setString('NOTIF_SOUND', _selectedNotificationSound);
 
@@ -85,15 +117,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   List<String> _getQuickModelSuggestions() {
-    if (_selectedProviderPreset == 'NVIDIA NIM (Recommended)') {
+    if (_selectedProviderPreset.startsWith('Google Gemini')) {
+      return ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+    } else if (_selectedProviderPreset == 'NVIDIA NIM') {
       return [
         'meta/llama-3.3-70b-instruct',
         'nvidia/nemotron-4-340b-instruct',
         'mistralai/mixtral-8x7b-instruct',
         'deepseek-ai/deepseek-r1',
       ];
-    } else if (_selectedProviderPreset == 'Google Gemini') {
-      return ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
     } else if (_selectedProviderPreset == 'Groq Cloud') {
       return ['llama-3.3-70b-versatile', 'llama3-70b-8192', 'mixtral-8x7b-32768'];
     } else if (_selectedProviderPreset == 'OpenRouter') {
@@ -147,7 +179,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         radius: 26,
                         backgroundColor: activeAccent.color,
                         child: Text(
-                          _userNameController.text.isNotEmpty ? _userNameController.text[0].toUpperCase() : 'I',
+                          _userNameController.text.isNotEmpty
+                              ? _userNameController.text[0].toUpperCase()
+                              : 'A',
                           style: AuraTypography.orbLabel.copyWith(fontSize: 22, color: Colors.black),
                         ),
                       ),
@@ -393,6 +427,107 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
+            // ── Section 4a: Briefing Time ──────────────────────────────────
+            const _SettingsSectionHeader(title: 'MORNING BRIEFING'),
+            const SizedBox(height: 12),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AuraColors.bgCard,
+                border: Border.all(color: AuraColors.border, width: 2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Briefing hour', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<int>(
+                    value: _selectedBriefingHour,
+                    dropdownColor: AuraColors.bgElevated,
+                    style: AuraTypography.bodyPrimary,
+                    decoration: const InputDecoration(
+                      filled: true,
+                      fillColor: AuraColors.bgElevated,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 5, child: Text('5:00 AM')),
+                      DropdownMenuItem(value: 6, child: Text('6:00 AM')),
+                      DropdownMenuItem(value: 7, child: Text('7:00 AM')),
+                      DropdownMenuItem(value: 8, child: Text('8:00 AM')),
+                      DropdownMenuItem(value: 9, child: Text('9:00 AM')),
+                      DropdownMenuItem(value: 10, child: Text('10:00 AM')),
+                    ],
+                    onChanged: (val) {
+                      if (val == null) return;
+                      setState(() => _selectedBriefingHour = val);
+                      // Persist immediately; the scheduler reads it daily.
+                      SharedPreferences.getInstance().then((prefs) {
+                        prefs.setInt('BRIEFING_HOUR', val);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'A summary notification with your top focus item.',
+                    style: AuraTypography.label.copyWith(color: AuraColors.textMuted, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Section 4b: Voice Input Language ────────────────────────────
+            const _SettingsSectionHeader(title: 'VOICE INPUT LANGUAGE'),
+            const SizedBox(height: 12),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AuraColors.bgCard,
+                border: Border.all(color: AuraColors.border, width: 2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Speech recognition language', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: _selectedVoiceLocale,
+                    dropdownColor: AuraColors.bgElevated,
+                    style: AuraTypography.bodyPrimary,
+                    decoration: const InputDecoration(
+                      filled: true,
+                      fillColor: AuraColors.bgElevated,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                    ),
+                    items: _voiceLocales
+                        .map((locale) => DropdownMenuItem(
+                              value: locale.$1,
+                              child: Text(locale.$2),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() => _selectedVoiceLocale = val ?? '');
+                      // Persist immediately so the next capture uses it.
+                      SharedPreferences.getInstance().then((prefs) {
+                        prefs.setString('VOICE_LOCALE', _selectedVoiceLocale);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '“Device default” follows your phone’s language.',
+                    style: AuraTypography.label.copyWith(color: AuraColors.textMuted, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // ── Section 5: AI Engine & LLM API ──────────────────────────────
             const _SettingsSectionHeader(title: 'AI ENGINE & LLM API'),
             const SizedBox(height: 12),
@@ -421,12 +556,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     items: const [
                       DropdownMenuItem(
-                        value: 'NVIDIA NIM (Recommended)',
-                        child: Text('NVIDIA NIM (Recommended)'),
+                        value: 'Google Gemini (Recommended)',
+                        child: Text('Google Gemini (Recommended)'),
                       ),
                       DropdownMenuItem(
-                        value: 'Google Gemini',
-                        child: Text('Google Gemini (OpenAI Format)'),
+                        value: 'NVIDIA NIM',
+                        child: Text('NVIDIA NIM'),
                       ),
                       DropdownMenuItem(
                         value: 'Groq Cloud',
@@ -449,12 +584,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       if (preset == null) return;
                       setState(() {
                         _selectedProviderPreset = preset;
-                        if (preset == 'NVIDIA NIM (Recommended)') {
-                          _baseUrlController.text = 'https://integrate.api.nvidia.com/v1';
-                          _modelController.text = 'meta/llama-3.3-70b-instruct';
-                        } else if (preset == 'Google Gemini') {
+                        if (preset == 'Google Gemini (Recommended)') {
                           _baseUrlController.text = 'https://generativelanguage.googleapis.com/v1beta/openai/';
                           _modelController.text = 'gemini-2.0-flash';
+                        } else if (preset == 'NVIDIA NIM') {
+                          _baseUrlController.text = 'https://integrate.api.nvidia.com/v1';
+                          _modelController.text = 'meta/llama-3.3-70b-instruct';
                         } else if (preset == 'Groq Cloud') {
                           _baseUrlController.text = 'https://api.groq.com/openai/v1';
                           _modelController.text = 'llama-3.3-70b-versatile';
@@ -729,9 +864,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         await db.customStatement('DELETE FROM workspace_sections');
                         await db.customStatement('DELETE FROM workspaces');
 
-                        // 2. Clear SharedPreferences
+                        // 2. Clear native orb prefs (position/color/dismissed
+                        // survived a full reset before).
+                        try {
+                          await OverlayChannel.clearNativePrefs();
+                        } catch (e) {
+                          debugPrint('Reset: native prefs clear failed: $e');
+                        }
+
+                        // 3. Clear SharedPreferences + the stored API key.
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.clear();
+                        try {
+                          await const FlutterSecureStorage()
+                              .deleteAll();
+                        } catch (_) {
+                          // Secure storage unavailable — nothing to scrub.
+                        }
+
+                        // 4. Invalidate live providers so no stale state
+                        // (accent, name, gate) survives into onboarding.
+                        await ref
+                            .read(themeAccentProvider.notifier)
+                            .resetToDefault();
+                        ref.read(userNameProvider.notifier).reset();
+                        await ref.read(onboardingGateProvider.notifier).reset();
 
                         if (context.mounted) context.go(Routes.onboarding);
                       }

@@ -48,10 +48,57 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final intent = widget.state.intentResult;
     if (intent == null) return const SizedBox.shrink();
 
+    final inner = _buildInnerCard(context, intent);
+
+    // Surface degraded-AI notices (offline parser used, rate limited, …) so
+    // the user always knows how the transcript was interpreted.
+    final notice = widget.state.aiNotice;
+    if (notice == null || notice.isEmpty) return inner;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildAiNoticeBanner(notice),
+        Flexible(child: inner),
+      ],
+    );
+  }
+
+  Widget _buildAiNoticeBanner(String notice) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(AuraSpacing.md, AuraSpacing.sm, AuraSpacing.md, 0),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AuraSpacing.sm,
+        vertical: AuraSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: AuraColors.accentOrange.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AuraColors.accentOrange.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(LucideIcons.info, size: 13, color: AuraColors.accentOrange),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              notice,
+              style: AuraTypography.label.copyWith(
+                color: AuraColors.accentOrange,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInnerCard(BuildContext context, IntentResult intent) {
     // Dedicated Card Routing
     switch (intent.intentType) {
       case 'create_alarm':
@@ -448,13 +495,8 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                       children: [
                         ...workspaces.map((ws) {
                           final isSelected = ws.id == currentWsId;
-                          Color wsColor;
-                          try {
-                            final clean = ws.colorHex.replaceFirst('#', '');
-                            wsColor = Color(int.parse('FF$clean', radix: 16));
-                          } catch (_) {
-                            wsColor = AuraColors.accentLime;
-                          }
+                          final wsColor =
+                              hexToColor(ws.colorHex, fallback: AuraColors.accentLime);
 
                           return ListTile(
                             dense: true,

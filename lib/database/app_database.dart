@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
@@ -79,12 +80,15 @@ class AppDatabase extends _$AppDatabase {
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
-            // Safely create any missing tables introduced in schema v2
+            // Idempotently create any tables missing from schema v1.
+            // Failures are logged — a real failure (disk full) must not be
+            // indistinguishable from "table already exists".
             for (final table in allTables) {
               try {
                 await m.createTable(table);
-              } catch (_) {
-                // Table already exists from previous schema
+              } catch (e) {
+                debugPrint('Migration v$from→v2: '
+                    'createTable(${table.actualTableName}) skipped/failed: $e');
               }
             }
           }
@@ -92,8 +96,9 @@ class AppDatabase extends _$AppDatabase {
             // Add parentId column for subtask support
             try {
               await m.addColumn(items, items.parentId);
-            } catch (_) {
-              // Column parent_id already exists
+            } catch (e) {
+              debugPrint('Migration v$from→v3: addColumn(parent_id) '
+                  'skipped/failed (may already exist): $e');
             }
           }
         },

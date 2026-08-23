@@ -106,4 +106,16 @@ class OverlayChannel {
       debugPrint('[OverlayChannel] Error updating orb color: $e');
     }
   }
+
+  /// Clear native orb preferences (position / color / dismissed flag).
+  /// Part of the full Reset App Data teardown.
+  static Future<void> clearNativePrefs() async {
+    try {
+      await _channel.invokeMethod('clearNativePrefs');
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error clearing native prefs: $e');
+    } on MissingPluginException catch (e) {
+      debugPrint('[OverlayChannel] clearNativePrefs unavailable: $e');
+    }
+  }
 }

@@ -3,10 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../database/app_database.dart';
 
+import 'clock_providers.dart';
+
 import '../../features/home/domain/services/briefing_scheduler.dart';
 import '../../features/reminders/domain/usecases/overdue_reminder_usecase.dart';
-import '../../features/reminders/domain/usecases/replay_dnd_notifications_usecase.dart';
-import '../../features/reminders/domain/usecases/schedule_reminder_usecase.dart';
 import '../../features/reminders/domain/usecases/snooze_reminder_usecase.dart';
 import '../../features/tasks/domain/usecases/recurring_task_reset_usecase.dart';
 
@@ -61,9 +61,12 @@ final urgentItemsProvider = StreamProvider<List<Item>>((ref) {
   return ref.watch(itemDaoProvider).watchUrgent();
 });
 
-/// Stream provider for today's focus items
+/// Stream provider for today's focus items.
+/// Re-subscribes when the calendar day rolls over (drift watches don't
+/// observe wall-clock changes on their own).
 final todayFocusItemsProvider = StreamProvider<List<Item>>((ref) {
-  return ref.watch(itemDaoProvider).watchTodayFocus();
+  final now = ref.watch(dayRefreshProvider);
+  return ref.watch(itemDaoProvider).watchTodayFocus(now: now);
 });
 
 /// Stream provider for alarms
@@ -104,6 +107,13 @@ class UserNameNotifier extends StateNotifier<String> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('USER_NAME', newName);
   }
+
+  /// Used by Reset App Data: back to the anonymous default immediately.
+  Future<void> reset() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('USER_NAME');
+    state = 'there';
+  }
 }
 
 /// StateNotifierProvider for the user's display name.
@@ -128,8 +138,10 @@ class QuickStats {
   });
 }
 
-/// Stream provider computing pending / completed / overdue item counts reactively.
+/// Stream provider computing pending / completed / overdue item counts
+/// reactively, with a midnight rollover via [dayRefreshProvider].
 final quickStatsProvider = StreamProvider<QuickStats>((ref) {
+  ref.watch(dayRefreshProvider);
   final itemDao = ref.watch(itemDaoProvider);
   return itemDao.watchAllActive().map((allItems) {
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -155,14 +167,13 @@ final quickStatsProvider = StreamProvider<QuickStats>((ref) {
 });
 
 // ── Reminder Usecase Providers ────────────────────────────────────────────────
+// NOTE: snoozeReminderUseCaseProvider lives in
+// features/reminders/presentation/providers/reminder_providers.dart (single
+// canonical definition). scheduleReminderUseCaseProvider was removed with its
+// dead use case — scheduling now flows through ReminderSchedulingService.
 
-/// Provider for ScheduleReminderUseCase
-final scheduleReminderUseCaseProvider = Provider<ScheduleReminderUseCase>((ref) {
-  final db = ref.watch(databaseProvider);
-  return ScheduleReminderUseCase(db: db);
-});
-
-/// Provider for SnoozeReminderUseCase
+/// Provider for SnoozeReminderUseCase (kept for background-action callers
+/// that import only core providers).
 final snoozeReminderUseCaseProvider = Provider<SnoozeReminderUseCase>((ref) {
   final db = ref.watch(databaseProvider);
   return SnoozeReminderUseCase(db: db);
@@ -174,17 +185,11 @@ final overdueReminderUseCaseProvider = Provider<OverdueReminderUseCase>((ref) {
   return OverdueReminderUseCase(db: db);
 });
 
-/// Provider for ReplayDndNotificationsUseCase
-final replayDndUseCaseProvider = Provider<ReplayDndNotificationsUseCase>((ref) {
-  final db = ref.watch(databaseProvider);
-  return ReplayDndNotificationsUseCase(db: db);
-});
-
 // ── Briefing Scheduler Provider ───────────────────────────────────────────────
 
 /// Singleton provider for the daily morning briefing scheduler.
 final briefingSchedulerProvider = Provider<BriefingSchedulerService>((ref) {
-  return BriefingSchedulerService();
+  return BriefingSchedulerService(db: ref.watch(databaseProvider));
 });
 
 // ── Recurring Task Reset Provider ─────────────────────────────────────────

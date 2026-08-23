@@ -44,13 +44,8 @@ class WorkspaceListScreen extends ConsumerWidget {
             children: workspaces.map((ws) {
               final countAsync = ref.watch(workspaceItemCountProvider(ws.id));
               final count = countAsync.value ?? 0;
-              Color wsColor;
-              try {
-                final clean = ws.colorHex.replaceFirst('#', '');
-                wsColor = Color(int.parse('FF$clean', radix: 16));
-              } catch (_) {
-                wsColor = primaryColor;
-              }
+              final wsColor =
+                  hexToColor(ws.colorHex, fallback: primaryColor);
 
               return InkWell(
                 onTap: () => context.push('/workspace/${ws.id}'),

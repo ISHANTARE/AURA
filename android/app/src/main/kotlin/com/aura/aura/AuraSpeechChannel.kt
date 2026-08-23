@@ -56,7 +56,8 @@ class AuraSpeechChannel(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "startListening" -> {
-                val success = startListening()
+                val localeTag = call.argument<String>("localeId")
+                val success = startListening(localeTag)
                 result.success(success)
             }
             "stopListening" -> {
@@ -74,7 +75,11 @@ class AuraSpeechChannel(
         }
     }
 
-    private fun startListening(): Boolean {
+    /**
+     * Start recognition. When [localeTag] is null/blank the recognizer follows
+     * the device's default locale — never a hardcoded one.
+     */
+    private fun startListening(localeTag: String?): Boolean {
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
             return false
         }
@@ -86,10 +91,13 @@ class AuraSpeechChannel(
                 }
             }
 
+            val effectiveLocale = localeTag?.takeIf { it.isNotBlank() }
+                ?: java.util.Locale.getDefault().toLanguageTag()
+
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "en-IN")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, effectiveLocale)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, effectiveLocale)
                 putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, false)
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                 putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)

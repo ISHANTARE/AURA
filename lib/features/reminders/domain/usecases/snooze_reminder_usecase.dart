@@ -1,18 +1,19 @@
 import '../../../../database/app_database.dart';
-import '../../data/services/notification_service.dart';
 import '../entities/reminder_models.dart';
+import '../services/reminder_scheduling_service.dart';
 
-/// Snoozes an active reminder by cancelling and re-scheduling it.
+/// Snoozes a reminder through the single [ReminderSchedulingService] path:
+/// the DB (`fireAt`) and the OS notification move together, so overdue stats
+/// and Today's Focus reflect the snoozed time instead of the original one.
 class SnoozeReminderUseCase {
-  // ignore: unused_field
   final AppDatabase _db;
-  final NotificationService _notificationService;
+  final ReminderSchedulingService _scheduling;
 
   SnoozeReminderUseCase({
     required AppDatabase db,
-    NotificationService? notificationService,
+    ReminderSchedulingService? scheduling,
   })  : _db = db,
-        _notificationService = notificationService ?? NotificationService();
+        _scheduling = scheduling ?? ReminderSchedulingService(db: db);
 
   /// Snooze a reminder using a preset or custom DateTime
   Future<void> execute({
@@ -24,17 +25,9 @@ class SnoozeReminderUseCase {
   }) async {
     final targetTime = preset.calculateTargetTime(customTime: customDateTime);
 
-    // Cancel old notification if pending
-    final notifId = reminderId.hashCode.abs();
-    await _notificationService.cancel(notifId);
+    final item = await ItemDao(_db).getById(taskId);
+    if (item == null) return;
 
-    // Schedule re-fire notification at targetTime
-    await _notificationService.scheduleNotification(
-      id: notifId,
-      title: taskTitle,
-      body: 'Snoozed reminder · Due soon',
-      scheduledDate: targetTime,
-      payload: 'item:$taskId',
-    );
+    await _scheduling.snooze(item: item, target: targetTime, title: taskTitle);
   }
 }

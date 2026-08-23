@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../../core/services/connectivity_service.dart';
 import '../../../../platform/speech_channel.dart';
 import '../../data/datasources/llm_api_datasource.dart';
 import '../../domain/entities/capture_state.dart';
@@ -10,6 +12,10 @@ import '../../domain/usecases/create_task_usecase.dart';
 import '../../domain/usecases/execute_ai_action_usecase.dart';
 import '../../domain/usecases/queue_offline_transcript_usecase.dart';
 import '../../domain/usecases/workspace_router_usecase.dart';
+
+/// SharedPreferences key holding an optional BCP-47 voice-locale override
+/// (Settings → Voice). Null/unset ⇒ follow the device's default locale.
+const String kVoiceLocalePrefKey = 'VOICE_LOCALE';
 
 final speechChannelProvider = Provider<SpeechChannel>((ref) {
   final channel = SpeechChannel();
@@ -49,7 +55,7 @@ final captureProvider =
   final executeAiActionUseCase = ref.watch(executeAiActionUseCaseProvider);
   final queueOfflineUseCase = ref.watch(queueOfflineTranscriptUseCaseProvider);
   final db = ref.watch(databaseProvider);
-  final isOnline = ref.watch(isOnlineProvider);
+  final connectivityService = ref.watch(connectivityServiceProvider);
 
   return CaptureNotifier(
     speechChannel: speechChannel,
@@ -58,7 +64,7 @@ final captureProvider =
     executeAiActionUseCase: executeAiActionUseCase,
     queueOfflineUseCase: queueOfflineUseCase,
     db: db,
-    isOnline: isOnline,
+    connectivityService: connectivityService,
   );
 });
 
@@ -69,12 +75,17 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
   final ExecuteAiActionUseCase _executeAiActionUseCase;
   final QueueOfflineTranscriptUseCase _queueOfflineUseCase;
   final AppDatabase _db;
-  final bool _isOnline;
+  final ConnectivityService _connectivityService;
 
   StreamSubscription<String>? _transcriptSub;
   StreamSubscription<double>? _audioLevelSub;
   StreamSubscription<String>? _stateSub;
   StreamSubscription<String>? _errorSub;
+  StreamSubscription<String>? _finalTranscriptSub;
+
+  /// Highest-accuracy result delivered by the native recognizer's
+  /// onResults callback; preferred over partials at processing time.
+  String? _lastFinalTranscript;
 
   Timer? _silenceTimer;
 
@@ -85,14 +96,14 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
     required ExecuteAiActionUseCase executeAiActionUseCase,
     required QueueOfflineTranscriptUseCase queueOfflineUseCase,
     required AppDatabase db,
-    required bool isOnline,
+    required ConnectivityService connectivityService,
   })  : _speechChannel = speechChannel,
         _llmDataSource = llmDataSource,
         _workspaceRouter = workspaceRouter,
         _executeAiActionUseCase = executeAiActionUseCase,
         _queueOfflineUseCase = queueOfflineUseCase,
         _db = db,
-        _isOnline = isOnline,
+        _connectivityService = connectivityService,
         super(const CaptureState());
 
   /// Start voice capture flow.
@@ -103,12 +114,18 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
 
     _transcriptSub =
         _speechChannel.partialTranscriptStream.listen(_onPartialTranscript);
+    _finalTranscriptSub =
+        _speechChannel.finalTranscriptStream.listen(_onFinalTranscript);
     _audioLevelSub =
         _speechChannel.audioLevelStream.listen(_onAudioLevel);
     _stateSub = _speechChannel.speechStateStream.listen(_onSpeechState);
     _errorSub = _speechChannel.errorStream.listen(_onError);
 
-    final success = await _speechChannel.startListening();
+    // Optional user override; null ⇒ recognizer follows the device locale.
+    final prefs = await SharedPreferences.getInstance();
+    final localeId = prefs.getString(kVoiceLocalePrefKey);
+
+    final success = await _speechChannel.startListening(localeId: localeId);
     if (success) {
       state = state.copyWith(status: CaptureStatus.listening);
       _resetSilenceTimer();
@@ -120,16 +137,18 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
     }
   }
 
+  void _onFinalTranscript(String text) {
+    if (text.isEmpty) return;
+    _lastFinalTranscript = text;
+    if (state.transcript != text) {
+      state = state.copyWith(transcript: text);
+    }
+    _resetSilenceTimer();
+  }
+
   void _onPartialTranscript(String text) {
     if (text.isEmpty) return;
-
-    final contextHint = _detectContextHint(text);
-
-    state = state.copyWith(
-      transcript: text,
-      detectedContext: contextHint,
-    );
-
+    state = state.copyWith(transcript: text);
     _resetSilenceTimer();
   }
 
@@ -167,7 +186,25 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
     _silenceTimer?.cancel();
     await _speechChannel.stopListening();
 
-    final transcriptText = state.transcript.trim();
+    // Prefer the recognizer's final result over the last partial — give it a
+    // short grace window to arrive, then fall back to what we have.
+    var transcriptText = state.transcript.trim();
+    if (_lastFinalTranscript == null) {
+      for (var i = 0; i < 5; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        if (_lastFinalTranscript != null &&
+            _lastFinalTranscript!.trim().isNotEmpty) {
+          break;
+        }
+      }
+    }
+    final finalText = _lastFinalTranscript?.trim();
+    if (finalText != null && finalText.isNotEmpty) {
+      transcriptText = finalText;
+      state = state.copyWith(transcript: transcriptText);
+    }
+    _lastFinalTranscript = null;
+
     if (transcriptText.isEmpty) {
       state = state.copyWith(
         status: CaptureStatus.error,
@@ -179,8 +216,11 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
 
     state = state.copyWith(status: CaptureStatus.processing);
 
+    // Probe connectivity at the decision point (never trust a stale snapshot).
+    final isOnline = await _connectivityService.isOnline();
+
     // If device is offline, queue to local DB offline_queue
-    if (!_isOnline) {
+    if (!isOnline) {
       try {
         await _queueOfflineUseCase.execute(transcriptText);
         state = state.copyWith(
@@ -196,25 +236,36 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
       return;
     }
 
-    // Device is online: send transcript to Gemini / NVIDIA NIM
+    // Device is online: send transcript to the configured LLM provider
     try {
       final existingWorkspaces = await _db.workspaceDao.getAll();
       final workspaceNames = existingWorkspaces.map((w) => w.name).toList();
 
-      final intentResult = await _llmDataSource.extractIntent(
+      final outcome = await _llmDataSource.extractIntentWithMeta(
         transcript: transcriptText,
         userWorkspaces: workspaceNames,
       );
 
       final workspaceMatch = _workspaceRouter.routeWorkspace(
-        workspaceHint: intentResult.workspaceHint,
+        workspaceHint: outcome.result.workspaceHint,
         existingWorkspaces: existingWorkspaces,
       );
 
       state = state.copyWith(
         status: CaptureStatus.confirming,
-        intentResult: intentResult,
+        intentResult: outcome.result,
         workspaceMatch: workspaceMatch,
+        aiNotice: outcome.fallbackNotice,
+        clearAiNotice: outcome.fallbackNotice == null,
+        hardError: false,
+      );
+    } on LlmApiException catch (e) {
+      // Config-level AI failure (bad key / dead model): never mask it —
+      // surface an actionable error instead of silently degrading.
+      state = state.copyWith(
+        status: CaptureStatus.error,
+        errorMessage: e.message,
+        hardError: e.isConfigError,
       );
     } catch (e) {
       state = state.copyWith(
@@ -302,11 +353,7 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
 
   /// Update transcript manually (when typing).
   void updateTypedTranscript(String text) {
-    final contextHint = _detectContextHint(text);
-    state = state.copyWith(
-      transcript: text,
-      detectedContext: contextHint,
-    );
+    state = state.copyWith(transcript: text);
   }
 
   /// Submit typed transcript for processing.
@@ -323,49 +370,23 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
     state = const CaptureState(status: CaptureStatus.idle);
   }
 
-  /// Reset state to idle.
-  void reset() {
+  /// Reset state to idle. Awaits subscription cancellation so a late speech
+  /// event can never land in the fresh idle state.
+  Future<void> reset() async {
     _silenceTimer?.cancel();
-    _cancelSubscriptions();
+    await _cancelSubscriptions();
+    if (!mounted) return;
     state = const CaptureState(status: CaptureStatus.idle);
-  }
-
-  String? _detectContextHint(String text) {
-    final lower = text.toLowerCase();
-    if (lower.contains('assignment') ||
-        lower.contains('exam') ||
-        lower.contains('lab') ||
-        lower.contains('vtop') ||
-        lower.contains('vit')) {
-      return 'Academics · VIT';
-    }
-    if (lower.contains('internship') ||
-        lower.contains('standup') ||
-        lower.contains('sprint') ||
-        lower.contains('pr')) {
-      return 'Internship';
-    }
-    if (lower.contains('gate') ||
-        lower.contains('iit') ||
-        lower.contains('pyq') ||
-        lower.contains('algo')) {
-      return 'IIT / GATE Prep';
-    }
-    if (lower.contains('gym') ||
-        lower.contains('workout') ||
-        lower.contains('water') ||
-        lower.contains('run')) {
-      return 'Fitness & Health';
-    }
-    return null;
   }
 
   Future<void> _cancelSubscriptions() async {
     await _transcriptSub?.cancel();
+    await _finalTranscriptSub?.cancel();
     await _audioLevelSub?.cancel();
     await _stateSub?.cancel();
     await _errorSub?.cancel();
     _transcriptSub = null;
+    _finalTranscriptSub = null;
     _audioLevelSub = null;
     _stateSub = null;
     _errorSub = null;

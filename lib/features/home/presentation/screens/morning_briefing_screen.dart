@@ -9,6 +9,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/utils/greeting.dart';
 
 /// Morning Briefing Screen — AURA v2 Morning Briefing.
 /// Shows: user greeting, today's focus tasks, urgent alarms, and quick stats.
@@ -21,7 +22,7 @@ class MorningBriefingScreen extends ConsumerWidget {
     final dateStr = DateFormat('EEEE, MMMM d').format(now);
 
     final userName = ref.watch(userNameProvider);
-    final firstName = userName.split(' ').first;
+    final greeting = timeAwareGreeting(now.hour, userName: userName);
 
     final focusAsync = ref.watch(todayFocusItemsProvider);
     final urgentAsync = ref.watch(urgentItemsProvider);
@@ -46,7 +47,7 @@ class MorningBriefingScreen extends ConsumerWidget {
             children: [
               // ── Greeting ───────────────────────────────────────────────
               Text(
-                'Good morning, $firstName.',
+                greeting,
                 style: AuraTypography.display.copyWith(fontSize: 22),
               ),
               const SizedBox(height: 4),

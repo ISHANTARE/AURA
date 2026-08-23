@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:aura/database/app_database.dart';
@@ -27,6 +28,8 @@ void main() {
   });
 
   setUp(() async {
+    // The scheduling service reads SharedPreferences for its migration guard.
+    SharedPreferences.setMockInitialValues({});
     db = AppDatabase.forTesting(NativeDatabase.memory());
     itemDao = ItemDao(db);
     workspaceDao = WorkspaceDao(db);

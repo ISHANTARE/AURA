@@ -9,7 +9,8 @@ import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
-import '../../../reminders/data/services/notification_service.dart';
+import '../../../capture/domain/entities/intent_result.dart';
+import '../../../reminders/domain/services/reminder_scheduling_service.dart';
 
 /// Comprehensive manual task creation bottom sheet.
 /// Includes Title, Workspace, Priority, Deadline, Notes, Reminder, and Recurring settings.
@@ -409,17 +410,29 @@ class _ManualTaskSheetState extends ConsumerState<ManualTaskSheet> {
         ),
       );
 
-      // Schedule notification reminder if deadline set
+      // Schedule the deadline reminder through the single scheduling path —
+      // same engine voice capture uses, so behavior can never drift.
       if (_deadline != null) {
-        final remTime = _deadline!.subtract(Duration(minutes: _reminderOffsetMinutes));
-        if (remTime.isAfter(DateTime.now())) {
-          await NotificationService().scheduleNotification(
-            id: taskId.hashCode.abs(),
-            title: title,
-            body: notesText.isNotEmpty ? notesText : 'Task deadline approaching',
-            scheduledDate: remTime,
-            payload: taskId,
+        final savedItem = await itemDao.getById(taskId);
+        if (savedItem != null) {
+          final service = ref.read(reminderSchedulingServiceProvider);
+          final outcome = await service.syncForItem(
+            savedItem,
+            extractedReminders: [
+              ExtractedReminder(
+                offsetValue: _reminderOffsetMinutes,
+                offsetUnit: 'minutes',
+                type: 'notification',
+              ),
+            ],
           );
+          if (mounted && outcome.usedInexactFallback) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text(
+                      'Exact alarms unavailable — reminders may be delayed by a few minutes.')),
+            );
+          }
         }
       }
 

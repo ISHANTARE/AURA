@@ -12,7 +12,6 @@ dependencies:
 
   # ── State management ──────────────────────────────────────────────────────
   flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
 
   # ── Navigation ────────────────────────────────────────────────────────────
   go_router: ^14.2.0
@@ -50,8 +49,6 @@ dependencies:
 
   # ── Utilities ─────────────────────────────────────────────────────────────
   uuid: ^4.4.0
-  freezed_annotation: ^2.4.4
-  json_annotation: ^4.9.0
   shared_preferences: ^2.2.3
   intl: ^0.19.0
   share_plus: ^10.1.4
@@ -60,14 +57,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # Code generation
+  # Code generation (Drift only — no riverpod/freezed codegen in use)
   build_runner: ^2.4.11
   drift_dev: ^2.18.0
-  riverpod_generator: ^2.4.3
-  freezed: ^2.5.7
-  json_serializable: ^6.8.0
-  custom_lint: ^0.6.4
-  riverpod_lint: ^2.3.13
 
   # Linting
   flutter_lints: ^4.0.0
@@ -75,5 +67,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - .env
     - assets/

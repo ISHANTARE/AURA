@@ -51,7 +51,13 @@ class ProcessSharedContentUseCase {
     if (payload.type == 'image' && payload.filePath != null) {
       imagePath = payload.filePath;
       title = 'Shared Image / Screenshot';
-      extractedText = await _ocrDataSource.processImage(payload.filePath!);
+      try {
+        extractedText = await _ocrDataSource.processImage(payload.filePath!);
+      } on OcrException catch (e) {
+        // OCR failure is user-relevant — surface it instead of silently
+        // saving an empty capture.
+        extractedText = '⚠ ${e.message}';
+      }
     } else if (payload.type == 'video' && payload.filePath != null) {
       title = 'Shared Video';
       extractedText = 'Attached video: ${payload.filePath!.split('/').last}';

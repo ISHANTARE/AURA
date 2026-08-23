@@ -1,4 +1,6 @@
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
+
 import '../app_database.dart';
 
 part 'item_dao.g.dart';
@@ -62,20 +64,28 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
         ..orderBy([(t) => OrderingTerm.asc(t.deadline)]))
       .watch();
 
-  /// Watch today's focus items (pending items due today, overdue, or created today)
-  Stream<List<Item>> watchTodayFocus() {
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
-    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59).millisecondsSinceEpoch;
+  /// Watch today's focus items: pending items due today (or created today).
+  ///
+  /// [now] is injectable for tests; callers should re-subscribe when the day
+  /// rolls over (see dayRefreshProvider) because drift watches do not react
+  /// to wall-clock changes.
+  ///
+  /// Bounded on BOTH ends: deadline/fireAt/startTime must fall within today,
+  /// so months-old never-completed items no longer accumulate forever here —
+  /// they surface through the overdue stat and urgent list instead.
+  Stream<List<Item>> watchTodayFocus({DateTime? now}) {
+    final effectiveNow = now ?? DateTime.now();
+    final startOfDay = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day).millisecondsSinceEpoch;
+    final endOfDay = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day, 23, 59, 59).millisecondsSinceEpoch;
 
     return (select(items)
       ..where((t) =>
           t.deletedAt.isNull() &
           t.status.equals('pending') &
           (
-            (t.deadline.isNotNull() & t.deadline.isSmallerOrEqualValue(endOfDay)) |
-            (t.fireAt.isNotNull() & t.fireAt.isSmallerOrEqualValue(endOfDay)) |
-            (t.startTime.isNotNull() & t.startTime.isSmallerOrEqualValue(endOfDay)) |
+            (t.deadline.isNotNull() & t.deadline.isBiggerOrEqualValue(startOfDay) & t.deadline.isSmallerOrEqualValue(endOfDay)) |
+            (t.fireAt.isNotNull() & t.fireAt.isBiggerOrEqualValue(startOfDay) & t.fireAt.isSmallerOrEqualValue(endOfDay)) |
+            (t.startTime.isNotNull() & t.startTime.isBiggerOrEqualValue(startOfDay) & t.startTime.isSmallerOrEqualValue(endOfDay)) |
             (t.createdAt.isBiggerOrEqualValue(startOfDay) & t.createdAt.isSmallerOrEqualValue(endOfDay))
           )
       )
@@ -183,7 +193,9 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
     final original = await getById(id);
     if (original == null) return null;
     final nowEpoch = DateTime.now().millisecondsSinceEpoch;
-    final newId = 'item_${nowEpoch}_${original.title.hashCode.abs()}';
+    // UUID primary key — title-hash-derived IDs collided when the same item
+    // was duplicated twice within one millisecond.
+    final newId = const Uuid().v4();
     final companion = ItemsCompanion(
       id: Value(newId),
       title: Value('${original.title} (Copy)'),

@@ -3,16 +3,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../database/app_database.dart';
 import '../../../../database/daos/daily_log_dao.dart';
+import '../../../reminders/domain/services/recurrence_resolver.dart';
 
 /// Recurring Task Reset Use Case — Sprint 10 (F-12)
 ///
 /// Design rules (SPRINTS.md S10):
 /// - On each app-open, check if today's reset has already run.
 /// - Guard with SharedPreferences key `recurring_reset_<year>_<month>_<day>`.
-/// - For every item where isRecurring = true and status = 'completed',
-///   reset status → 'pending' and write a DailyLog entry for the prior day.
-/// - For items that are recurring and were NOT completed yesterday,
-///   write a DailyLog entry with result = 'missed'.
+/// - Cadence-aware: `SPECIFIC_DATE:` rules are never reset (one-shot),
+///   `DAYS:…` rules only on the morning after a matching weekday, and simple
+///   daily cadences behave as before.
+/// - For every eligible item completed yesterday → status 'pending' +
+///   DailyLog 'completed'; not completed yesterday → DailyLog 'missed'.
 class RecurringTaskResetUseCase {
   final AppDatabase _db;
   final DailyLogDao _dailyLogDao;
@@ -43,6 +45,18 @@ class RecurringTaskResetUseCase {
         .get();
 
     for (final item in recurringItems) {
+      // One-shot dated rules are never reset.
+      if (RecurrenceResolver.parseSpecificDate(item.recurrenceRule) != null) {
+        continue;
+      }
+
+      // Weekly weekday rules only reset the day after a scheduled weekday.
+      final weekdays =
+          RecurrenceResolver.parseWeekdays(item.recurrenceRule);
+      if (weekdays != null && !weekdays.contains(yesterday.weekday)) {
+        continue;
+      }
+
       final wasCompleted = item.status == 'completed';
 
       // Write daily log for yesterday

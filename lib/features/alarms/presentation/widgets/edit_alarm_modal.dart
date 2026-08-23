@@ -9,7 +9,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../platform/overlay_channel.dart';
-import '../../../reminders/data/services/notification_service.dart';
+import '../../../reminders/domain/services/reminder_scheduling_service.dart';
 
 enum AlarmRepeatType { repeatDays, specificDate }
 
@@ -478,6 +478,8 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                   final itemDao = ref.read(itemDaoProvider);
                   final nextTargetDt = _calculateNextOccurrence();
                   final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+                  // Captured before any awaits — used after the save completes.
+                  final messenger = ScaffoldMessenger.of(context);
 
                   String ruleStr;
                   if (_repeatType == AlarmRepeatType.specificDate) {
@@ -503,14 +505,22 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
 
                   await itemDao.upsertItem(companion);
 
-                  await NotificationService().scheduleAlarm(
-                    id: alarmId.hashCode.abs(),
-                    title: title,
-                    body: 'Alarm: ${DateFormat('h:mm a').format(nextTargetDt)}',
-                    scheduledDate: nextTargetDt,
-                    payload: alarmId,
-                    soundUri: _selectedSoundUri,
-                  );
+                  // Schedule through the single scheduling path — recurring
+                  // weekday alarms become native weekly OS repeats that fire
+                  // even when the app process is dead.
+                  final savedItem = await itemDao.getById(alarmId);
+                  if (savedItem != null) {
+                    final outcome = await ref
+                        .read(reminderSchedulingServiceProvider)
+                        .syncForItem(savedItem, soundUri: _selectedSoundUri);
+                    if (outcome.usedInexactFallback && mounted) {
+                      messenger.showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                'Exact alarms unavailable — this alarm may ring a few minutes late.')),
+                      );
+                    }
+                  }
 
                   if (context.mounted) Navigator.pop(context);
                 },

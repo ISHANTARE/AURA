@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
@@ -39,7 +40,9 @@ class _TaskSubtasksTabState extends ConsumerState<TaskSubtasksTab> {
 
     final itemDao = ref.read(itemDaoProvider);
     final nowEpoch = DateTime.now().millisecondsSinceEpoch;
-    final subtaskId = 'subtask_${nowEpoch}_${title.hashCode.abs()}';
+    // UUID id — same-title subtasks added in the same millisecond collided.
+    const uuid = Uuid();
+    final subtaskId = 'subtask_${nowEpoch}_${uuid.v4()}';
 
     await itemDao.insertItem(
       ItemsCompanion(

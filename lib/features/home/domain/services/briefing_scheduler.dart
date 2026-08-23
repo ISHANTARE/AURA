@@ -1,27 +1,35 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../database/app_database.dart';
 import '../../../reminders/data/services/notification_service.dart';
+import '../../../reminders/domain/services/notification_ids.dart';
 
 /// Schedules the daily morning briefing notification for AURA.
 ///
 /// Design rules (from SPRINTS.md S8):
-/// - Default briefing time: 7:00 AM
-/// - Late-wake detection: if phone not unlocked before briefing time, fire at 9:00 AM instead
+/// - Briefing hour configurable via Settings (prefs `BRIEFING_HOUR`, default 7)
+/// - Late-wake fallback: fires 9 AM if the day's first unlock was earlier;
+///   if the user first unlocked AFTER the fallback hour, today's briefing is
+///   skipped (they're already up — it would be noise) and it moves to tomorrow
 /// - Schedule once per day — guard via SharedPreferences `briefing_scheduled_date`
+/// - Body is composed at schedule time from the live top focus item
 /// - Deep-link payload: `route:/briefing`
 class BriefingSchedulerService {
   final NotificationService _notifications;
+  final AppDatabase? _db;
 
   static const String _keyScheduledDate = 'briefing_scheduled_date';
   static const String _keyFirstUnlockMs = 'briefing_first_unlock_ms';
-  static const String _keyBriefingHour = 'BRIEFING_HOUR'; // set by Settings
+
+  /// Prefs key written by Settings → Briefing hour.
+  static const String keyBriefingHour = 'BRIEFING_HOUR';
   static const int _defaultBriefingHour = 7;
   static const int _lateWakeFallbackHour = 9;
-  static const int _briefingNotificationId = 10001;
 
-  BriefingSchedulerService({NotificationService? notifications})
-      : _notifications = notifications ?? NotificationService();
+  BriefingSchedulerService({NotificationService? notifications, AppDatabase? db})
+      : _notifications = notifications ?? NotificationService(),
+        _db = db;
 
   /// Call this on every app resume / first launch.
   /// Records the first unlock time and schedules the briefing if not yet done today.
@@ -45,16 +53,14 @@ class BriefingSchedulerService {
     final lastScheduled = prefs.getString(_keyScheduledDate);
     if (lastScheduled == todayKey) return;
 
-    await _scheduleTodaysBriefing(prefs, now);
+    await _scheduleTodaysBriefing(prefs, now, isFirstUnlockToday);
     await prefs.setString(_keyScheduledDate, todayKey);
   }
 
   Future<void> _scheduleTodaysBriefing(
-      SharedPreferences prefs, DateTime now) async {
-    final briefingHour =
-        prefs.getInt(_keyBriefingHour) ?? _defaultBriefingHour;
+      SharedPreferences prefs, DateTime now, bool isFirstUnlockToday) async {
+    final briefingHour = prefs.getInt(keyBriefingHour) ?? _defaultBriefingHour;
 
-    // Build the target DateTime for today at briefing hour
     DateTime target = DateTime(
       now.year,
       now.month,
@@ -62,9 +68,6 @@ class BriefingSchedulerService {
       briefingHour,
     );
 
-    // If we're already past the briefing time:
-    // - Use late-wake fallback (9AM) if still before fallback hour
-    // - Otherwise skip (too late today, will fire tomorrow)
     if (now.isAfter(target)) {
       final fallback = DateTime(
         now.year,
@@ -72,22 +75,30 @@ class BriefingSchedulerService {
         now.day,
         _lateWakeFallbackHour,
       );
+      final firstUnlock = prefs.getInt(_keyFirstUnlockMs);
+      final firstUnlockAfterFallback = firstUnlock != null &&
+          DateTime.fromMillisecondsSinceEpoch(firstUnlock).isAfter(fallback);
+
       if (now.isBefore(fallback)) {
         target = fallback;
-        debugPrint('[BriefingScheduler] Past $briefingHour AM — using 9AM fallback');
+        debugPrint(
+            '[BriefingScheduler] Past $briefingHour AM — using ${_lateWakeFallbackHour}AM fallback');
+      } else if (firstUnlockAfterFallback && !isFirstUnlockToday) {
+        // User has been up since before we could have helped — don't buzz now.
+        target = target.add(const Duration(days: 1));
+        debugPrint('[BriefingScheduler] Late unlock — scheduling for tomorrow');
       } else {
-        // Schedule for tomorrow at briefing hour
         target = target.add(const Duration(days: 1));
         debugPrint('[BriefingScheduler] Past fallback — scheduling for tomorrow');
       }
     }
 
-    final greetingLine = _greetingLine(now.hour);
+    final body = await _composeBody();
 
     await _notifications.scheduleNotification(
-      id: _briefingNotificationId,
+      id: NotificationIds.briefing,
       title: 'AURA Morning Briefing',
-      body: greetingLine,
+      body: body,
       scheduledDate: target,
       payload: 'route:/briefing',
     );
@@ -95,10 +106,26 @@ class BriefingSchedulerService {
     debugPrint('[BriefingScheduler] Briefing scheduled for ${target.toIso8601String()}');
   }
 
-  String _greetingLine(int hour) {
-    if (hour < 12) return 'Your daily summary is ready. Tap to start your day.';
-    if (hour < 17) return 'Afternoon check-in — see what needs your attention.';
-    return 'Evening briefing — wrap up your day with AURA.';
+  /// Compose a one-line summary from live data at schedule time (the
+  /// notification content is static once scheduled — a documented platform
+  /// limitation; the deep-linked screen always shows the fresh picture).
+  Future<String> _composeBody() async {
+    final db = _db;
+    if (db == null) return 'Your daily summary is ready. Tap to start your day.';
+    try {
+      final items = await ItemDao(db).watchTodayFocus().first;
+      if (items.isEmpty) {
+        return 'Nothing due today — enjoy the calm start.';
+      }
+      final top = items.first;
+      final count = items.length;
+      return count == 1
+          ? '1 item today · Top: ${top.title}'
+          : '$count items today · Top: ${top.title}';
+    } catch (e) {
+      debugPrint('[BriefingScheduler] body compose failed: $e');
+      return 'Your daily summary is ready. Tap to start your day.';
+    }
   }
 
   String _todayKey(DateTime dt) =>

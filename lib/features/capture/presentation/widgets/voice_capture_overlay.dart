@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../../core/router/app_router.dart';
 import '../../domain/entities/capture_state.dart';
 import '../providers/capture_provider.dart';
 import 'confirmation_box.dart';
@@ -395,19 +397,39 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
               style: AuraTypography.label.copyWith(color: AuraColors.textSecondary),
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(0, 44),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          // Config-level AI failures need Settings, not another retry.
+          if (state.hardError)
+            TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              onPressed: () {
+                VoiceCaptureOverlay.closeOverlay(context);
+                context.go(Routes.settings);
+              },
+              child: Text(
+                'Open AI Settings',
+                style: AuraTypography.label.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
+          else
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(0, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                ref.read(captureProvider.notifier).startCapture();
+              },
+              child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            onPressed: () {
-              ref.read(captureProvider.notifier).startCapture();
-            },
-            child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
         ],
       );
     }

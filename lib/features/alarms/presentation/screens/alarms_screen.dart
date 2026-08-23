@@ -9,7 +9,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/widgets/empty_state.dart';
-import '../../../reminders/data/services/notification_service.dart';
+import '../../../reminders/domain/services/reminder_scheduling_service.dart';
 
 import '../widgets/edit_alarm_modal.dart';
 
@@ -121,8 +121,12 @@ class AlarmsScreen extends ConsumerWidget {
                               color: AuraColors.textMuted, size: 20),
                           onPressed: () async {
                             HapticFeedback.mediumImpact();
+                            // Cancel every notification variant first, then
+                            // soft-delete the row.
+                            await ref
+                                .read(reminderSchedulingServiceProvider)
+                                .cancelForItem(alarm.id);
                             await itemDao.softDelete(alarm.id);
-                            await NotificationService().cancel(alarm.id.hashCode.abs());
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(

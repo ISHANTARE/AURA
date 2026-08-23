@@ -9,6 +9,7 @@ import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/utils/greeting.dart';
 import '../../../alarms/presentation/widgets/edit_alarm_modal.dart';
 import '../../../capture/presentation/widgets/voice_capture_overlay.dart';
 import '../../../workspaces/presentation/widgets/create_workspace_modal.dart';
@@ -68,7 +69,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     // Dynamic user name from StateNotifierProvider
     final userName = ref.watch(userNameProvider);
-    final greeting = _greeting(now.hour, userName);
+    final greeting = timeAwareGreeting(now.hour, userName: userName);
 
     final urgentAsync = ref.watch(urgentItemsProvider);
     final focusAsync = ref.watch(todayFocusItemsProvider);
@@ -276,13 +277,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ],
       ),
     );
-  }
-
-  String _greeting(int hour, String name) {
-    final firstName = name.split(' ').first;
-    if (hour < 12) return 'Good morning, $firstName.';
-    if (hour < 17) return 'Good afternoon, $firstName.';
-    return 'Good evening, $firstName.';
   }
 }
 

@@ -1,3 +1,54 @@
+## [2.1.0] — 2026-08-23
+
+### Fixed — Market-Readiness Remediation (post-audit)
+
+Full remediation of the 2026-08-22 adversarial audit plus ~20 additional
+defects found during verification. 60+ tests now cover the previously
+untested AI / scheduling / offline pipelines.
+
+**Scheduling Engine (core promise restored)**
+- New single `ReminderSchedulingService`: voice, manual, and alarm paths all persist `reminders_schedule` rows, schedule OS notifications, write `notification_logs`, and resynchronize on app start — the previous split-brain (manual tasks notified, voice tasks never did) is gone.
+- `create_event` / `create_reminder` intents no longer degrade to bare task rows: event start/end/location and confidence are persisted; parsed reminder offsets are honored.
+- Deterministic notification-ID codec (`FNV-1a` over namespaced keys) replaces all 12+ inconsistent `hashCode.abs()` sites; snooze cancels the right notification instead of duplicating it.
+- Recurring weekday alarms now use native weekly OS repeats (`matchDateTimeComponents`) so they ring with the app killed, plus a startup sweep that marks fired occurrences and advances recurring items.
+- Past-time alarms fire immediately through the alarm channel (previously silently dropped); stale reminders beyond a 15-minute grace are skipped with a surfaced warning.
+- Exact-alarm permission is probed before scheduling (`inexact` fallback + user-visible notice) — no more unhandled exceptions on Android 14+ revocations.
+- Snooze moves the DB `fireAt` together with the OS notification.
+
+**AI Pipeline & Config**
+- Google Gemini (OpenAI-compatible endpoint) is the out-of-box default; config precedence unified (user settings → dart-define → dotenv → default).
+- Typed `LlmApiException`: invalid-key / dead-model errors surface with an "Open AI Settings" action instead of silently degrading to the offline parser; transient errors still fall back but say so in the confirmation card.
+- Rate limiter rewritten as a true sliding window.
+- Offline queue processor actually starts now; retry-cap status machine fixed; FAILED·TAP RETRY badge drains stuck captures.
+- API key moved to encrypted storage (`flutter_secure_storage`) with one-time plaintext migration; `.env` removed from bundled assets.
+
+**Voice & Workspace Intelligence**
+- Speech recognition follows the device locale by default with a Settings override (was hardcoded to Indian English).
+- Final recognizer result preferred over partials for processing accuracy.
+- Workspace routing matches hints against the user's real workspace names with a generic fallback taxonomy — VIT/GATE/internship keyword maps removed everywhere.
+
+**Home & Data Correctness**
+- Today's Focus bounded to the current day on both ends with midnight rollover (previously accumulated overdue items forever).
+- Morning briefing: hour-aware greeting from the real user name, live top-focus content in the notification body, configurable briefing hour in Settings. All `'Ishan T'` / `'your name'` developer artifacts removed.
+- Nudges: minimum 3-hour spacing and target rotation instead of nagging the same item three times a minute.
+- Per-step error isolation in the startup pipeline.
+
+**Android Native**
+- Dead prototype `AuraFloatingService` and orphaned `AuraDNDReceiver` deleted from code and manifest; `USE_EXACT_ALARM` removed for Play-policy cleanliness.
+- Unified `AuraChannelRegistrar` gives both Flutter engines identical channel support (capture engine previously lacked ringtone picking and DND events).
+- Share-to-AURA hardened: payload persisted to disk (single-consume), config-change dedupe, off-main-thread media copy, 24h cache sweep; fresh-install FK crash fixed; share saves work without any workspace.
+- Onboarding: real name validation (no more "your name"), exact-alarm permission row added.
+
+**Router & Reset**
+- Onboarding gate lives in Riverpod: Reset App Data re-locks every route (deep links could previously bypass onboarding entirely).
+- Reset App Data now clears native orb prefs, encrypted key storage, accent/name/gate providers — equals a true fresh install.
+- Removed unused dependencies (freezed/json_annotation/riverpod_annotation + four unused codegen dev-deps).
+
+**Verification**
+- `flutter analyze`: **No issues found!** · `flutter test`: **all passing** (DB, dispatcher, scheduling service, offline processor, rate limiter, config precedence, recurrence resolver, ID codec vectors, router guard, greeting, workspace router).
+
+---
+
 ## [2.0.0] — 2026-08-21
 
 ### Added & Refined — Project Reorganization & UI/UX Polish

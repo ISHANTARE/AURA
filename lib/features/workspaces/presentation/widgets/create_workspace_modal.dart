@@ -76,14 +76,8 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
     super.dispose();
   }
 
-  Color _parseColor(String hex) {
-    try {
-      final clean = hex.replaceFirst('#', '');
-      return Color(int.parse('FF$clean', radix: 16));
-    } catch (_) {
-      return AuraColors.accentLime;
-    }
-  }
+  Color _parseColor(String hex) =>
+      hexToColor(hex, fallback: AuraColors.accentLime);
 
   IconData _selectedIcon() {
     for (final opt in _iconOptions) {

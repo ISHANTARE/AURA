@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../reminders/data/services/notification_service.dart';
+import '../../../reminders/domain/services/notification_ids.dart';
 import '../../data/datasources/llm_api_datasource.dart';
 import '../usecases/execute_ai_action_usecase.dart';
 
@@ -20,20 +22,17 @@ class OfflineQueueProcessor {
   final LlmApiDataSource _llmDataSource;
   final ExecuteAiActionUseCase _executeAiActionUseCase;
   final WorkspaceDao _workspaceDao;
-  final ConnectivityService _connectivityService;
+  final ConnectivityMonitor _connectivityService;
 
   StreamSubscription<bool>? _connectivitySub;
   bool _isProcessing = false;
-
-  /// Items that exceed this attempt count are skipped permanently.
-  static const int _maxAttempts = 5;
 
   OfflineQueueProcessor({
     required OfflineQueueDao queueDao,
     required LlmApiDataSource llmDataSource,
     required ExecuteAiActionUseCase executeAiActionUseCase,
     required WorkspaceDao workspaceDao,
-    required ConnectivityService connectivityService,
+    required ConnectivityMonitor connectivityService,
   })  : _queueDao = queueDao,
         _llmDataSource = llmDataSource,
         _executeAiActionUseCase = executeAiActionUseCase,
@@ -72,9 +71,10 @@ class OfflineQueueProcessor {
       final defaultWorkspace = workspaces.firstOrNull;
 
       for (final item in pending) {
-        // Skip items that have already exceeded the retry cap.
-        if (item.attempts >= _maxAttempts) {
-          await _queueDao.markProcessed(item.id);
+        // Items already at the shared retry cap are marked failed, not
+        // processed — they stay visible to the user via the FAILED badge.
+        if (item.attempts >= OfflineQueueDao.maxAttempts) {
+          await _queueDao.markFailed(item.id);
           continue;
         }
 
@@ -94,7 +94,7 @@ class OfflineQueueProcessor {
           // MUST NOT execute silently in the background (ADR-004 compliance).
           if (intent.intentType == 'delete_task' || intent.intentType == 'delete_workspace') {
             await NotificationService().showInstantNotification(
-              id: item.id.hashCode.abs(),
+              id: NotificationIds.offlineReview,
               title: 'Pending Offline Action Review',
               body: 'Voice request "${item.content}" requires your confirmation to execute.',
               payload: 'route:/search',
@@ -112,7 +112,7 @@ class OfflineQueueProcessor {
 
           // 4. Notify user that offline voice capture was processed (Human-in-the-Loop)
           await NotificationService().showInstantNotification(
-            id: item.id.hashCode.abs(),
+            id: NotificationIds.offlineReview,
             title: 'Offline Voice Capture Processed',
             body: '$resultMsg. Tap to review.',
             payload: 'route:/',
@@ -120,8 +120,10 @@ class OfflineQueueProcessor {
 
           // 5. Mark item as successfully processed.
           await _queueDao.markProcessed(item.id);
-        } catch (_) {
-          // On failure, increment the attempt counter.
+        } catch (e, st) {
+          // On failure increment the attempt counter; log so persistent
+          // failures are diagnosable instead of silently retried.
+          debugPrint('OfflineQueueProcessor: item ${item.id} failed: $e\n$st');
           await _queueDao.incrementAttempt(item.id, item.attempts);
         }
       }

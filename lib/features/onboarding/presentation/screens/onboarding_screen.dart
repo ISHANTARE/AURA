@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:aura/core/constants/colors.dart';
@@ -22,7 +21,8 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
-  final TextEditingController _nameController = TextEditingController(text: 'your name');
+  final TextEditingController _nameController = TextEditingController();
+  String? _nameError;
   int _currentPage = 0;
 
   // Selected workspaces for Screen 3
@@ -35,9 +35,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
 
+  bool get _isNameValid {
+    final name = _nameController.text.trim();
+    return name.length >= 2 && name.toLowerCase() != 'your name';
+  }
+
   Future<void> _completeOnboarding() async {
     final name = _nameController.text.trim();
-    if (name.isNotEmpty) {
+    if (_isNameValid) {
       await ref.read(userNameProvider.notifier).setName(name);
     }
 
@@ -62,23 +67,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           );
           colourIdx++;
-        } catch (_) {
-          // Workspace may already exist — skip silently.
+        } catch (e) {
+          // IDs are fresh UUIDs, so this can only be a real DB failure —
+          // log it instead of pretending duplicates were skipped.
+          debugPrint('Onboarding: workspace "$wsName" insert failed: $e');
         }
       }
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_complete', true);
+    // Gate lives in Riverpod so Reset App Data can invalidate it later.
+    await ref.read(onboardingGateProvider.notifier).complete();
     if (mounted) context.go(Routes.home);
   }
 
   void _nextPage() {
     if (_currentPage == 0) {
       final name = _nameController.text.trim();
-      if (name.isNotEmpty) {
-        ref.read(userNameProvider.notifier).setName(name);
+      if (!_isNameValid) {
+        setState(() => _nameError =
+            name.isEmpty ? 'Please enter your name to continue' : 'Please enter a real name (not a placeholder)');
+        return;
       }
+      setState(() => _nameError = null);
+      ref.read(userNameProvider.notifier).setName(name);
     }
     if (_currentPage < 3) {
       _pageController.nextPage(
@@ -211,6 +222,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     decoration: InputDecoration(
                       hintText: 'Enter your name',
                       hintStyle: AuraTypography.body,
+                      errorText: _nameError,
                       filled: true,
                       fillColor: AuraColors.bgElevated,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -287,10 +299,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             const SizedBox(height: 16),
             _PermissionItem(
               icon: LucideIcons.bell,
-              title: 'Notifications & Alarms',
-              desc: 'Ensures deadlines and reminders fire on time.',
+              title: 'Notifications',
+              desc: 'Ensures deadlines and reminders reach you.',
               onRequest: () async {
                 await Permission.notification.request();
+              },
+            ),
+            const SizedBox(height: 16),
+            _PermissionItem(
+              icon: LucideIcons.alarmClock,
+              title: 'Alarms & Exact Reminders',
+              desc: 'Lets AURA wake you and alert you at the exact minute.',
+              onRequest: () async {
+                await Permission.scheduleExactAlarm.request();
               },
             ),
             const SizedBox(height: 24),

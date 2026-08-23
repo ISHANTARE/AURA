@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../database/app_database.dart';
 import '../../data/services/notification_service.dart';
+import '../services/notification_ids.dart';
 
 /// Scans active items and fires summary notification for overdue tasks (PRD F-07).
 class OverdueReminderUseCase {
@@ -39,7 +40,7 @@ class OverdueReminderUseCase {
     final firstTitle = overdueItems.first.title;
 
     await _notificationService.showInstantNotification(
-      id: 'overdue_summary_$todayKey'.hashCode.abs(),
+      id: NotificationIds.overdueSummary,
       title: 'Overdue Task Alert',
       body: count == 1
           ? 'Overdue: "$firstTitle"'

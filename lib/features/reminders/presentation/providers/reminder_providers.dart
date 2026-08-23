@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aura/platform/dnd_channel.dart';
 import 'package:aura/features/reminders/domain/entities/reminder_models.dart';
-import 'package:aura/features/reminders/domain/usecases/snooze_reminder_usecase.dart';
+// snoozeReminderUseCaseProvider is the single canonical definition in
+// core/providers/providers.dart — do not re-declare it here.
 import '../../../../core/providers/providers.dart';
 
 // Platform channel provider
@@ -16,10 +17,6 @@ final dndStatusStreamProvider = StreamProvider<bool>((ref) {
 // Current DND status future provider
 final isDndActiveProvider = FutureProvider<bool>((ref) async {
   return ref.watch(dndChannelProvider).isDndActive();
-});
-
-final snoozeReminderUseCaseProvider = Provider<SnoozeReminderUseCase>((ref) {
-  return SnoozeReminderUseCase(db: ref.watch(databaseProvider));
 });
 
 // StateNotifier for executing reminder actions

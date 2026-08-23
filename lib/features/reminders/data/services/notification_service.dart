@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -56,6 +57,17 @@ class NotificationService {
 
   bool _initialized = false;
 
+  /// Guarantees the timezone database is usable even if [initialize] has not
+  /// completed yet — `tz.local` otherwise throws LateInitializationError.
+  void _ensureTz() {
+    try {
+      tz.local;
+    } catch (_) {
+      tz.initializeTimeZones();
+      tz.setLocalLocation(tz.UTC);
+    }
+  }
+
   /// Initialize local notifications and timezone data.
   Future<void> initialize({
     void Function(NotificationResponse)? onNotificationTap,
@@ -68,8 +80,11 @@ class NotificationService {
     try {
       final String timeZoneName = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(timeZoneName));
-    } catch (_) {
-      // Fallback to UTC if timezone name lookup fails
+    } catch (e) {
+      // Fallback to UTC — log loudly: every schedule would otherwise fire at
+      // the wrong wall-clock time with no other trace.
+      debugPrint('NotificationService: timezone lookup failed, '
+          'falling back to UTC (notifications may be offset): $e');
     }
 
     // 2. Android settings with app launcher icon
@@ -137,20 +152,63 @@ class NotificationService {
     _initialized = true;
   }
 
-  /// Request permissions for Android 13+ (POST_NOTIFICATIONS) & Android 12+ (EXACT_ALARM)
+  /// Request permissions for Android 13+ (POST_NOTIFICATIONS) & exact alarms.
+  ///
+  /// Returns whether NOTIFICATIONS were granted. Exact-alarm denial is not a
+  /// failure — callers fall back to inexact scheduling via [alarmCapability].
   Future<bool> requestPermissions() async {
     final androidImplementation = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidImplementation != null) {
-      await androidImplementation.requestNotificationsPermission();
-      await androidImplementation.requestExactAlarmsPermission();
+      final notificationsGranted =
+          await androidImplementation.requestNotificationsPermission();
+      try {
+        await androidImplementation.requestExactAlarmsPermission();
+      } catch (e) {
+        debugPrint('NotificationService: exact-alarm request failed: $e');
+      }
+      return notificationsGranted ?? false;
     }
-    return true;
+    return true; // Non-Android platforms.
   }
 
-  /// Schedule an exact time notification using local timezone.
+  /// Snapshot of what the OS currently allows for scheduling.
+  ///
+  /// Overridable probe for tests: set [canScheduleExactAlarmsProbe] to skip
+  /// the platform call.
+  Future<bool> Function()? canScheduleExactAlarmsProbe;
+
+  /// Probe whether exact alarms can currently be scheduled. Fails open on
+  /// older devices where the API is unavailable (previous behavior was to
+  /// always attempt exact).
+  Future<bool> _canScheduleExact() async {
+    final probe = canScheduleExactAlarmsProbe;
+    if (probe != null) return probe();
+
+    try {
+      // permission_handler exposes the Android 12+ exact-alarm policy state
+      // reliably across plugin versions. Pre-Android-12 devices report it as
+      // implicitly granted.
+      final status = await Permission.scheduleExactAlarm.status;
+      return status.isGranted;
+    } catch (_) {
+      return true; // Non-Android or probe unavailable — attempt exact.
+    }
+  }
+
+  /// Resolve the effective scheduling capability before scheduling a batch.
+  Future<AlarmCapability> alarmCapability() async {
+    return AlarmCapability(exactAlarmsAllowed: await _canScheduleExact());
+  }
+
+  /// Schedule a reminder-channel notification using local timezone.
+  ///
+  /// Past times fire immediately as a "missed" alert (never silently dropped).
+  /// When [useExact] is false the schedule degrades to
+  /// [AndroidScheduleMode.inexactAllowWhileIdle] instead of throwing on
+  /// Android 14+ with revoked exact-alarm permission.
   Future<void> scheduleNotification({
     required int id,
     required String title,
@@ -158,14 +216,18 @@ class NotificationService {
     required DateTime scheduledDate,
     String? payload,
     List<AndroidNotificationAction>? actions,
+    bool useExact = true,
+    bool missedFire = false,
+    DateTimeComponents? matchDateTimeComponents,
   }) async {
+    _ensureTz();
     final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
 
     // If scheduled time is in the past, fire immediately
     if (tzScheduledDate.isBefore(tz.TZDateTime.now(tz.local))) {
       await showInstantNotification(
         id: id,
-        title: title,
+        title: missedFire ? 'Missed: $title' : title,
         body: body,
         payload: payload,
         actions: actions,
@@ -200,14 +262,22 @@ class NotificationService {
       body,
       tzScheduledDate,
       details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: useExact
+          ? AndroidScheduleMode.exactAllowWhileIdle
+          : AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: matchDateTimeComponents,
       payload: payload,
     );
   }
 
-  /// Schedule an exact ALARM notification (loud ringing, fullScreenIntent, alarm audio usage).
+  /// Schedule an ALARM-channel notification (loud ringing, full-screen
+  /// intent, alarm audio usage).
+  ///
+  /// Unlike reminders, a past alarm time still fires immediately through the
+  /// alarm channel — dropping it silently made users miss real events while
+  /// believing AURA had them covered.
   Future<void> scheduleAlarm({
     required int id,
     required String title,
@@ -215,29 +285,18 @@ class NotificationService {
     required DateTime scheduledDate,
     String? payload,
     String? soundUri,
+    bool useExact = true,
+    DateTimeComponents? matchDateTimeComponents,
   }) async {
+    _ensureTz();
     final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
 
-    if (tzScheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
+    if (tzScheduledDate.isBefore(tz.TZDateTime.now(tz.local))) {
+      await showInstantAlarmNotification(id: id, title: title, body: body);
+      return;
+    }
 
-    final androidDetails = AndroidNotificationDetails(
-      alarmChannelId,
-      alarmChannelName,
-      channelDescription: alarmChannelDescription,
-      importance: Importance.max,
-      priority: Priority.max,
-      color: AuraColors.accentLime,
-      audioAttributesUsage: AudioAttributesUsage.alarm,
-      sound: soundUri != null && soundUri.isNotEmpty
-          ? UriAndroidNotificationSound(soundUri)
-          : null,
-      playSound: true,
-      fullScreenIntent: true,
-      category: AndroidNotificationCategory.alarm,
-      visibility: NotificationVisibility.public,
-      ongoing: true,
-      autoCancel: false,
-    );
+    final androidDetails = _alarmAndroidDetails(soundUri: soundUri);
 
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -257,11 +316,56 @@ class NotificationService {
       body,
       tzScheduledDate,
       details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: useExact
+          ? AndroidScheduleMode.exactAllowWhileIdle
+          : AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: matchDateTimeComponents,
       payload: payload,
     );
+  }
+
+  AndroidNotificationDetails _alarmAndroidDetails({String? soundUri}) {
+    return AndroidNotificationDetails(
+      alarmChannelId,
+      alarmChannelName,
+      channelDescription: alarmChannelDescription,
+      importance: Importance.max,
+      priority: Priority.max,
+      color: AuraColors.accentLime,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      sound: soundUri != null && soundUri.isNotEmpty
+          ? UriAndroidNotificationSound(soundUri)
+          : null,
+      playSound: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.alarm,
+      visibility: NotificationVisibility.public,
+      ongoing: true,
+      autoCancel: false,
+    );
+  }
+
+  /// Fire an immediate notification through the ALARM channel (full-screen
+  /// intent + alarm sound), used when an alarm's scheduled time already passed.
+  Future<void> showInstantAlarmNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? soundUri,
+  }) async {
+    final details = NotificationDetails(
+      android: _alarmAndroidDetails(soundUri: soundUri),
+      iOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        interruptionLevel: InterruptionLevel.timeSensitive,
+      ),
+    );
+
+    await _notificationsPlugin.show(id, title, body, details);
   }
 
   /// Fire an instant notification.
@@ -327,4 +431,13 @@ class NotificationService {
       ),
     ];
   }
+}
+
+/// OS scheduling capability snapshot used to decide exact vs inexact modes.
+class AlarmCapability {
+  final bool exactAlarmsAllowed;
+
+  const AlarmCapability({required this.exactAlarmsAllowed});
+
+  bool get usesInexactFallback => !exactAlarmsAllowed;
 }

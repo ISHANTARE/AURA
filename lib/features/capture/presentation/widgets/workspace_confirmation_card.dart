@@ -133,7 +133,7 @@ class _WorkspaceConfirmationCardState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: _presetColors.map((colorHex) {
               final isSelected = _selectedColor == colorHex;
-              final color = Color(int.parse('FF${colorHex.replaceFirst('#', '')}', radix: 16));
+              final color = hexToColor(colorHex, fallback: AuraColors.accentLime);
 
               return GestureDetector(
                 onTap: () {

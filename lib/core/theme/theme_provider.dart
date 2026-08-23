@@ -38,6 +38,15 @@ class ThemeAccentNotifier extends StateNotifier<ThemeAccent> {
     _syncOrbColor(accent);
   }
 
+  /// Used by Reset App Data: back to the factory accent immediately (the live
+  /// notifier previously kept the old color until process restart).
+  Future<void> resetToDefault() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('THEME_ACCENT');
+    state = ThemeAccent.indigoPrimary;
+    _syncOrbColor(state);
+  }
+
   void _syncOrbColor(ThemeAccent accent) {
     final hexString = '#${accent.color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
     OverlayChannel.updateOrbColor(hexString);

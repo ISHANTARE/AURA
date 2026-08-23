@@ -72,3 +72,19 @@ abstract final class AuraColors {
   /// Keeping this so existing screens compile without changes during migration.
   static const Color accentLime = accentPrimary;
 }
+
+/// Parses a `#RRGGBB` (or `#AARRGGBB`) hex string, falling back to
+/// [fallback] for malformed input. Single source of truth — four screens
+/// previously duplicated this logic.
+Color hexToColor(String hex, {Color fallback = AuraColors.accentPrimary}) {
+  final cleaned = hex.trim().replaceFirst('#', '');
+  if (cleaned.length == 6) {
+    final value = int.tryParse(cleaned, radix: 16);
+    if (value != null) return Color(0xFF000000 | value);
+  }
+  if (cleaned.length == 8) {
+    final value = int.tryParse(cleaned, radix: 16);
+    if (value != null) return Color(value);
+  }
+  return fallback;
+}

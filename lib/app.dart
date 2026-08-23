@@ -4,13 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/router/app_router.dart';
+import 'core/providers/clock_providers.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'platform/overlay_channel.dart';
+import 'features/capture/domain/services/offline_queue_processor.dart';
 import 'features/home/presentation/providers/home_providers.dart';
 import 'features/reminders/data/services/dnd_service.dart';
 import 'features/reminders/data/services/notification_service.dart';
 import 'features/reminders/domain/entities/reminder_models.dart';
+import 'features/reminders/domain/services/reminder_scheduling_service.dart';
 
 /// Root application widget.
 /// Consumes the router and theme — both Riverpod-aware.
@@ -44,6 +47,9 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
       // Start DND service
       ref.read(dndServiceProvider);
 
+      // Start the offline capture queue processor (drains when back online)
+      ref.read(offlineQueueProcessorProvider);
+
       // Auto-start system-level floating orb if permission is granted
       OverlayChannel.autoStartIfPermitted();
 
@@ -62,25 +68,47 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // Roll "today" windows over if we were suspended across midnight.
+      _notifyDayRefresh();
       _onAppActive();
     }
   }
 
   Future<void> _onAppActive() async {
-    // 1. Process any pending background actions from SharedPreferences
-    await _processPendingBackgroundActions();
+    // Each startup job runs isolated: one failing step must never starve the
+    // remaining ones (a thrown exact-alarm exception used to kill them all).
+    await _guarded('background-actions', _processPendingBackgroundActions);
+    await _guarded('briefing-scheduler',
+        () => ref.read(briefingSchedulerProvider).onAppActive());
+    await _guarded(
+        'recurring-reset', () => ref.read(recurringTaskResetProvider).execute());
+    await _guarded(
+        'nudges', () => ref.read(nudgeEngineProvider).evaluateAndNudge());
+    await _guarded('overdue-check',
+        () => ref.read(overdueReminderUseCaseProvider).execute());
 
-    // 2. Schedule (or re-confirm) today's morning briefing notification
-    await ref.read(briefingSchedulerProvider).onAppActive();
+    // Heal DB ↔ OS schedule drift (fired marks, recurring advances, reboot
+    // recovery). Cheap when everything is already in sync.
+    await _guarded(
+      'schedule-resync',
+      () => ref.read(reminderSchedulingServiceProvider).resynchronizeAll(),
+    );
+  }
 
-    // 3. Recurring task daily reset (once per calendar day)
-    await ref.read(recurringTaskResetProvider).execute();
+  Future<void> _guarded(String label, Future<void> Function() step) async {
+    try {
+      await step();
+    } catch (e, st) {
+      debugPrint('_onAppActive[$label] failed: $e\n$st');
+    }
+  }
 
-    // 4. Evaluate proactive nudges
-    await ref.read(nudgeEngineProvider).evaluateAndNudge();
-
-    // 5. Evaluate overdue items notification (1/day max)
-    await ref.read(overdueReminderUseCaseProvider).execute();
+  void _notifyDayRefresh() {
+    try {
+      ref.read(dayRefreshProvider.notifier).notifyResumed();
+    } catch (e) {
+      debugPrint('day refresh failed: $e');
+    }
   }
 
   Future<void> _processPendingBackgroundActions() async {
@@ -116,6 +144,9 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
+  /// Unified notification tap grammar:
+  ///   route:<location> | item:<itemId> | alarm:<alarmId>
+  /// Legacy bare UUID payloads (pre-codec schedules) are tolerated as items.
   void _onNotificationTapPayload(String? payload) {
     if (payload == null || payload.isEmpty) return;
 
@@ -129,8 +160,13 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
         router.push(route);
       }
     } else if (payload.startsWith('item:')) {
-      final itemId = payload.substring(5);
-      router.push(Routes.taskRoute(itemId));
+      router.push(Routes.taskRoute(payload.substring(5)));
+    } else if (payload.startsWith('alarm:')) {
+      // Alarms are Items — open their detail view.
+      router.push(Routes.taskRoute(payload.substring(6)));
+    } else {
+      // Legacy bare-id payload from an old schedule.
+      router.push(Routes.taskRoute(payload));
     }
   }
 

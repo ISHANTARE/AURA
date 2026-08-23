@@ -42,7 +42,52 @@ abstract final class Routes {
   static String taskRoute(String id) => '/task/$id';
 }
 
-bool _onboardingCompleteChecked = false;
+/// Onboarding gate state. Lives in Riverpod (not a global mutable flag) so
+/// Reset App Data can invalidate it — previously the stale `true` let users
+/// skip onboarding after clearing data, and deep links bypassed the guard
+/// entirely.
+class OnboardingGateNotifier extends StateNotifier<bool> {
+  OnboardingGateNotifier() : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return; // provider may have been disposed mid-load (tests)
+    state = prefs.getBool('onboarding_complete') ?? false;
+  }
+
+  /// Syncs the gate from a redirect-time disk read (avoids a race where the
+  /// async constructor load lands after a redirect already checked).
+  void hydrate(bool value) {
+    if (!mounted) return;
+    if (value && !state) state = true;
+  }
+
+  Future<void> complete() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_complete', true);
+    if (!mounted) return;
+    state = true;
+  }
+
+  /// Called by Reset App Data: re-locks every route behind onboarding.
+  Future<void> reset() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('onboarding_complete');
+    if (!mounted) return;
+    state = false;
+  }
+}
+
+final onboardingGateProvider =
+    StateNotifierProvider<OnboardingGateNotifier, bool>((ref) {
+  return OnboardingGateNotifier();
+});
+
+/// Routes reachable before onboarding completes (share target and the
+/// capture overlay must work regardless of setup state).
+const _preOnboardingAllowedLocations = {Routes.onboarding, Routes.share, '/capture-overlay'};
 
 /// Riverpod provider for the go_router instance.
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -50,15 +95,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: Routes.home,
     debugLogDiagnostics: false,
     redirect: (context, state) async {
-      // Only guard the root route on cold start
-      if (_onboardingCompleteChecked || state.matchedLocation != Routes.home) return null;
-      final prefs = await SharedPreferences.getInstance();
-      final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
-      if (onboardingDone) {
-        _onboardingCompleteChecked = true;
+      // Allow-list short-circuit (share engine / capture overlay / onboarding).
+      if (_preOnboardingAllowedLocations.contains(state.matchedLocation)) {
         return null;
       }
-      return Routes.onboarding;
+
+      final onboarded = ref.read(onboardingGateProvider);
+      if (onboarded) return null;
+
+      // Gate not yet hydrated from disk — check directly to avoid flashing.
+      final prefs = await SharedPreferences.getInstance();
+      final done = prefs.getBool('onboarding_complete') ?? false;
+      ref.read(onboardingGateProvider.notifier).hydrate(done);
+      return done ? null : Routes.onboarding;
     },
     routes: [
       // ── Main shell ────────────────────────────────────────────────────────
