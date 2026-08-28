@@ -9,6 +9,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:aura/core/constants/colors.dart';
 import 'package:aura/core/constants/typography.dart';
@@ -56,8 +57,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ('zh-CN', 'Chinese (Mandarin)'),
   ];
 
-  String _selectedAlarmSound = 'System Alarm';
-  String _selectedNotificationSound = 'Soft Chime';
+  String _selectedAlarmSoundTitle = 'System Default Alarm';
+  String _selectedAlarmSoundUri = '';
+  String _selectedNotificationSoundTitle = 'System Default Notification';
+  String _selectedNotificationSoundUri = '';
   bool _obscureKey = true;
   bool _isLoading = true;
 
@@ -80,8 +83,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _selectedBriefingHour = prefs.getInt('BRIEFING_HOUR') ?? 7;
       _selectedProviderPreset =
           prefs.getString('LLM_PROVIDER_PRESET') ?? _defaultProviderPreset;
-      _selectedAlarmSound = prefs.getString('ALARM_SOUND') ?? 'System Alarm';
-      _selectedNotificationSound = prefs.getString('NOTIF_SOUND') ?? 'Soft Chime';
+      _selectedAlarmSoundTitle =
+          prefs.getString('ALARM_SOUND_TITLE') ?? prefs.getString('ALARM_SOUND') ?? 'System Default Alarm';
+      _selectedAlarmSoundUri = prefs.getString('ALARM_SOUND_URI') ?? '';
+      _selectedNotificationSoundTitle =
+          prefs.getString('NOTIF_SOUND_TITLE') ?? prefs.getString('NOTIF_SOUND') ?? 'System Default Notification';
+      _selectedNotificationSoundUri = prefs.getString('NOTIF_SOUND_URI') ?? '';
       _isLoading = false;
     });
   }
@@ -97,8 +104,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await prefs.setString('REMINDER_DEFAULT', _selectedReminderDefault);
     await prefs.setString('VOICE_LOCALE', _selectedVoiceLocale);
     await prefs.setString('LLM_PROVIDER_PRESET', _selectedProviderPreset);
-    await prefs.setString('ALARM_SOUND', _selectedAlarmSound);
-    await prefs.setString('NOTIF_SOUND', _selectedNotificationSound);
+    await prefs.setString('ALARM_SOUND_TITLE', _selectedAlarmSoundTitle);
+    await prefs.setString('ALARM_SOUND_URI', _selectedAlarmSoundUri);
+    await prefs.setString('ALARM_SOUND', _selectedAlarmSoundTitle);
+    await prefs.setString('NOTIF_SOUND_TITLE', _selectedNotificationSoundTitle);
+    await prefs.setString('NOTIF_SOUND_URI', _selectedNotificationSoundUri);
+    await prefs.setString('NOTIF_SOUND', _selectedNotificationSoundTitle);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -139,6 +150,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final activeAccent = ref.watch(themeAccentProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     if (_isLoading) {
       return Scaffold(
@@ -169,59 +181,92 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               decoration: BoxDecoration(
                 color: AuraColors.bgCard,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AuraColors.border, width: 2),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundColor: activeAccent.color,
-                        child: Text(
-                          _userNameController.text.isNotEmpty
-                              ? _userNameController.text[0].toUpperCase()
-                              : 'A',
-                          style: AuraTypography.orbLabel.copyWith(fontSize: 22, color: Colors.black),
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: activeAccent.color,
+                    child: Text(
+                      _userNameController.text.isNotEmpty
+                          ? _userNameController.text[0].toUpperCase()
+                          : 'A',
+                      style: AuraTypography.orbLabel.copyWith(fontSize: 22, color: Colors.black),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('DISPLAY NAME', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: _userNameController,
+                          style: AuraTypography.cardTitle,
+                          onChanged: (val) {
+                            setState(() {});
+                            final trimmed = val.trim();
+                            if (trimmed.isNotEmpty) {
+                              ref.read(userNameProvider.notifier).setName(trimmed);
+                            }
+                          },
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            filled: true,
+                            fillColor: AuraColors.bgElevated,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('DISPLAY NAME', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
-                            const SizedBox(height: 4),
-                            TextField(
-                              controller: _userNameController,
-                              style: AuraTypography.cardTitle,
-                              onChanged: (val) {
-                                setState(() {});
-                                final trimmed = val.trim();
-                                if (trimmed.isNotEmpty) {
-                                  ref.read(userNameProvider.notifier).setName(trimmed);
-                                }
-                              },
-                              decoration: const InputDecoration(
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                filled: true,
-                                fillColor: AuraColors.bgElevated,
-                                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            // ── Section 2: Color Theme Accent ──────────────────────────────
-            const _SettingsSectionHeader(title: 'COLOR THEME ACCENT'),
+            // ── Section 2: Color Theme Accent & Mode Toggle ───────────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const _SettingsSectionHeader(title: 'COLOR THEME ACCENT'),
+                GestureDetector(
+                  onTap: () {
+                    ref.read(themeModeProvider.notifier).toggleTheme();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AuraColors.bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AuraColors.border, width: 1.5),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          themeMode == ThemeMode.dark ? LucideIcons.moon : LucideIcons.sun,
+                          size: 13,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          themeMode == ThemeMode.dark ? 'Dark' : 'Light',
+                          style: AuraTypography.caption.copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AuraColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
 
             Container(
@@ -339,48 +384,159 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Alarm Ringtone', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: _selectedAlarmSound,
-                    dropdownColor: AuraColors.bgElevated,
-                    style: AuraTypography.bodyPrimary,
-                    decoration: const InputDecoration(
-                      filled: true,
-                      fillColor: AuraColors.bgElevated,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                  // Default Alarm Ringtone Picker Card
+                  Text('DEFAULT ALARM RINGTONE',
+                      style: AuraTypography.bentoMetricLabel
+                          .copyWith(color: AuraColors.textSecondary)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AuraColors.bgElevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AuraColors.border, width: 1),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'System Alarm', child: Text('System Alarm (Loud Ringing)')),
-                      DropdownMenuItem(value: 'Radar', child: Text('Radar Chime')),
-                      DropdownMenuItem(value: 'Beacon', child: Text('Beacon Alert')),
-                      DropdownMenuItem(value: 'Beep', child: Text('Digital Beep')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedAlarmSound = val);
-                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(LucideIcons.alarmClock,
+                                      size: 16, color: activeAccent.color),
+                                  const SizedBox(width: 6),
+                                  Text('Alarm Audio',
+                                      style: AuraTypography.caption
+                                          .copyWith(color: AuraColors.textMuted)),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _selectedAlarmSoundTitle,
+                                style: AuraTypography.bodyPrimary
+                                    .copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          icon: const Icon(LucideIcons.music, size: 15),
+                          label: const Text('PICK AUDIO'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: activeAccent.color,
+                            side: BorderSide(color: activeAccent.color),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final soundMap = await OverlayChannel.pickAlarmSound(
+                              currentUri: _selectedAlarmSoundUri,
+                            );
+                            if (soundMap != null) {
+                              setState(() {
+                                _selectedAlarmSoundTitle =
+                                    soundMap['title'] ?? 'Custom Audio';
+                                _selectedAlarmSoundUri = soundMap['uri'] ?? '';
+                              });
+                              // Auto-persist immediately
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString(
+                                  'ALARM_SOUND_TITLE', _selectedAlarmSoundTitle);
+                              await prefs.setString(
+                                  'ALARM_SOUND_URI', _selectedAlarmSoundUri);
+                              await prefs.setString(
+                                  'ALARM_SOUND', _selectedAlarmSoundTitle);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
+
                   const SizedBox(height: 16),
 
-                  Text('Notification Sound', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: _selectedNotificationSound,
-                    dropdownColor: AuraColors.bgElevated,
-                    style: AuraTypography.bodyPrimary,
-                    decoration: const InputDecoration(
-                      filled: true,
-                      fillColor: AuraColors.bgElevated,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                  // Default Notification Sound Picker Card
+                  Text('DEFAULT NOTIFICATION SOUND',
+                      style: AuraTypography.bentoMetricLabel
+                          .copyWith(color: AuraColors.textSecondary)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AuraColors.bgElevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AuraColors.border, width: 1),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'Soft Chime', child: Text('Soft Chime')),
-                      DropdownMenuItem(value: 'Crystal', child: Text('Crystal Bell')),
-                      DropdownMenuItem(value: 'Pop', child: Text('Subtle Pop')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedNotificationSound = val);
-                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(LucideIcons.bell,
+                                      size: 16, color: activeAccent.color),
+                                  const SizedBox(width: 6),
+                                  Text('Notification Audio',
+                                      style: AuraTypography.caption
+                                          .copyWith(color: AuraColors.textMuted)),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _selectedNotificationSoundTitle,
+                                style: AuraTypography.bodyPrimary
+                                    .copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          icon: const Icon(LucideIcons.music, size: 15),
+                          label: const Text('PICK AUDIO'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: activeAccent.color,
+                            side: BorderSide(color: activeAccent.color),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final soundMap = await OverlayChannel.pickNotificationSound(
+                              currentUri: _selectedNotificationSoundUri,
+                            );
+                            if (soundMap != null) {
+                              setState(() {
+                                _selectedNotificationSoundTitle =
+                                    soundMap['title'] ?? 'Custom Audio';
+                                _selectedNotificationSoundUri =
+                                    soundMap['uri'] ?? '';
+                              });
+                              // Auto-persist immediately
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString('NOTIF_SOUND_TITLE',
+                                  _selectedNotificationSoundTitle);
+                              await prefs.setString('NOTIF_SOUND_URI',
+                                  _selectedNotificationSoundUri);
+                              await prefs.setString('NOTIF_SOUND',
+                                  _selectedNotificationSoundTitle);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -669,7 +825,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: AuraColors.bgElevated,
-                      hintText: 'Paste API Key (nvapi-..., gsk_..., etc.)',
+                      hintText: 'Paste API Key (nvapi-..., gsk_..., AIza...)',
                       border: const OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -678,6 +834,66 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         onPressed: () => setState(() => _obscureKey = !_obscureKey),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // ── Free Gemini API Key Helper Card ────────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: activeAccent.color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: activeAccent.color.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(LucideIcons.sparkles, size: 16, color: activeAccent.color),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Need a free API key?',
+                                style: AuraTypography.cardTitle.copyWith(
+                                  fontSize: 13,
+                                  color: activeAccent.color,
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                backgroundColor: activeAccent.color,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              icon: const Icon(LucideIcons.externalLink, size: 12),
+                              label: const Text(
+                                'GET FREE KEY',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                              onPressed: () async {
+                                final uri = Uri.parse('https://aistudio.google.com/app/apikey');
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Google Gemini 2.0 Flash is 100% free with no credit card required. Generate your key in 10 seconds at Google AI Studio.',
+                          style: AuraTypography.caption.copyWith(fontSize: 11),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -886,6 +1102,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         // (accent, name, gate) survives into onboarding.
                         await ref
                             .read(themeAccentProvider.notifier)
+                            .resetToDefault();
+                        await ref
+                            .read(themeModeProvider.notifier)
                             .resetToDefault();
                         ref.read(userNameProvider.notifier).reset();
                         await ref.read(onboardingGateProvider.notifier).reset();

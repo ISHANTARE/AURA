@@ -69,9 +69,22 @@ final todayFocusItemsProvider = StreamProvider<List<Item>>((ref) {
   return ref.watch(itemDaoProvider).watchTodayFocus(now: now);
 });
 
-/// Stream provider for alarms
+/// Stream provider for alarms, sorted chronologically by time of day (e.g. 6 AM → 7:30 AM → 2 PM)
 final alarmsListProvider = StreamProvider<List<Item>>((ref) {
-  return ref.watch(itemDaoProvider).watchByCategory('alarm');
+  return ref.watch(itemDaoProvider).watchByCategory('alarm').map((alarms) {
+    final sorted = List<Item>.from(alarms);
+    sorted.sort((a, b) {
+      final aDt = a.fireAt != null ? DateTime.fromMillisecondsSinceEpoch(a.fireAt!) : null;
+      final bDt = b.fireAt != null ? DateTime.fromMillisecondsSinceEpoch(b.fireAt!) : null;
+      final aMinuteOfDay = aDt != null ? aDt.hour * 60 + aDt.minute : 9999;
+      final bMinuteOfDay = bDt != null ? bDt.hour * 60 + bDt.minute : 9999;
+      if (aMinuteOfDay != bMinuteOfDay) {
+        return aMinuteOfDay.compareTo(bMinuteOfDay);
+      }
+      return (a.fireAt ?? 0).compareTo(b.fireAt ?? 0);
+    });
+    return sorted;
+  });
 });
 
 /// Stream provider for active workspaces list

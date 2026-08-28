@@ -174,13 +174,14 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     final accent = ref.watch(themeAccentProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'AURA',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark(accent.color),
+      theme: AppTheme.light(accent.color),
       darkTheme: AppTheme.dark(accent.color),
-      themeMode: ThemeMode.dark,
+      themeMode: themeMode,
       routerConfig: router,
     );
   }

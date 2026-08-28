@@ -14,13 +14,16 @@ import '../../../../core/providers/providers.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/empty_state.dart';
 
+import '../providers/note_sort_provider.dart';
+
 /// Notes Screen — AURA v2 Redesigned Notes Screen
 class NotesScreen extends ConsumerWidget {
   const NotesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notesAsync = ref.watch(notesListProvider);
+    final notesAsync = ref.watch(sortedNotesProvider);
+    final currentSort = ref.watch(noteSortOrderProvider);
     final itemDao = ref.watch(itemDaoProvider);
     final primaryColor = Theme.of(context).colorScheme.primary;
 
@@ -30,6 +33,69 @@ class NotesScreen extends ConsumerWidget {
         title: Text('NOTES', style: AuraTypography.screenHeader),
         backgroundColor: AuraColors.bgBase,
         elevation: 0,
+        actions: [
+          PopupMenuButton<NoteSortOrder>(
+            initialValue: currentSort,
+            icon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AuraColors.bgCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AuraColors.border, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.arrowUpDown, size: 14, color: primaryColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    currentSort.label,
+                    style: AuraTypography.caption.copyWith(
+                      color: AuraColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            color: AuraColors.bgCard,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: const BorderSide(color: AuraColors.border, width: 1),
+            ),
+            onSelected: (order) {
+              ref.read(noteSortOrderProvider.notifier).setSortOrder(order);
+            },
+            itemBuilder: (context) => NoteSortOrder.values.map((order) {
+              final isSelected = order == currentSort;
+              return PopupMenuItem<NoteSortOrder>(
+                value: order,
+                child: Row(
+                  children: [
+                    Icon(
+                      order == NoteSortOrder.lastEdited
+                          ? LucideIcons.clock
+                          : (order == NoteSortOrder.dateCreated
+                              ? LucideIcons.calendar
+                              : LucideIcons.arrowDownAZ),
+                      size: 16,
+                      color: isSelected ? primaryColor : AuraColors.textSecondary,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      order.label,
+                      style: AuraTypography.body.copyWith(
+                        color: isSelected ? primaryColor : AuraColors.textPrimary,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(width: AuraSpacing.sm),
+        ],
       ),
       body: notesAsync.when(
         data: (notes) {

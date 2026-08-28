@@ -5,139 +5,191 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
-import '../../../../core/providers/providers.dart';
-import 'bento_card.dart';
+import '../providers/home_providers.dart';
+import 'overdue_triage_sheet.dart';
 
-/// Quick stats summary row — shows Pending / Completed / Overdue counts.
-/// Sits at the top of the Bento grid as a lightweight data snapshot.
-class QuickStatsRow extends StatelessWidget {
-  const QuickStatsRow({super.key, required this.stats});
-
-  final AsyncValue<QuickStats> stats;
-
-  @override
-  Widget build(BuildContext context) {
-    return stats.when(
-      loading: () => const _StatsShimmer(),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (s) => BentoCard(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AuraSpacing.md,
-          vertical: AuraSpacing.sm,
-        ),
-        child: Row(
-          children: [
-            _StatChip(
-              icon: LucideIcons.clock,
-              label: 'PENDING',
-              count: s.pending,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            _VerticalDivider(),
-            _StatChip(
-              icon: LucideIcons.checkCircle,
-              label: 'DONE',
-              count: s.completed,
-              color: AuraColors.accentGreen,
-            ),
-            _VerticalDivider(),
-            _StatChip(
-              icon: LucideIcons.alertCircle,
-              label: 'OVERDUE',
-              count: s.overdue,
-              color: s.overdue > 0 ? AuraColors.accentRed : AuraColors.textDisabled,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  const _StatChip({
-    required this.icon,
-    required this.label,
-    required this.count,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final int count;
-  final Color color;
+/// Top stats split cards:
+/// Card 1: Today's Tasks (Pending & Completed strictly for today).
+/// Card 2: Cumulative Overdue Accumulator (Tappable → opens OverdueTriageSheet).
+class QuickStatsRow extends ConsumerWidget {
+  const QuickStatsRow({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 12, color: color),
-              const SizedBox(width: 4),
-              Text(
-                '$count',
-                style: AuraTypography.bentoMetricValue.copyWith(
-                  color: color,
-                  fontSize: 20,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final todayAsync = ref.watch(todayStatsProvider);
+    final overdueAsync = ref.watch(overdueItemsProvider);
+    const accentColor = AuraColors.accentPrimary;
+
+    final todayStats = todayAsync.value ?? const TodayStats(pending: 0, completed: 0);
+    final overdueCount = overdueAsync.value?.length ?? 0;
+
+    return Row(
+      children: [
+        // ── Card 1: Today's Focus (Pending & Done) ─────────────────────────
+        Expanded(
+          flex: 55,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AuraColors.bgCard,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AuraColors.border, width: 2),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.calendarCheck2, size: 13, color: accentColor),
+                    const SizedBox(width: 6),
+                    Text(
+                      "TODAY'S TASKS",
+                      style: AuraTypography.label.copyWith(
+                        color: AuraColors.textSecondary,
+                        fontSize: 9,
+                        letterSpacing: 0.8,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    // Pending
+                    Column(
+                      children: [
+                        Text(
+                          '${todayStats.pending}',
+                          style: AuraTypography.bentoMetricValue.copyWith(
+                            color: accentColor,
+                            fontSize: 20,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'PENDING',
+                          style: AuraTypography.caption.copyWith(
+                            color: AuraColors.textMuted,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: AuraColors.borderMuted,
+                    ),
+                    // Done
+                    Column(
+                      children: [
+                        Text(
+                          '${todayStats.completed}',
+                          style: AuraTypography.bentoMetricValue.copyWith(
+                            color: AuraColors.accentGreen,
+                            fontSize: 20,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'DONE',
+                          style: AuraTypography.caption.copyWith(
+                            color: AuraColors.textMuted,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(width: AuraSpacing.sm),
+
+        // ── Card 2: Cumulative Overdue Accumulator ──────────────────────────
+        Expanded(
+          flex: 45,
+          child: InkWell(
+            onTap: () => OverdueTriageSheet.show(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: overdueCount > 0
+                    ? AuraColors.accentRed.withValues(alpha: 0.08)
+                    : AuraColors.bgCard,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: overdueCount > 0 ? AuraColors.accentRed : AuraColors.border,
+                  width: 2,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: AuraTypography.label.copyWith(
-              color: AuraColors.textSecondary,
-              fontSize: 9,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VerticalDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 36,
-      color: AuraColors.borderMuted,
-      margin: const EdgeInsets.symmetric(horizontal: AuraSpacing.sm),
-    );
-  }
-}
-
-class _StatsShimmer extends StatelessWidget {
-  const _StatsShimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return BentoCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AuraSpacing.md,
-        vertical: AuraSpacing.sm,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(
-          3,
-          (i) => Container(
-            width: 60,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AuraColors.borderMuted.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            LucideIcons.alertCircle,
+                            size: 13,
+                            color: overdueCount > 0 ? AuraColors.accentRed : AuraColors.textDisabled,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'OVERDUE',
+                            style: AuraTypography.label.copyWith(
+                              color: overdueCount > 0 ? AuraColors.accentRed : AuraColors.textSecondary,
+                              fontSize: 9,
+                              letterSpacing: 0.8,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (overdueCount > 0)
+                        Icon(LucideIcons.chevronRight, size: 13, color: AuraColors.accentRed.withValues(alpha: 0.7)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        '$overdueCount',
+                        style: AuraTypography.bentoMetricValue.copyWith(
+                          color: overdueCount > 0 ? AuraColors.accentRed : AuraColors.textDisabled,
+                          fontSize: 20,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        overdueCount == 1 ? 'task' : 'tasks',
+                        style: AuraTypography.caption.copyWith(
+                          color: overdueCount > 0 ? AuraColors.accentRed : AuraColors.textMuted,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
+

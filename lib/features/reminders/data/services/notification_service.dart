@@ -216,6 +216,7 @@ class NotificationService {
     required DateTime scheduledDate,
     String? payload,
     List<AndroidNotificationAction>? actions,
+    String? soundUri,
     bool useExact = true,
     bool missedFire = false,
     DateTimeComponents? matchDateTimeComponents,
@@ -230,6 +231,7 @@ class NotificationService {
         title: missedFire ? 'Missed: $title' : title,
         body: body,
         payload: payload,
+        soundUri: soundUri,
         actions: actions,
       );
       return;
@@ -242,6 +244,10 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       color: AuraColors.accentLime,
+      sound: soundUri != null && soundUri.isNotEmpty
+          ? UriAndroidNotificationSound(soundUri)
+          : null,
+      playSound: true,
       actions: actions ?? defaultActions(),
     );
 
@@ -374,6 +380,7 @@ class NotificationService {
     required String title,
     required String body,
     String? payload,
+    String? soundUri,
     List<AndroidNotificationAction>? actions,
   }) async {
     final androidDetails = AndroidNotificationDetails(
@@ -383,6 +390,10 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       color: AuraColors.accentLime,
+      sound: soundUri != null && soundUri.isNotEmpty
+          ? UriAndroidNotificationSound(soundUri)
+          : null,
+      playSound: true,
       actions: actions ?? defaultActions(),
     );
 

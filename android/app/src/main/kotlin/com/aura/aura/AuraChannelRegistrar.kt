@@ -102,7 +102,14 @@ class AuraChannelRegistrar(
                     AuraOverlayService.instance?.updateOrbColor(colorHex)
                     result.success(true)
                 }
-                "pickAlarmSound" -> launchRingtonePicker(call.argument<String>("currentUri"), result)
+                "pickAlarmSound" -> launchRingtonePicker("alarm", call.argument<String>("currentUri"), "Select Default Alarm Sound", result)
+                "pickNotificationSound" -> launchRingtonePicker("notification", call.argument<String>("currentUri"), "Select Default Notification Sound", result)
+                "pickSound" -> launchRingtonePicker(
+                    call.argument<String>("type") ?: "alarm",
+                    call.argument<String>("currentUri"),
+                    call.argument<String>("title"),
+                    result
+                )
                 "clearNativePrefs" -> {
                     activity.getSharedPreferences(AuraOverlayService.PREFS_NAME, Context.MODE_PRIVATE)
                         .edit().clear().apply()
@@ -167,11 +174,22 @@ class AuraChannelRegistrar(
      * does not extend ComponentActivity, so the Activity Result API contract
      * launcher is unavailable here. Isolated to this one method.
      */
-    private fun launchRingtonePicker(currentUriStr: String?, result: MethodChannel.Result) {
+    private fun launchRingtonePicker(
+        type: String,
+        currentUriStr: String?,
+        title: String?,
+        result: MethodChannel.Result
+    ) {
         pendingRingtoneResult = result
+        val ringtoneType = if (type == "notification") {
+            RingtoneManager.TYPE_NOTIFICATION
+        } else {
+            RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE
+        }
+        val defaultTitle = if (type == "notification") "Select Notification Sound" else "Select Alarm Sound"
         val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE)
-            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, ringtoneType)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, title ?: defaultTitle)
             putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
             putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
             if (!currentUriStr.isNullOrEmpty()) {

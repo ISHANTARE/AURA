@@ -268,5 +268,40 @@ void main() {
           .get();
       expect(stampedLogs.length, greaterThanOrEqualTo(1));
     });
+
+    test('retains and passes item.soundUri during sync and reschedule sweep',
+        () async {
+      final futureAnchor = DateTime.now().add(const Duration(hours: 4));
+      final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+      const customSound = 'content://media/internal/audio/media/42';
+
+      await itemDao.insertItem(
+        ItemsCompanion.insert(
+          id: 'alarm-sound-test',
+          title: 'Custom Sound Alarm',
+          workspaceId: const Value('ws-general'),
+          category: 'alarm',
+          kind: 'alarm',
+          fireAt: Value(futureAnchor.millisecondsSinceEpoch),
+          soundUri: const Value(customSound),
+          createdAt: nowEpoch,
+          updatedAt: nowEpoch,
+        ),
+      );
+
+      final service =
+          ReminderSchedulingService(db: db, notifications: notifications);
+
+      final item = (await itemDao.getById('alarm-sound-test'))!;
+      expect(item.soundUri, equals(customSound));
+
+      final outcome = await service.syncForItem(item, soundUri: item.soundUri);
+      expect(outcome.scheduledCount, 1);
+
+      // Verify sweep also runs cleanly with the custom sound URI
+      await service.resynchronizeAll(reason: 'sound-sweep-test');
+      final rows = await itemDao.getRemindersForItem('alarm-sound-test');
+      expect(rows, isNotEmpty);
+    });
   });
 }

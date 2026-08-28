@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="voice_capture"
+        android:enabled="true"
+        android:icon="@drawable/ic_qs_aura_mic"
+        android:shortcutShortLabel="@string/shortcut_voice_short"
+        android:shortcutLongLabel="@string/shortcut_voice_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.aura.aura"
+            android:targetClass="com.aura.aura.AuraCaptureActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="alarms_shortcut"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_alarm"
+        android:shortcutShortLabel="@string/shortcut_alarm_short"
+        android:shortcutLongLabel="@string/shortcut_alarm_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.aura.aura"
+            android:targetClass="com.aura.aura.MainActivity"
+            android:data="aura://app/alarms" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

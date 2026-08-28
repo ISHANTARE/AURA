@@ -71,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,6 +98,15 @@ class AppDatabase extends _$AppDatabase {
               await m.addColumn(items, items.parentId);
             } catch (e) {
               debugPrint('Migration v$from→v3: addColumn(parent_id) '
+                  'skipped/failed (may already exist): $e');
+            }
+          }
+          if (from < 4) {
+            // Add soundUri column for per-alarm ringtone persistence
+            try {
+              await m.addColumn(items, items.soundUri);
+            } catch (e) {
+              debugPrint('Migration v$from→v4: addColumn(sound_uri) '
                   'skipped/failed (may already exist): $e');
             }
           }

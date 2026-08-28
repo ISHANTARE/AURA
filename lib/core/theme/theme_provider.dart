@@ -57,3 +57,38 @@ final themeAccentProvider =
     StateNotifierProvider<ThemeAccentNotifier, ThemeAccent>((ref) {
   return ThemeAccentNotifier();
 });
+
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  ThemeModeNotifier() : super(ThemeMode.dark) {
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final modeStr = prefs.getString('THEME_MODE') ?? 'dark';
+    final mode = modeStr == 'light' ? ThemeMode.light : ThemeMode.dark;
+    state = mode;
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    state = mode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('THEME_MODE', mode == ThemeMode.light ? 'light' : 'dark');
+  }
+
+  Future<void> toggleTheme() async {
+    final newMode = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    await setThemeMode(newMode);
+  }
+
+  Future<void> resetToDefault() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('THEME_MODE');
+    state = ThemeMode.dark;
+  }
+}
+
+final themeModeProvider =
+    StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+  return ThemeModeNotifier();
+});

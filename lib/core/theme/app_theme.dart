@@ -313,6 +313,312 @@ abstract final class AppTheme {
       ),
     );
   }
+
+  static ThemeData light([Color accentColor = AuraColors.accentPrimary]) {
+    final base = ThemeData.light(useMaterial3: true);
+
+    const lightBgBase = Color(0xFFF6F8FA);
+    const lightBgCard = Color(0xFFFFFFFF);
+    const lightBgElevated = Color(0xFFEFF2F6);
+    const lightBorder = Color(0xFFCBD5E1);
+    const lightTextPrimary = Color(0xFF0F172A);
+    const lightTextSecondary = Color(0xFF475569);
+    const lightTextMuted = Color(0xFF94A3B8);
+
+    return base.copyWith(
+      // ── Scaffold ─────────────────────────────────────────────────────────
+      scaffoldBackgroundColor: lightBgBase,
+
+      // ── Color scheme ─────────────────────────────────────────────────────
+      colorScheme: ColorScheme.light(
+        surface: lightBgBase,
+        onSurface: lightTextPrimary,
+        primary: accentColor,
+        onPrimary: AuraColors.textOnAccent,
+        secondary: AuraColors.accentBlue,
+        onSecondary: AuraColors.textOnAccent,
+        error: AuraColors.accentRed,
+        onError: Colors.white,
+        outline: lightBorder,
+        surfaceContainerHighest: lightBgElevated,
+        surfaceContainerHigh: lightBgCard,
+        surfaceContainer: lightBgCard,
+      ),
+
+      // ── App bar ───────────────────────────────────────────────────────────
+      appBarTheme: AppBarTheme(
+        backgroundColor: lightBgBase,
+        foregroundColor: lightTextPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          systemNavigationBarColor: lightBgBase,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        titleTextStyle: AuraTypography.sectionHeader.copyWith(color: lightTextPrimary),
+        iconTheme: const IconThemeData(
+          color: lightTextPrimary,
+          size: AuraIcons.sizeNavBar,
+        ),
+      ),
+
+      // ── Navigation bar (Material 3) ───────────────────────────────────────
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: lightBgCard,
+        indicatorColor: accentColor.withValues(alpha: 0.18),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: accentColor, size: 22);
+          }
+          return const IconThemeData(color: lightTextMuted, size: 22);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AuraTypography.label.copyWith(color: accentColor);
+          }
+          return AuraTypography.label.copyWith(color: lightTextMuted);
+        }),
+        elevation: 0,
+        height: AuraSpacing.bottomNavHeight,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+      ),
+
+      // ── Legacy bottom nav bar (fallback) ─────────────────────────────────
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: lightBgCard,
+        selectedItemColor: accentColor,
+        unselectedItemColor: lightTextMuted,
+        selectedLabelStyle: const TextStyle(fontSize: 0),
+        unselectedLabelStyle: const TextStyle(fontSize: 0),
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+      ),
+
+      // ── Text theme ────────────────────────────────────────────────────────
+      textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
+        displayLarge:  AuraTypography.display.copyWith(color: lightTextPrimary),
+        headlineMedium: AuraTypography.headline.copyWith(color: lightTextPrimary),
+        titleLarge:    AuraTypography.sectionHeader.copyWith(color: lightTextPrimary),
+        titleMedium:   AuraTypography.cardTitle.copyWith(color: lightTextPrimary),
+        bodyLarge:     AuraTypography.bodyPrimary.copyWith(color: lightTextPrimary),
+        bodyMedium:    AuraTypography.body.copyWith(color: lightTextSecondary),
+        bodySmall:     AuraTypography.bodySmall.copyWith(color: lightTextSecondary),
+        labelSmall:    AuraTypography.label.copyWith(color: lightTextMuted),
+        labelMedium:   AuraTypography.overline.copyWith(color: lightTextMuted),
+      ),
+
+      // ── Divider ───────────────────────────────────────────────────────────
+      dividerTheme: const DividerThemeData(
+        color: Color(0x1F000000),
+        thickness: 1,
+        space: 0,
+      ),
+
+      // ── Card ──────────────────────────────────────────────────────────────
+      cardTheme: CardThemeData(
+        color: lightBgCard,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: lightBorder, width: 1),
+        ),
+        shadowColor: Colors.black.withValues(alpha: 0.06),
+      ),
+
+      // ── Elevated button (primary CTA) ─────────────────────────────────────
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accentColor,
+          foregroundColor: AuraColors.textOnAccent,
+          elevation: 0,
+          textStyle: AuraTypography.buttonPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AuraSpacing.lg,
+            vertical: AuraSpacing.md,
+          ),
+          minimumSize: const Size(0, 52),
+        ),
+      ),
+
+      // ── Outlined button (secondary CTA) ───────────────────────────────────
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: lightTextPrimary,
+          elevation: 0,
+          textStyle: AuraTypography.buttonSecondary,
+          side: const BorderSide(color: lightBorder, width: 1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AuraSpacing.lg,
+            vertical: AuraSpacing.md,
+          ),
+          minimumSize: const Size(0, 52),
+        ),
+      ),
+
+      // ── Text button ───────────────────────────────────────────────────────
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: accentColor,
+          textStyle: AuraTypography.buttonSecondary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+
+      // ── FAB ───────────────────────────────────────────────────────────────
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentColor,
+        foregroundColor: AuraColors.textOnAccent,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+
+      // ── Input / TextField ─────────────────────────────────────────────────
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: lightBgElevated,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: lightBorder, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: lightBorder, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accentColor, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AuraColors.accentRed, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AuraColors.accentRed, width: 1.5),
+        ),
+        hintStyle: AuraTypography.body.copyWith(color: lightTextMuted),
+        labelStyle: AuraTypography.overline.copyWith(color: lightTextMuted),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AuraSpacing.md,
+          vertical: AuraSpacing.md,
+        ),
+      ),
+
+      // ── Chip ──────────────────────────────────────────────────────────────
+      chipTheme: ChipThemeData(
+        backgroundColor: lightBgElevated,
+        selectedColor: accentColor.withValues(alpha: 0.15),
+        side: const BorderSide(color: lightBorder, width: 1),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        labelStyle: AuraTypography.label.copyWith(color: lightTextPrimary),
+        padding: const EdgeInsets.symmetric(horizontal: AuraSpacing.sm),
+      ),
+
+      // ── Bottom sheet ──────────────────────────────────────────────────────
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: lightBgCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        elevation: 0,
+        modalBarrierColor: Color(0x60000000),
+        dragHandleColor: lightBorder,
+        showDragHandle: false,
+      ),
+
+      // ── Dialog ────────────────────────────────────────────────────────────
+      dialogTheme: DialogThemeData(
+        backgroundColor: lightBgCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        elevation: 0,
+        titleTextStyle: AuraTypography.sectionHeader.copyWith(color: lightTextPrimary),
+        contentTextStyle: AuraTypography.body.copyWith(color: lightTextSecondary),
+      ),
+
+      // ── Icon ──────────────────────────────────────────────────────────────
+      iconTheme: const IconThemeData(
+        color: lightTextPrimary,
+        size: AuraIcons.sizeStandard,
+      ),
+
+      // ── Snackbar ──────────────────────────────────────────────────────────
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: lightTextPrimary,
+        contentTextStyle: AuraTypography.body.copyWith(
+          color: Colors.white,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        behavior: SnackBarBehavior.floating,
+        elevation: 4,
+      ),
+
+      // ── Progress indicator ────────────────────────────────────────────────
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: accentColor,
+        linearTrackColor: lightBgElevated,
+        circularTrackColor: lightBgElevated,
+      ),
+
+      // ── Checkbox ──────────────────────────────────────────────────────────
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return accentColor;
+          return Colors.transparent;
+        }),
+        checkColor: WidgetStateProperty.all(AuraColors.textOnAccent),
+        side: const BorderSide(color: lightBorder, width: 1.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+
+      // ── Switch ────────────────────────────────────────────────────────────
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AuraColors.textOnAccent;
+          return lightTextMuted;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return accentColor;
+          return lightBorder;
+        }),
+      ),
+
+      // ── List tile ─────────────────────────────────────────────────────────
+      listTileTheme: ListTileThemeData(
+        tileColor: Colors.transparent,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AuraSpacing.lg,
+          vertical: AuraSpacing.xs,
+        ),
+        titleTextStyle: AuraTypography.cardTitle.copyWith(color: lightTextPrimary),
+        subtitleTextStyle: AuraTypography.body.copyWith(color: lightTextSecondary),
+        iconColor: lightTextSecondary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
 }
 
 // Keep AuraIcons accessible here too (needed in appBarTheme above)

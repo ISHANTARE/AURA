@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// Rebuilt from neubrutalist lime to a calm, premium dark + indigo/violet palette.
 /// Every color in the app must come from this class. No hardcoded hex values elsewhere.
 abstract final class AuraColors {
-  // ── Base Backgrounds ─────────────────────────────────────────────────────
+  // ── Dark Base Backgrounds (Default) ──────────────────────────────────────
   /// Main app background — deepest layer
   static const Color bgBase     = Color(0xFF0D0F14);
   /// Card / cell background — second layer
@@ -14,13 +14,26 @@ abstract final class AuraColors {
   /// Hover / pressed state surface
   static const Color bgHover    = Color(0xFF222536);
 
-  // ── Border / Divider ─────────────────────────────────────────────────────
-  /// Subtle card outline — low opacity
+  // ── Dark Border / Divider ────────────────────────────────────────────────
+  /// Subtle card outline
   static const Color border      = Color(0xFF2A2D3E);
   /// Ultra-subtle divider lines
   static const Color borderMuted = Color(0x1AFFFFFF); // rgba(255,255,255,0.10)
   /// Soft drop shadow color — used in BoxShadow across cards and overlays
   static const Color shadow      = Color(0x40000000); // rgba(0,0,0,0.25)
+
+  // ── Light Palette Constants ──────────────────────────────────────────────
+  static const Color lightBgBase     = Color(0xFFF6F8FA);
+  static const Color lightBgCard     = Color(0xFFFFFFFF);
+  static const Color lightBgElevated = Color(0xFFEFF2F6);
+  static const Color lightBgHover    = Color(0xFFE2E8F0);
+  static const Color lightBorder     = Color(0xFFCBD5E1);
+  static const Color lightBorderMuted = Color(0x1F000000);
+  static const Color lightShadow     = Color(0x12000000);
+  static const Color lightTextPrimary   = Color(0xFF0F172A);
+  static const Color lightTextSecondary = Color(0xFF475569);
+  static const Color lightTextMuted     = Color(0xFF94A3B8);
+  static const Color lightTextDisabled  = Color(0x4D0F172A);
 
   // ── Accent Palette ────────────────────────────────────────────────────────
   /// Primary CTA, active states, orb, AURA brand — indigo/violet
@@ -66,6 +79,31 @@ abstract final class AuraColors {
   /// Used in orb, onboarding hero, and capture overlay background gradient
   static const Color gradientStart = Color(0xFF1A1730);
   static const Color gradientEnd   = Color(0xFF0D0F14);
+
+  // ── Context-Aware Theme Helpers ──────────────────────────────────────────
+  static bool isDarkMode(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  static Color bgOf(BuildContext context) =>
+      isDarkMode(context) ? bgBase : lightBgBase;
+
+  static Color cardOf(BuildContext context) =>
+      isDarkMode(context) ? bgCard : lightBgCard;
+
+  static Color elevatedOf(BuildContext context) =>
+      isDarkMode(context) ? bgElevated : lightBgElevated;
+
+  static Color borderOf(BuildContext context) =>
+      isDarkMode(context) ? border : lightBorder;
+
+  static Color textPrimaryOf(BuildContext context) =>
+      isDarkMode(context) ? textPrimary : lightTextPrimary;
+
+  static Color textSecondaryOf(BuildContext context) =>
+      isDarkMode(context) ? textSecondary : lightTextSecondary;
+
+  static Color textMutedOf(BuildContext context) =>
+      isDarkMode(context) ? textMuted : lightTextMuted;
 
   // ── Legacy alias (kept for safe migration — points to new primary) ────────
   /// @deprecated Use [accentPrimary] instead.

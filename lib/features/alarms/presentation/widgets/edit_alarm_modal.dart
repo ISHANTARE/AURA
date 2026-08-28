@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:drift/drift.dart' hide Column;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
@@ -73,6 +74,16 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
     _selectedTime = TimeOfDay.fromDateTime(initialDt);
     _selectedDate = DateTime(initialDt.year, initialDt.month, initialDt.day);
 
+    // Restore saved ringtone for editing mode, or load user default
+    if (alarm?.soundUri != null && alarm!.soundUri!.isNotEmpty) {
+      _selectedSoundUri = alarm.soundUri!;
+      // Derive a human-friendly title from the URI (last path segment)
+      final segments = _selectedSoundUri.split('/');
+      _selectedSoundTitle = segments.isNotEmpty ? segments.last : 'Custom Sound';
+    } else {
+      _loadDefaultSound();
+    }
+
     final rule = alarm?.recurrenceRule ?? '';
     if (rule.startsWith('SPECIFIC_DATE:')) {
       _repeatType = AlarmRepeatType.specificDate;
@@ -92,6 +103,18 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
     } else {
       _repeatType = AlarmRepeatType.repeatDays;
       _selectedWeekdays = {1, 2, 3, 4, 5, 6, 7}; // Default everyday
+    }
+  }
+
+  Future<void> _loadDefaultSound() async {
+    final prefs = await SharedPreferences.getInstance();
+    final defaultTitle = prefs.getString('ALARM_SOUND_TITLE');
+    final defaultUri = prefs.getString('ALARM_SOUND_URI');
+    if (mounted && defaultTitle != null && defaultTitle.isNotEmpty) {
+      setState(() {
+        _selectedSoundTitle = defaultTitle;
+        if (defaultUri != null) _selectedSoundUri = defaultUri;
+      });
     }
   }
 
@@ -499,6 +522,8 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                     fireAt: Value(nextTargetDt.millisecondsSinceEpoch),
                     isRecurring: Value(_repeatType == AlarmRepeatType.repeatDays),
                     recurrenceRule: Value(ruleStr),
+                    // Persist the chosen ringtone URI so it survives restarts
+                    soundUri: Value(_selectedSoundUri.isEmpty ? null : _selectedSoundUri),
                     createdAt: Value(widget.alarm?.createdAt ?? nowEpoch),
                     updatedAt: Value(nowEpoch),
                   );

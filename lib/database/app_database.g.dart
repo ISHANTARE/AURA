@@ -1099,6 +1099,12 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
   late final GeneratedColumn<String> recurrenceRule = GeneratedColumn<String>(
       'recurrence_rule', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _soundUriMeta =
+      const VerificationMeta('soundUri');
+  @override
+  late final GeneratedColumn<String> soundUri = GeneratedColumn<String>(
+      'sound_uri', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _orbSourceAppMeta =
       const VerificationMeta('orbSourceApp');
   @override
@@ -1154,6 +1160,7 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
         status,
         isRecurring,
         recurrenceRule,
+        soundUri,
         orbSourceApp,
         aiTranscript,
         confidence,
@@ -1252,6 +1259,10 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
           recurrenceRule.isAcceptableOrUnknown(
               data['recurrence_rule']!, _recurrenceRuleMeta));
     }
+    if (data.containsKey('sound_uri')) {
+      context.handle(_soundUriMeta,
+          soundUri.isAcceptableOrUnknown(data['sound_uri']!, _soundUriMeta));
+    }
     if (data.containsKey('orb_source_app')) {
       context.handle(
           _orbSourceAppMeta,
@@ -1329,6 +1340,8 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
           .read(DriftSqlType.bool, data['${effectivePrefix}is_recurring'])!,
       recurrenceRule: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}recurrence_rule']),
+      soundUri: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sound_uri']),
       orbSourceApp: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}orb_source_app']),
       aiTranscript: attachedDatabase.typeMapping
@@ -1368,6 +1381,7 @@ class Item extends DataClass implements Insertable<Item> {
   final String status;
   final bool isRecurring;
   final String? recurrenceRule;
+  final String? soundUri;
   final String? orbSourceApp;
   final String? aiTranscript;
   final double? confidence;
@@ -1392,6 +1406,7 @@ class Item extends DataClass implements Insertable<Item> {
       required this.status,
       required this.isRecurring,
       this.recurrenceRule,
+      this.soundUri,
       this.orbSourceApp,
       this.aiTranscript,
       this.confidence,
@@ -1437,6 +1452,9 @@ class Item extends DataClass implements Insertable<Item> {
     map['is_recurring'] = Variable<bool>(isRecurring);
     if (!nullToAbsent || recurrenceRule != null) {
       map['recurrence_rule'] = Variable<String>(recurrenceRule);
+    }
+    if (!nullToAbsent || soundUri != null) {
+      map['sound_uri'] = Variable<String>(soundUri);
     }
     if (!nullToAbsent || orbSourceApp != null) {
       map['orb_source_app'] = Variable<String>(orbSourceApp);
@@ -1492,6 +1510,9 @@ class Item extends DataClass implements Insertable<Item> {
       recurrenceRule: recurrenceRule == null && nullToAbsent
           ? const Value.absent()
           : Value(recurrenceRule),
+      soundUri: soundUri == null && nullToAbsent
+          ? const Value.absent()
+          : Value(soundUri),
       orbSourceApp: orbSourceApp == null && nullToAbsent
           ? const Value.absent()
           : Value(orbSourceApp),
@@ -1530,6 +1551,7 @@ class Item extends DataClass implements Insertable<Item> {
       status: serializer.fromJson<String>(json['status']),
       isRecurring: serializer.fromJson<bool>(json['isRecurring']),
       recurrenceRule: serializer.fromJson<String?>(json['recurrenceRule']),
+      soundUri: serializer.fromJson<String?>(json['soundUri']),
       orbSourceApp: serializer.fromJson<String?>(json['orbSourceApp']),
       aiTranscript: serializer.fromJson<String?>(json['aiTranscript']),
       confidence: serializer.fromJson<double?>(json['confidence']),
@@ -1559,6 +1581,7 @@ class Item extends DataClass implements Insertable<Item> {
       'status': serializer.toJson<String>(status),
       'isRecurring': serializer.toJson<bool>(isRecurring),
       'recurrenceRule': serializer.toJson<String?>(recurrenceRule),
+      'soundUri': serializer.toJson<String?>(soundUri),
       'orbSourceApp': serializer.toJson<String?>(orbSourceApp),
       'aiTranscript': serializer.toJson<String?>(aiTranscript),
       'confidence': serializer.toJson<double?>(confidence),
@@ -1586,6 +1609,7 @@ class Item extends DataClass implements Insertable<Item> {
           String? status,
           bool? isRecurring,
           Value<String?> recurrenceRule = const Value.absent(),
+          Value<String?> soundUri = const Value.absent(),
           Value<String?> orbSourceApp = const Value.absent(),
           Value<String?> aiTranscript = const Value.absent(),
           Value<double?> confidence = const Value.absent(),
@@ -1611,6 +1635,7 @@ class Item extends DataClass implements Insertable<Item> {
         isRecurring: isRecurring ?? this.isRecurring,
         recurrenceRule:
             recurrenceRule.present ? recurrenceRule.value : this.recurrenceRule,
+        soundUri: soundUri.present ? soundUri.value : this.soundUri,
         orbSourceApp:
             orbSourceApp.present ? orbSourceApp.value : this.orbSourceApp,
         aiTranscript:
@@ -1643,6 +1668,7 @@ class Item extends DataClass implements Insertable<Item> {
       recurrenceRule: data.recurrenceRule.present
           ? data.recurrenceRule.value
           : this.recurrenceRule,
+      soundUri: data.soundUri.present ? data.soundUri.value : this.soundUri,
       orbSourceApp: data.orbSourceApp.present
           ? data.orbSourceApp.value
           : this.orbSourceApp,
@@ -1677,6 +1703,7 @@ class Item extends DataClass implements Insertable<Item> {
           ..write('status: $status, ')
           ..write('isRecurring: $isRecurring, ')
           ..write('recurrenceRule: $recurrenceRule, ')
+          ..write('soundUri: $soundUri, ')
           ..write('orbSourceApp: $orbSourceApp, ')
           ..write('aiTranscript: $aiTranscript, ')
           ..write('confidence: $confidence, ')
@@ -1706,6 +1733,7 @@ class Item extends DataClass implements Insertable<Item> {
         status,
         isRecurring,
         recurrenceRule,
+        soundUri,
         orbSourceApp,
         aiTranscript,
         confidence,
@@ -1734,6 +1762,7 @@ class Item extends DataClass implements Insertable<Item> {
           other.status == this.status &&
           other.isRecurring == this.isRecurring &&
           other.recurrenceRule == this.recurrenceRule &&
+          other.soundUri == this.soundUri &&
           other.orbSourceApp == this.orbSourceApp &&
           other.aiTranscript == this.aiTranscript &&
           other.confidence == this.confidence &&
@@ -1760,6 +1789,7 @@ class ItemsCompanion extends UpdateCompanion<Item> {
   final Value<String> status;
   final Value<bool> isRecurring;
   final Value<String?> recurrenceRule;
+  final Value<String?> soundUri;
   final Value<String?> orbSourceApp;
   final Value<String?> aiTranscript;
   final Value<double?> confidence;
@@ -1785,6 +1815,7 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.status = const Value.absent(),
     this.isRecurring = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
+    this.soundUri = const Value.absent(),
     this.orbSourceApp = const Value.absent(),
     this.aiTranscript = const Value.absent(),
     this.confidence = const Value.absent(),
@@ -1811,6 +1842,7 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.status = const Value.absent(),
     this.isRecurring = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
+    this.soundUri = const Value.absent(),
     this.orbSourceApp = const Value.absent(),
     this.aiTranscript = const Value.absent(),
     this.confidence = const Value.absent(),
@@ -1842,6 +1874,7 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Expression<String>? status,
     Expression<bool>? isRecurring,
     Expression<String>? recurrenceRule,
+    Expression<String>? soundUri,
     Expression<String>? orbSourceApp,
     Expression<String>? aiTranscript,
     Expression<double>? confidence,
@@ -1868,6 +1901,7 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       if (status != null) 'status': status,
       if (isRecurring != null) 'is_recurring': isRecurring,
       if (recurrenceRule != null) 'recurrence_rule': recurrenceRule,
+      if (soundUri != null) 'sound_uri': soundUri,
       if (orbSourceApp != null) 'orb_source_app': orbSourceApp,
       if (aiTranscript != null) 'ai_transcript': aiTranscript,
       if (confidence != null) 'confidence': confidence,
@@ -1896,6 +1930,7 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       Value<String>? status,
       Value<bool>? isRecurring,
       Value<String?>? recurrenceRule,
+      Value<String?>? soundUri,
       Value<String?>? orbSourceApp,
       Value<String?>? aiTranscript,
       Value<double?>? confidence,
@@ -1921,6 +1956,7 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       status: status ?? this.status,
       isRecurring: isRecurring ?? this.isRecurring,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
+      soundUri: soundUri ?? this.soundUri,
       orbSourceApp: orbSourceApp ?? this.orbSourceApp,
       aiTranscript: aiTranscript ?? this.aiTranscript,
       confidence: confidence ?? this.confidence,
@@ -1985,6 +2021,9 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     if (recurrenceRule.present) {
       map['recurrence_rule'] = Variable<String>(recurrenceRule.value);
     }
+    if (soundUri.present) {
+      map['sound_uri'] = Variable<String>(soundUri.value);
+    }
     if (orbSourceApp.present) {
       map['orb_source_app'] = Variable<String>(orbSourceApp.value);
     }
@@ -2029,6 +2068,7 @@ class ItemsCompanion extends UpdateCompanion<Item> {
           ..write('status: $status, ')
           ..write('isRecurring: $isRecurring, ')
           ..write('recurrenceRule: $recurrenceRule, ')
+          ..write('soundUri: $soundUri, ')
           ..write('orbSourceApp: $orbSourceApp, ')
           ..write('aiTranscript: $aiTranscript, ')
           ..write('confidence: $confidence, ')
@@ -6757,6 +6797,7 @@ typedef $$ItemsTableCreateCompanionBuilder = ItemsCompanion Function({
   Value<String> status,
   Value<bool> isRecurring,
   Value<String?> recurrenceRule,
+  Value<String?> soundUri,
   Value<String?> orbSourceApp,
   Value<String?> aiTranscript,
   Value<double?> confidence,
@@ -6783,6 +6824,7 @@ typedef $$ItemsTableUpdateCompanionBuilder = ItemsCompanion Function({
   Value<String> status,
   Value<bool> isRecurring,
   Value<String?> recurrenceRule,
+  Value<String?> soundUri,
   Value<String?> orbSourceApp,
   Value<String?> aiTranscript,
   Value<double?> confidence,
@@ -6956,6 +6998,9 @@ class $$ItemsTableFilterComposer extends Composer<_$AppDatabase, $ItemsTable> {
   ColumnFilters<String> get recurrenceRule => $composableBuilder(
       column: $table.recurrenceRule,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get soundUri => $composableBuilder(
+      column: $table.soundUri, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get orbSourceApp => $composableBuilder(
       column: $table.orbSourceApp, builder: (column) => ColumnFilters(column));
@@ -7176,6 +7221,9 @@ class $$ItemsTableOrderingComposer
       column: $table.recurrenceRule,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get soundUri => $composableBuilder(
+      column: $table.soundUri, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get orbSourceApp => $composableBuilder(
       column: $table.orbSourceApp,
       builder: (column) => ColumnOrderings(column));
@@ -7290,6 +7338,9 @@ class $$ItemsTableAnnotationComposer
 
   GeneratedColumn<String> get recurrenceRule => $composableBuilder(
       column: $table.recurrenceRule, builder: (column) => column);
+
+  GeneratedColumn<String> get soundUri =>
+      $composableBuilder(column: $table.soundUri, builder: (column) => column);
 
   GeneratedColumn<String> get orbSourceApp => $composableBuilder(
       column: $table.orbSourceApp, builder: (column) => column);
@@ -7504,6 +7555,7 @@ class $$ItemsTableTableManager extends RootTableManager<
             Value<String> status = const Value.absent(),
             Value<bool> isRecurring = const Value.absent(),
             Value<String?> recurrenceRule = const Value.absent(),
+            Value<String?> soundUri = const Value.absent(),
             Value<String?> orbSourceApp = const Value.absent(),
             Value<String?> aiTranscript = const Value.absent(),
             Value<double?> confidence = const Value.absent(),
@@ -7530,6 +7582,7 @@ class $$ItemsTableTableManager extends RootTableManager<
             status: status,
             isRecurring: isRecurring,
             recurrenceRule: recurrenceRule,
+            soundUri: soundUri,
             orbSourceApp: orbSourceApp,
             aiTranscript: aiTranscript,
             confidence: confidence,
@@ -7556,6 +7609,7 @@ class $$ItemsTableTableManager extends RootTableManager<
             Value<String> status = const Value.absent(),
             Value<bool> isRecurring = const Value.absent(),
             Value<String?> recurrenceRule = const Value.absent(),
+            Value<String?> soundUri = const Value.absent(),
             Value<String?> orbSourceApp = const Value.absent(),
             Value<String?> aiTranscript = const Value.absent(),
             Value<double?> confidence = const Value.absent(),
@@ -7582,6 +7636,7 @@ class $$ItemsTableTableManager extends RootTableManager<
             status: status,
             isRecurring: isRecurring,
             recurrenceRule: recurrenceRule,
+            soundUri: soundUri,
             orbSourceApp: orbSourceApp,
             aiTranscript: aiTranscript,
             confidence: confidence,

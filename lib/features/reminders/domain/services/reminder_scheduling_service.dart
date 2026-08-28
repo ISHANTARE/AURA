@@ -259,6 +259,15 @@ class ReminderSchedulingService {
         item.category == 'alarm' ? 'alarm:${item.id}' : 'item:${item.id}';
     final timeLabel = _format(when);
 
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveSoundUri = (soundUri != null && soundUri.isNotEmpty)
+        ? soundUri
+        : (item.soundUri != null && item.soundUri!.isNotEmpty
+            ? item.soundUri
+            : (isAlarmChannel
+                ? prefs.getString('ALARM_SOUND_URI')
+                : prefs.getString('NOTIF_SOUND_URI')));
+
     if (isAlarmChannel) {
       // Alarms always surface — even late ones ring through the alarm channel.
       await _notifications.scheduleAlarm(
@@ -267,7 +276,7 @@ class ReminderSchedulingService {
         body: 'Alarm: $timeLabel',
         scheduledDate: when,
         payload: payload,
-        soundUri: soundUri,
+        soundUri: effectiveSoundUri,
         useExact: useExact,
         matchDateTimeComponents:
             weeklyRepeat ? DateTimeComponents.dayOfWeekAndTime : null,
@@ -287,6 +296,7 @@ class ReminderSchedulingService {
         body: 'Due ${lateBy.inMinutes} min ago',
         scheduledDate: when, // past ⇒ instant "Missed:" fire inside service
         payload: payload,
+        soundUri: effectiveSoundUri,
         useExact: useExact,
         missedFire: true,
       );
@@ -299,6 +309,7 @@ class ReminderSchedulingService {
       body: item.notes?.isNotEmpty == true ? item.notes! : 'Reminder',
       scheduledDate: when,
       payload: payload,
+      soundUri: effectiveSoundUri,
       useExact: useExact,
     );
     return true;
@@ -474,6 +485,7 @@ class ReminderSchedulingService {
           when: fireAt,
           isAlarmChannel: true,
           weeklyRepeat: true,
+          soundUri: item.soundUri,
           useExact: capability.exactAlarmsAllowed,
         );
       } else {
@@ -483,6 +495,7 @@ class ReminderSchedulingService {
           when: fireAt,
           isAlarmChannel: item.category == 'alarm',
           weeklyRepeat: false,
+          soundUri: item.category == 'alarm' ? item.soundUri : null,
           useExact: capability.exactAlarmsAllowed,
         );
       }

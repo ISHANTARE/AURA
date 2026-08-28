@@ -73,6 +73,11 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="aura" android:host="app" />
             </intent-filter>
+
+            <!-- App Shortcuts -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
 
         <!-- Translucent Capture Overlay Activity (Sprint 3) -->
@@ -91,6 +96,18 @@
             android:name=".AuraOverlayService"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
+
+        <!-- Quick Settings Voice Capture Tile -->
+        <service
+            android:name=".AuraTileService"
+            android:exported="true"
+            android:label="@string/tile_label"
+            android:icon="@drawable/ic_qs_aura_mic"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
 
         <!-- flutter_local_notifications receivers for scheduled alarms & notifications -->
         <receiver

@@ -84,16 +84,38 @@ class OverlayChannel {
   }
 
   /// Open system ringtone picker to select custom alarm audio on device
-  static Future<Map<String, String>?> pickAlarmSound({String? currentUri}) async {
+  static Future<Map<String, String>?> pickAlarmSound({
+    String? currentUri,
+    String? title,
+  }) async {
+    return pickSound(type: 'alarm', currentUri: currentUri, title: title);
+  }
+
+  /// Open system ringtone picker to select custom notification audio on device
+  static Future<Map<String, String>?> pickNotificationSound({
+    String? currentUri,
+    String? title,
+  }) async {
+    return pickSound(type: 'notification', currentUri: currentUri, title: title);
+  }
+
+  /// Open system ringtone picker with specified sound type ('alarm' | 'notification')
+  static Future<Map<String, String>?> pickSound({
+    String type = 'alarm',
+    String? currentUri,
+    String? title,
+  }) async {
     try {
-      final res = await _channel.invokeMethod<Map>('pickAlarmSound', {
+      final res = await _channel.invokeMethod<Map>('pickSound', {
+        'type': type,
         'currentUri': currentUri ?? '',
+        'title': title,
       });
       if (res != null) {
         return Map<String, String>.from(res);
       }
     } on PlatformException catch (e) {
-      debugPrint('[OverlayChannel] Error picking alarm sound: $e');
+      debugPrint('[OverlayChannel] Error picking sound: $e');
     }
     return null;
   }

@@ -32,6 +32,9 @@ class Items extends Table {
   BoolColumn get isRecurring => boolean().withDefault(const Constant(false))();
   TextColumn get recurrenceRule => text().nullable()(); // 'daily', 'weekly', etc.
 
+  // Alarm sound — URI of the selected ringtone (null = system default)
+  TextColumn get soundUri => text().nullable()();
+
   // Metadata & AI Context
   TextColumn get orbSourceApp => text().nullable()();
   TextColumn get aiTranscript => text().nullable()();
