@@ -1,3 +1,43 @@
+## [2.1.0+2] — 2026-08-29
+
+### Home Screen: Daily Cockpit (Phase 1)
+- **Replaced** the mixed bento-grid home with a focused **Daily Cockpit** layout.
+- **3-Part Date Navigator** (`◀ Prev · Thu, Aug 29 · Next ▶`): tap the centre date to open a calendar picker; arrow buttons step one day at a time.
+- **Mini-Week Dot Strip**: 7-day `M T W T F S S` bar with activity dots under days that have scheduled tasks.
+- **Swipeable Day Agenda**: horizontal `PageView` swipe between days; transitions backed by haptic feedback.
+- **Day Status Text**: `"X Pending · Y Completed"` line rendered below the navigator for the active date.
+- **Scheduled & Timed** section: items with specific start times sorted chronologically with time-pill badges (`10:00 AM`, `3:30 PM`).
+- **Anytime Today** section: general tasks and reminders without a specific hour with instant check-off boxes and workspace chips.
+- **Overdue Triage Sheet**: tapping the red Overdue accumulator card opens a slide-up bottom sheet with 1-tap *Move to Today*, *Snooze +1 Day*, and *Mark Completed* actions.
+- **Split Stats Row**: Card 1 (Today's Pending & Done) + Card 2 (Cumulative Overdue in amber/red).
+
+### Alarms & Notes Sorting (Phase 2)
+- **Alarms** now sort strictly by time of day (earliest → latest): `6:00 AM → 7:30 AM → 2:15 PM → 10:00 PM`. Alarms without a `fireAt` time fall to the bottom.
+- **Notes sort menu** added (3 options, persisted to `SharedPreferences`):
+  - *Last Edited* (default — most recently updated first)
+  - *Date Created* (creation timestamp order)
+  - *Alphabetical A–Z* (by note title)
+
+### Exact Alarm Permission Warning (Phase 3)
+- Reactive amber warning card shown at the top of the Alarms screen when `Permission.scheduleExactAlarm` is denied on Android 13+.
+- **ENABLE** button requests the permission or opens App Settings; banner auto-dismisses on app resume after grant.
+
+### Quick Settings Tile & Launcher Shortcuts (Phase 4)
+- **Android Quick Settings Tile** (`AuraTileService`): pull down the shade, tap "AURA Voice" → immediately launches voice capture. Works on Android 7+ with correct Android 14 `startActivityAndCollapse` API.
+- **Static launcher shortcuts** (`shortcuts.xml`): long-press the AURA icon for *Voice Capture* and *New Alarm* shortcuts.
+
+### Settings & Release Packaging (Phase 5)
+- **"GET FREE KEY"** button in API Settings opens `https://aistudio.google.com/app/apikey` directly in the browser.
+- Note explaining Gemini 2.0 Flash is 100% free with no credit card required.
+- Dark / Light background toggle added beside **COLOR THEME ACCENT** in Settings; persists to `SharedPreferences`.
+- Version bumped to `2.1.0+2`.
+
+### Release Build Fix
+- Created `android/app/proguard-rules.pro` with `-dontwarn` rules for optional ML Kit language model classes (Chinese, Devanagari, Japanese, Korean) not bundled with the Latin-only recognizer.
+- Enabled `isMinifyEnabled` + `isShrinkResources` in `build.gradle.kts` release block.
+
+---
+
 ## [2.1.0] — 2026-08-23
 
 ### Fixed — Market-Readiness Remediation (post-audit)
