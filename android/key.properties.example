@@ -1,8 +1,0 @@
-# Release signing credentials template for AURA (Google Play Store Release)
-# Copy this file to `android/key.properties` and fill in your actual keystore credentials.
-# DO NOT commit `key.properties` or `.jks`/`.keystore` files to version control.
-
-storePassword=YOUR_KEYSTORE_PASSWORD
-keyPassword=YOUR_KEY_PASSWORD
-keyAlias=aura-release-key
-storeFile=/path/to/aura-release-key.jks

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">AURA</string>
-    <string name="tile_label">AURA Voice</string>
-    <string name="shortcut_voice_short">Voice Capture</string>
-    <string name="shortcut_voice_long">Instant AURA Voice Capture</string>
-    <string name="shortcut_alarm_short">Alarms</string>
-    <string name="shortcut_alarm_long">View &amp; Set Alarms</string>
-</resources>
