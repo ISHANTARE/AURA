@@ -9,6 +9,15 @@ class OverlayChannel {
   OverlayChannel([MethodChannel? channel])
       : _channel = channel ?? const MethodChannel(AuraChannels.overlayMethod);
 
+  /// Registers a callback listener for Orb Tap events from the native layer.
+  void listenToOrbTaps(VoidCallback onOrbTap) {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'onOrbTap') {
+        onOrbTap();
+      }
+    });
+  }
+
   /// Starts the floating Canvas orb foreground service.
   Future<bool> startOverlay() async {
     try {
