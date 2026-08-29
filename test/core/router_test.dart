@@ -3,19 +3,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:aura/core/providers/database_provider.dart';
 import 'package:aura/core/router/app_router.dart';
+import 'package:aura/database/app_database.dart';
+import 'package:aura/features/capture/presentation/capture_overlay_screen.dart';
+import 'package:aura/features/home/home_screen.dart';
+import 'package:aura/features/onboarding/onboarding_screen.dart';
+import 'package:aura/features/share/share_receiver_screen.dart';
 
 void main() {
   late SharedPreferences prefs;
   late OnboardingGateNotifier gateNotifier;
+  late AppDatabase db;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
     gateNotifier = OnboardingGateNotifier(prefs);
+    db = AppDatabase();
   });
 
-  tearDown(() => gateNotifier.dispose());
+  tearDown(() {
+    gateNotifier.dispose();
+    db.close();
+  });
 
   group('OnboardingGateNotifier', () {
     test('defaults to false when no pref is set', () {
@@ -66,12 +77,16 @@ void main() {
       addTearDown(router.dispose);
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            databaseProvider.overrideWithValue(db),
+          ],
           child: MaterialApp.router(routerConfig: router),
         ),
       );
       router.go(Routes.captureOverlay);
-      await tester.pumpAndSettle();
-      expect(find.text('Voice Capture Overlay'), findsOneWidget);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(FloatingCaptureOverlayScreen), findsOneWidget);
     });
 
     testWidgets('un-gated /share is accessible before onboarding',
@@ -80,12 +95,16 @@ void main() {
       addTearDown(router.dispose);
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            databaseProvider.overrideWithValue(db),
+          ],
           child: MaterialApp.router(routerConfig: router),
         ),
       );
       router.go(Routes.share);
-      await tester.pumpAndSettle();
-      expect(find.text('Share Receiver'), findsOneWidget);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(ShareReceiverScreen), findsOneWidget);
     });
 
     testWidgets('gated / redirects to /onboarding before completion',
@@ -94,11 +113,15 @@ void main() {
       addTearDown(router.dispose);
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            databaseProvider.overrideWithValue(db),
+          ],
           child: MaterialApp.router(routerConfig: router),
         ),
       );
-      await tester.pumpAndSettle();
-      expect(find.text('Onboarding'), findsOneWidget);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(OnboardingScreen), findsOneWidget);
     });
 
     testWidgets('gated / is accessible after onboarding completes',
@@ -112,11 +135,15 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            databaseProvider.overrideWithValue(db),
+          ],
           child: MaterialApp.router(routerConfig: router),
         ),
       );
-      await tester.pumpAndSettle();
-      expect(find.text('Home'), findsOneWidget);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(HomeScreen), findsOneWidget);
     });
 
     testWidgets('/onboarding redirects to / when already completed',
@@ -130,12 +157,16 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            databaseProvider.overrideWithValue(db),
+          ],
           child: MaterialApp.router(routerConfig: router),
         ),
       );
       router.go(Routes.onboarding);
-      await tester.pumpAndSettle();
-      expect(find.text('Home'), findsOneWidget);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(HomeScreen), findsOneWidget);
     });
   });
 }

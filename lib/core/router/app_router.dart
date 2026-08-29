@@ -3,6 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../app_shell.dart';
+import '../../features/alarms/alarms_screen.dart';
+import '../../features/briefing/briefing_screen.dart';
+import '../../features/capture/presentation/capture_overlay_screen.dart';
+import '../../features/home/home_screen.dart';
+import '../../features/notes/notes_screen.dart';
+import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/settings/settings_screen.dart';
+import '../../features/share/share_receiver_screen.dart';
+import '../../features/tasks/task_detail_screen.dart';
+import '../../features/workspaces/workspace_screens.dart';
+
 // ── Onboarding Gate ───────────────────────────────────────────────────────────
 
 /// Manages the onboarding gate state, reading and persisting completion status
@@ -39,8 +51,6 @@ class OnboardingGateNotifier extends ChangeNotifier {
 
 /// Riverpod provider for [OnboardingGateNotifier].
 final onboardingGateProvider = Provider<OnboardingGateNotifier>((ref) {
-  // This must be overridden in ProviderScope with an actual SharedPreferences
-  // instance. See main.dart for the override.
   throw UnimplementedError(
       'onboardingGateProvider must be overridden in ProviderScope.');
 });
@@ -59,8 +69,6 @@ abstract final class Routes {
   static const settings = '/settings';
   static const taskDetail = '/task/:id';
   static const briefing = '/briefing';
-  static const search = '/search';
-  static const reminders = '/reminders';
 
   /// Un-gated routes that bypass onboarding.
   static const Set<String> whitelist = {
@@ -72,12 +80,13 @@ abstract final class Routes {
 
 // ── Router builder ────────────────────────────────────────────────────────────
 
-/// Builds the app-wide [GoRouter] with onboarding gate redirect logic.
-///
-/// Gated routes redirect to `/onboarding` if onboarding has not been completed.
-/// Un-gated whitelist routes ([Routes.whitelist]) are always accessible.
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Builds the app-wide [GoRouter] with onboarding gate redirect logic and ShellRoute.
 GoRouter buildAppRouter(OnboardingGateNotifier gateNotifier) {
   return GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: Routes.home,
     refreshListenable: gateNotifier,
     redirect: (context, state) {
@@ -85,106 +94,89 @@ GoRouter buildAppRouter(OnboardingGateNotifier gateNotifier) {
       final location = state.uri.toString();
 
       if (!isComplete) {
-        // Allow whitelist routes when onboarding is incomplete.
         final isWhitelisted =
             Routes.whitelist.any((r) => location.startsWith(r));
         if (isWhitelisted) return null;
         return Routes.onboarding;
       }
 
-      // If onboarding is complete and user navigates to /onboarding, redirect to home.
       if (location == Routes.onboarding) return Routes.home;
 
-      return null; // No redirect needed.
+      return null;
     },
     routes: [
-      // ── Un-gated routes ──────────────────────────────────────────────────
+      // ── Un-gated standalone routes ───────────────────────────────────────
       GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
         path: Routes.onboarding,
-        builder: (context, state) =>
-            const _PlaceholderScreen(name: 'Onboarding'),
+        builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
         path: Routes.captureOverlay,
-        builder: (context, state) =>
-            const _PlaceholderScreen(name: 'Voice Capture Overlay'),
+        builder: (context, state) => const FloatingCaptureOverlayScreen(),
       ),
       GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
         path: Routes.share,
-        builder: (context, state) =>
-            const _PlaceholderScreen(name: 'Share Receiver'),
+        builder: (context, state) => const ShareReceiverScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: Routes.briefing,
+        builder: (context, state) => const MorningBriefingScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: Routes.taskDetail,
+        builder: (context, state) => TaskDetailScreen(
+          taskId: state.pathParameters['id'] ?? '',
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: Routes.workspaceDetail,
+        builder: (context, state) => WorkspaceDetailScreen(
+          workspaceId: state.pathParameters['id'] ?? '',
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: Routes.settings,
+        builder: (context, state) => const SettingsScreen(),
       ),
 
-      // ── Gated shell routes ───────────────────────────────────────────────
-      GoRoute(
-        path: Routes.home,
-        builder: (context, state) => const _PlaceholderScreen(name: 'Home'),
-      ),
-      GoRoute(
-        path: Routes.alarms,
-        builder: (context, state) => const _PlaceholderScreen(name: 'Alarms'),
-      ),
-      GoRoute(
-        path: Routes.workspaces,
-        builder: (context, state) =>
-            const _PlaceholderScreen(name: 'Workspaces'),
-      ),
-      GoRoute(
-        path: Routes.workspaceDetail,
-        builder: (context, state) => _PlaceholderScreen(
-          name: 'Workspace Detail: ${state.pathParameters['id']}',
-        ),
-      ),
-      GoRoute(
-        path: Routes.notes,
-        builder: (context, state) => const _PlaceholderScreen(name: 'Notes'),
-      ),
-      GoRoute(
-        path: Routes.settings,
-        builder: (context, state) =>
-            const _PlaceholderScreen(name: 'Settings'),
-      ),
-      GoRoute(
-        path: Routes.taskDetail,
-        builder: (context, state) => _PlaceholderScreen(
-          name: 'Task Detail: ${state.pathParameters['id']}',
-        ),
-      ),
-      GoRoute(
-        path: Routes.briefing,
-        builder: (context, state) =>
-            const _PlaceholderScreen(name: 'Morning Briefing'),
-      ),
-      GoRoute(
-        path: Routes.search,
-        builder: (context, state) =>
-            const _PlaceholderScreen(name: 'Search'),
-      ),
-      GoRoute(
-        path: Routes.reminders,
-        builder: (context, state) =>
-            const _PlaceholderScreen(name: 'Reminders'),
+      // ── Gated Shell navigation (BottomNav tabs) ──────────────────────────
+      ShellRoute(
+        navigatorKey: _shellNavigatorKey,
+        builder: (context, state, child) => AppShell(child: child),
+        routes: [
+          GoRoute(
+            path: Routes.home,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: HomeScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.alarms,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: AlarmsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.workspaces,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: WorkspaceListScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.notes,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: NotesScreen(),
+            ),
+          ),
+        ],
       ),
     ],
   );
-}
-
-// ── Placeholder screens (replaced during Phase 7) ────────────────────────────
-
-class _PlaceholderScreen extends StatelessWidget {
-  final String name;
-  const _PlaceholderScreen({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0D0D11),
-      body: Center(
-        child: Text(
-          name,
-          style: const TextStyle(color: Colors.white70, fontSize: 18),
-        ),
-      ),
-    );
-  }
 }
