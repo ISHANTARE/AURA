@@ -1,0 +1,1653 @@
+{
+  "files": [
+    {
+      "path": ".env",
+      "lines": 20,
+      "bytes": 1007
+    },
+    {
+      "path": ".env.example",
+      "lines": 13,
+      "bytes": 572
+    },
+    {
+      "path": ".flutter-plugins-dependencies",
+      "lines": 1,
+      "bytes": 15421
+    },
+    {
+      "path": ".gitignore",
+      "lines": 48,
+      "bytes": 762
+    },
+    {
+      "path": ".metadata",
+      "lines": 31,
+      "bytes": 998
+    },
+    {
+      "path": "README.md",
+      "lines": 144,
+      "bytes": 7159
+    },
+    {
+      "path": "analysis_options.yaml",
+      "lines": 29,
+      "bytes": 1448
+    },
+    {
+      "path": "aura.iml",
+      "lines": 18,
+      "bytes": 859
+    },
+    {
+      "path": "aura_audit_report.md",
+      "lines": 478,
+      "bytes": 25810
+    },
+    {
+      "path": "pubspec.lock",
+      "lines": 1144,
+      "bytes": 35149
+    },
+    {
+      "path": "pubspec.yaml",
+      "lines": 72,
+      "bytes": 2966
+    },
+    {
+      "path": ".agents/skills/AURA-adr-writer/SKILL.md",
+      "lines": 119,
+      "bytes": 4774
+    },
+    {
+      "path": ".agents/skills/AURA-ai-architect/SKILL.md",
+      "lines": 192,
+      "bytes": 7025
+    },
+    {
+      "path": ".agents/skills/AURA-context-guardian/SKILL.md",
+      "lines": 100,
+      "bytes": 4835
+    },
+    {
+      "path": ".agents/skills/AURA-database-designer/SKILL.md",
+      "lines": 230,
+      "bytes": 8335
+    },
+    {
+      "path": ".agents/skills/AURA-flutter-developer/SKILL.md",
+      "lines": 191,
+      "bytes": 6519
+    },
+    {
+      "path": ".agents/skills/AURA-prd-writer/SKILL.md",
+      "lines": 117,
+      "bytes": 3943
+    },
+    {
+      "path": ".agents/skills/AURA-ux-designer/SKILL.md",
+      "lines": 248,
+      "bytes": 7741
+    },
+    {
+      "path": ".claude/settings.local.json",
+      "lines": 8,
+      "bytes": 66
+    },
+    {
+      "path": ".claude/commands/handover.md",
+      "lines": 46,
+      "bytes": 980
+    },
+    {
+      "path": ".claude/handover/2026-08-24-22-20.md",
+      "lines": 105,
+      "bytes": 14687
+    },
+    {
+      "path": "android/.gitignore",
+      "lines": 15,
+      "bytes": 267
+    },
+    {
+      "path": "android/aura_android.iml",
+      "lines": 30,
+      "bytes": 1630
+    },
+    {
+      "path": "android/build.gradle.kts",
+      "lines": 22,
+      "bytes": 536
+    },
+    {
+      "path": "android/gradle.properties",
+      "lines": 8,
+      "bytes": 257
+    },
+    {
+      "path": "android/gradlew",
+      "lines": 161,
+      "bytes": 4971
+    },
+    {
+      "path": "android/gradlew.bat",
+      "lines": 91,
+      "bytes": 2404
+    },
+    {
+      "path": "android/key.properties.example",
+      "lines": 9,
+      "bytes": 382
+    },
+    {
+      "path": "android/local.properties",
+      "lines": 5,
+      "bytes": 120
+    },
+    {
+      "path": "android/settings.gradle.kts",
+      "lines": 26,
+      "bytes": 763
+    },
+    {
+      "path": "android/.gradle/file-system.probe",
+      "lines": 1,
+      "bytes": 8
+    },
+    {
+      "path": "android/.gradle/8.12/gc.properties",
+      "lines": 1,
+      "bytes": 0
+    },
+    {
+      "path": "android/.gradle/8.12/checksums/checksums.lock",
+      "lines": 1,
+      "bytes": 17
+    },
+    {
+      "path": "android/.gradle/8.12/checksums/md5-checksums.bin",
+      "lines": 110,
+      "bytes": 39697
+    },
+    {
+      "path": "android/.gradle/8.12/checksums/sha1-checksums.bin",
+      "lines": 396,
+      "bytes": 126971
+    },
+    {
+      "path": "android/.gradle/8.12/executionHistory/executionHistory.bin",
+      "lines": 17564,
+      "bytes": 23425835
+    },
+    {
+      "path": "android/.gradle/8.12/executionHistory/executionHistory.lock",
+      "lines": 1,
+      "bytes": 17
+    },
+    {
+      "path": "android/.gradle/8.12/fileChanges/last-build.bin",
+      "lines": 1,
+      "bytes": 1
+    },
+    {
+      "path": "android/.gradle/8.12/fileHashes/fileHashes.bin",
+      "lines": 6633,
+      "bytes": 1649737
+    },
+    {
+      "path": "android/.gradle/8.12/fileHashes/fileHashes.lock",
+      "lines": 1,
+      "bytes": 17
+    },
+    {
+      "path": "android/.gradle/8.12/fileHashes/resourceHashesCache.bin",
+      "lines": 61,
+      "bytes": 35089
+    },
+    {
+      "path": "android/.gradle/buildOutputCleanup/buildOutputCleanup.lock",
+      "lines": 1,
+      "bytes": 17
+    },
+    {
+      "path": "android/.gradle/buildOutputCleanup/cache.properties",
+      "lines": 3,
+      "bytes": 52
+    },
+    {
+      "path": "android/.gradle/buildOutputCleanup/outputFiles.bin",
+      "lines": 537,
+      "bytes": 313919
+    },
+    {
+      "path": "android/.gradle/noVersion/buildLogic.lock",
+      "lines": 1,
+      "bytes": 17
+    },
+    {
+      "path": "android/.gradle/vcs-1/gc.properties",
+      "lines": 1,
+      "bytes": 0
+    },
+    {
+      "path": "android/app/build.gradle.kts",
+      "lines": 59,
+      "bytes": 1927
+    },
+    {
+      "path": "android/app/proguard-rules.pro",
+      "lines": 37,
+      "bytes": 2585
+    },
+    {
+      "path": "android/app/src/debug/AndroidManifest.xml",
+      "lines": 8,
+      "bytes": 385
+    },
+    {
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "lines": 166,
+      "bytes": 7667
+    },
+    {
+      "path": "android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java",
+      "lines": 80,
+      "bytes": 3834
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/aura/aura/AuraBootReceiver.kt",
+      "lines": 23,
+      "bytes": 780
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/aura/aura/AuraCaptureActivity.kt",
+      "lines": 49,
+      "bytes": 1687
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/aura/aura/AuraChannelRegistrar.kt",
+      "lines": 253,
+      "bytes": 11070
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/aura/aura/AuraOverlayService.kt",
+      "lines": 284,
+      "bytes": 10660
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/aura/aura/AuraShareActivity.kt",
+      "lines": 221,
+      "bytes": 7920
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/aura/aura/AuraSpeechChannel.kt",
+      "lines": 207,
+      "bytes": 7892
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/aura/aura/AuraTileService.kt",
+      "lines": 42,
+      "bytes": 1314
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/aura/aura/MainActivity.kt",
+      "lines": 39,
+      "bytes": 1189
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/aura/aura/OrbMenuActivity.kt",
+      "lines": 212,
+      "bytes": 7544
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_qs_aura_mic.xml",
+      "lines": 13,
+      "bytes": 528
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_shortcut_alarm.xml",
+      "lines": 10,
+      "bytes": 538
+    },
+    {
+      "path": "android/app/src/main/res/drawable/launch_background.xml",
+      "lines": 13,
+      "bytes": 446
+    },
+    {
+      "path": "android/app/src/main/res/drawable-v21/launch_background.xml",
+      "lines": 13,
+      "bytes": 450
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+      "lines": 5,
+      "bytes": 544
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "lines": 6,
+      "bytes": 442
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+      "lines": 7,
+      "bytes": 721
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+      "lines": 9,
+      "bytes": 1031
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "lines": 15,
+      "bytes": 1443
+    },
+    {
+      "path": "android/app/src/main/res/values/strings.xml",
+      "lines": 10,
+      "bytes": 420
+    },
+    {
+      "path": "android/app/src/main/res/values/styles.xml",
+      "lines": 28,
+      "bytes": 1565
+    },
+    {
+      "path": "android/app/src/main/res/values-night/styles.xml",
+      "lines": 19,
+      "bytes": 1013
+    },
+    {
+      "path": "android/app/src/main/res/xml/shortcuts.xml",
+      "lines": 29,
+      "bytes": 1254
+    },
+    {
+      "path": "android/app/src/profile/AndroidManifest.xml",
+      "lines": 8,
+      "bytes": 385
+    },
+    {
+      "path": "android/gradle/wrapper/gradle-wrapper.jar",
+      "lines": 550,
+      "bytes": 53636
+    },
+    {
+      "path": "android/gradle/wrapper/gradle-wrapper.properties",
+      "lines": 6,
+      "bytes": 206
+    },
+    {
+      "path": "assets/.gitkeep",
+      "lines": 2,
+      "bytes": 31
+    },
+    {
+      "path": "aura-visuals/01_home_screen.svg",
+      "lines": 286,
+      "bytes": 15904
+    },
+    {
+      "path": "aura-visuals/02_voice_capture_overlay.svg",
+      "lines": 140,
+      "bytes": 7277
+    },
+    {
+      "path": "aura-visuals/03_task_detail_sheet.svg",
+      "lines": 164,
+      "bytes": 9390
+    },
+    {
+      "path": "aura-visuals/04_workspaces_screen.svg",
+      "lines": 191,
+      "bytes": 10787
+    },
+    {
+      "path": "aura-visuals/05_alarms_screen.svg",
+      "lines": 217,
+      "bytes": 12751
+    },
+    {
+      "path": "aura-visuals/06_notes_screen.svg",
+      "lines": 179,
+      "bytes": 9977
+    },
+    {
+      "path": "aura-visuals/07_settings_screen.svg",
+      "lines": 165,
+      "bytes": 9008
+    },
+    {
+      "path": "aura-visuals/08_morning_briefing.svg",
+      "lines": 130,
+      "bytes": 7355
+    },
+    {
+      "path": "aura-visuals/09_light_mode_home.svg",
+      "lines": 240,
+      "bytes": 14339
+    },
+    {
+      "path": "aura-visuals/index.html",
+      "lines": 243,
+      "bytes": 12555
+    },
+    {
+      "path": "aura-visuals/style.css",
+      "lines": 219,
+      "bytes": 4184
+    },
+    {
+      "path": "docs/AI_ARCHITECTURE.md",
+      "lines": 473,
+      "bytes": 15835
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "lines": 680,
+      "bytes": 28525
+    },
+    {
+      "path": "docs/CHANGELOG.md",
+      "lines": 461,
+      "bytes": 31847
+    },
+    {
+      "path": "docs/CONTEXT.md",
+      "lines": 277,
+      "bytes": 9233
+    },
+    {
+      "path": "docs/DECISIONS.md",
+      "lines": 494,
+      "bytes": 19452
+    },
+    {
+      "path": "docs/PRD.md",
+      "lines": 1509,
+      "bytes": 50442
+    },
+    {
+      "path": "docs/PRINCIPLES.md",
+      "lines": 141,
+      "bytes": 4717
+    },
+    {
+      "path": "docs/PRIVACY_POLICY.md",
+      "lines": 53,
+      "bytes": 3202
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "lines": 310,
+      "bytes": 11415
+    },
+    {
+      "path": "docs/SCHEMA.md",
+      "lines": 542,
+      "bytes": 20219
+    },
+    {
+      "path": "docs/VISION.md",
+      "lines": 118,
+      "bytes": 3736
+    },
+    {
+      "path": "docs/design_system.md",
+      "lines": 441,
+      "bytes": 14165
+    },
+    {
+      "path": "docs/flows/user_flows.md",
+      "lines": 372,
+      "bytes": 10136
+    },
+    {
+      "path": "docs/wireframes/.gitkeep",
+      "lines": 1,
+      "bytes": 0
+    },
+    {
+      "path": "docs/wireframes/01_home_screen.md",
+      "lines": 212,
+      "bytes": 8894
+    },
+    {
+      "path": "docs/wireframes/02_voice_capture.md",
+      "lines": 215,
+      "bytes": 7652
+    },
+    {
+      "path": "docs/wireframes/03_confirmation_box.md",
+      "lines": 239,
+      "bytes": 10777
+    },
+    {
+      "path": "docs/wireframes/04_workspace_screen.md",
+      "lines": 234,
+      "bytes": 14355
+    },
+    {
+      "path": "docs/wireframes/05_task_detail.md",
+      "lines": 229,
+      "bytes": 8665
+    },
+    {
+      "path": "docs/wireframes/06_morning_briefing.md",
+      "lines": 199,
+      "bytes": 9150
+    },
+    {
+      "path": "docs/wireframes/07_onboarding.md",
+      "lines": 244,
+      "bytes": 12494
+    },
+    {
+      "path": "lib/app.dart",
+      "lines": 189,
+      "bytes": 6271
+    },
+    {
+      "path": "lib/main.dart",
+      "lines": 35,
+      "bytes": 1060
+    },
+    {
+      "path": "lib/core/config/app_config.dart",
+      "lines": 21,
+      "bytes": 657
+    },
+    {
+      "path": "lib/core/constants/colors.dart",
+      "lines": 129,
+      "bytes": 7061
+    },
+    {
+      "path": "lib/core/constants/durations.dart",
+      "lines": 19,
+      "bytes": 667
+    },
+    {
+      "path": "lib/core/constants/icons.dart",
+      "lines": 122,
+      "bytes": 7844
+    },
+    {
+      "path": "lib/core/constants/spacing.dart",
+      "lines": 43,
+      "bytes": 1582
+    },
+    {
+      "path": "lib/core/constants/typography.dart",
+      "lines": 176,
+      "bytes": 7239
+    },
+    {
+      "path": "lib/core/errors/aura_failure.dart",
+      "lines": 41,
+      "bytes": 1329
+    },
+    {
+      "path": "lib/core/providers/clock_providers.dart",
+      "lines": 50,
+      "bytes": 1473
+    },
+    {
+      "path": "lib/core/providers/connectivity_provider.dart",
+      "lines": 18,
+      "bytes": 598
+    },
+    {
+      "path": "lib/core/providers/providers.dart",
+      "lines": 215,
+      "bytes": 8437
+    },
+    {
+      "path": "lib/core/router/app_router.dart",
+      "lines": 262,
+      "bytes": 9816
+    },
+    {
+      "path": "lib/core/security/secret_store.dart",
+      "lines": 87,
+      "bytes": 3029
+    },
+    {
+      "path": "lib/core/services/connectivity_service.dart",
+      "lines": 64,
+      "bytes": 2170
+    },
+    {
+      "path": "lib/core/services/notification_service.dart",
+      "lines": 2,
+      "bytes": 76
+    },
+    {
+      "path": "lib/core/theme/app_theme.dart",
+      "lines": 630,
+      "bytes": 30415
+    },
+    {
+      "path": "lib/core/theme/theme_provider.dart",
+      "lines": 94,
+      "bytes": 3042
+    },
+    {
+      "path": "lib/core/utils/greeting.dart",
+      "lines": 12,
+      "bytes": 509
+    },
+    {
+      "path": "lib/core/widgets/bottom_nav.dart",
+      "lines": 131,
+      "bytes": 3860
+    },
+    {
+      "path": "lib/core/widgets/empty_state.dart",
+      "lines": 81,
+      "bytes": 2348
+    },
+    {
+      "path": "lib/database/app_database.dart",
+      "lines": 130,
+      "bytes": 4096
+    },
+    {
+      "path": "lib/database/app_database.g.dart",
+      "lines": 10469,
+      "bytes": 397898
+    },
+    {
+      "path": "lib/database/daos/daily_log_dao.dart",
+      "lines": 23,
+      "bytes": 746
+    },
+    {
+      "path": "lib/database/daos/item_dao.dart",
+      "lines": 222,
+      "bytes": 8521
+    },
+    {
+      "path": "lib/database/daos/item_dao.g.dart",
+      "lines": 14,
+      "bytes": 460
+    },
+    {
+      "path": "lib/database/daos/notification_dao.dart",
+      "lines": 25,
+      "bytes": 734
+    },
+    {
+      "path": "lib/database/daos/notification_dao.g.dart",
+      "lines": 16,
+      "bytes": 566
+    },
+    {
+      "path": "lib/database/daos/offline_queue_dao.dart",
+      "lines": 102,
+      "bytes": 3448
+    },
+    {
+      "path": "lib/database/daos/offline_queue_dao.g.dart",
+      "lines": 9,
+      "bytes": 249
+    },
+    {
+      "path": "lib/database/daos/shared_content_dao.dart",
+      "lines": 20,
+      "bytes": 633
+    },
+    {
+      "path": "lib/database/daos/workspace_dao.dart",
+      "lines": 148,
+      "bytes": 5115
+    },
+    {
+      "path": "lib/database/daos/workspace_dao.g.dart",
+      "lines": 12,
+      "bytes": 377
+    },
+    {
+      "path": "lib/database/tables/ai_actions_log_table.dart",
+      "lines": 18,
+      "bytes": 625
+    },
+    {
+      "path": "lib/database/tables/daily_log_table.dart",
+      "lines": 15,
+      "bytes": 426
+    },
+    {
+      "path": "lib/database/tables/items_table.dart",
+      "lines": 50,
+      "bytes": 2107
+    },
+    {
+      "path": "lib/database/tables/notes_table.dart",
+      "lines": 20,
+      "bytes": 747
+    },
+    {
+      "path": "lib/database/tables/notification_log_table.dart",
+      "lines": 17,
+      "bytes": 673
+    },
+    {
+      "path": "lib/database/tables/offline_queue_table.dart",
+      "lines": 16,
+      "bytes": 622
+    },
+    {
+      "path": "lib/database/tables/reminders_schedule_table.dart",
+      "lines": 20,
+      "bytes": 693
+    },
+    {
+      "path": "lib/database/tables/shared_content_table.dart",
+      "lines": 22,
+      "bytes": 862
+    },
+    {
+      "path": "lib/database/tables/sync_queue_table.dart",
+      "lines": 17,
+      "bytes": 600
+    },
+    {
+      "path": "lib/database/tables/workspace_sections_table.dart",
+      "lines": 19,
+      "bytes": 788
+    },
+    {
+      "path": "lib/database/tables/workspaces_table.dart",
+      "lines": 19,
+      "bytes": 813
+    },
+    {
+      "path": "lib/features/alarms/presentation/providers/alarm_diagnostics_provider.dart",
+      "lines": 36,
+      "bytes": 970
+    },
+    {
+      "path": "lib/features/alarms/presentation/screens/alarms_screen.dart",
+      "lines": 289,
+      "bytes": 12236
+    },
+    {
+      "path": "lib/features/alarms/presentation/widgets/edit_alarm_modal.dart",
+      "lines": 562,
+      "bytes": 21729
+    },
+    {
+      "path": "lib/features/capture/data/datasources/link_reader_data_source.dart",
+      "lines": 58,
+      "bytes": 1635
+    },
+    {
+      "path": "lib/features/capture/data/datasources/llm_api_datasource.dart",
+      "lines": 356,
+      "bytes": 13945
+    },
+    {
+      "path": "lib/features/capture/data/datasources/ocr_data_source.dart",
+      "lines": 41,
+      "bytes": 1376
+    },
+    {
+      "path": "lib/features/capture/domain/entities/capture_state.dart",
+      "lines": 80,
+      "bytes": 2270
+    },
+    {
+      "path": "lib/features/capture/domain/entities/intent_result.dart",
+      "lines": 183,
+      "bytes": 6370
+    },
+    {
+      "path": "lib/features/capture/domain/entities/workspace_match_result.dart",
+      "lines": 58,
+      "bytes": 1570
+    },
+    {
+      "path": "lib/features/capture/domain/services/local_intent_parser.dart",
+      "lines": 195,
+      "bytes": 6877
+    },
+    {
+      "path": "lib/features/capture/domain/services/offline_queue_processor.dart",
+      "lines": 158,
+      "bytes": 6062
+    },
+    {
+      "path": "lib/features/capture/domain/usecases/create_task_usecase.dart",
+      "lines": 148,
+      "bytes": 5663
+    },
+    {
+      "path": "lib/features/capture/domain/usecases/execute_ai_action_usecase.dart",
+      "lines": 210,
+      "bytes": 7794
+    },
+    {
+      "path": "lib/features/capture/domain/usecases/process_shared_content_usecase.dart",
+      "lines": 110,
+      "bytes": 3864
+    },
+    {
+      "path": "lib/features/capture/domain/usecases/queue_offline_transcript_usecase.dart",
+      "lines": 27,
+      "bytes": 678
+    },
+    {
+      "path": "lib/features/capture/domain/usecases/workspace_router_usecase.dart",
+      "lines": 93,
+      "bytes": 3207
+    },
+    {
+      "path": "lib/features/capture/presentation/providers/capture_provider.dart",
+      "lines": 402,
+      "bytes": 13553
+    },
+    {
+      "path": "lib/features/capture/presentation/screens/floating_capture_overlay_screen.dart",
+      "lines": 49,
+      "bytes": 1560
+    },
+    {
+      "path": "lib/features/capture/presentation/screens/share_receive_screen.dart",
+      "lines": 485,
+      "bytes": 15624
+    },
+    {
+      "path": "lib/features/capture/presentation/widgets/alarm_confirmation_card.dart",
+      "lines": 202,
+      "bytes": 7429
+    },
+    {
+      "path": "lib/features/capture/presentation/widgets/confirmation_box.dart",
+      "lines": 869,
+      "bytes": 32054
+    },
+    {
+      "path": "lib/features/capture/presentation/widgets/delete_confirmation_card.dart",
+      "lines": 151,
+      "bytes": 5814
+    },
+    {
+      "path": "lib/features/capture/presentation/widgets/note_confirmation_card.dart",
+      "lines": 177,
+      "bytes": 6205
+    },
+    {
+      "path": "lib/features/capture/presentation/widgets/voice_capture_overlay.dart",
+      "lines": 520,
+      "bytes": 18748
+    },
+    {
+      "path": "lib/features/capture/presentation/widgets/waveform_widget.dart",
+      "lines": 88,
+      "bytes": 2744
+    },
+    {
+      "path": "lib/features/capture/presentation/widgets/workspace_confirmation_card.dart",
+      "lines": 198,
+      "bytes": 6986
+    },
+    {
+      "path": "lib/features/home/domain/services/briefing_scheduler.dart",
+      "lines": 137,
+      "bytes": 5298
+    },
+    {
+      "path": "lib/features/home/domain/services/nudge_engine.dart",
+      "lines": 67,
+      "bytes": 2461
+    },
+    {
+      "path": "lib/features/home/presentation/providers/home_providers.dart",
+      "lines": 239,
+      "bytes": 8334
+    },
+    {
+      "path": "lib/features/home/presentation/screens/home_screen.dart",
+      "lines": 178,
+      "bytes": 5710
+    },
+    {
+      "path": "lib/features/home/presentation/screens/morning_briefing_screen.dart",
+      "lines": 370,
+      "bytes": 12817
+    },
+    {
+      "path": "lib/features/home/presentation/widgets/aura_date_navigator.dart",
+      "lines": 348,
+      "bytes": 14906
+    },
+    {
+      "path": "lib/features/home/presentation/widgets/bento_card.dart",
+      "lines": 83,
+      "bytes": 2435
+    },
+    {
+      "path": "lib/features/home/presentation/widgets/day_agenda_view.dart",
+      "lines": 345,
+      "bytes": 12114
+    },
+    {
+      "path": "lib/features/home/presentation/widgets/floating_orb.dart",
+      "lines": 156,
+      "bytes": 5073
+    },
+    {
+      "path": "lib/features/home/presentation/widgets/home_bento_cells.dart",
+      "lines": 698,
+      "bytes": 23164
+    },
+    {
+      "path": "lib/features/home/presentation/widgets/overdue_triage_sheet.dart",
+      "lines": 332,
+      "bytes": 11532
+    },
+    {
+      "path": "lib/features/home/presentation/widgets/quick_stats_row.dart",
+      "lines": 196,
+      "bytes": 7662
+    },
+    {
+      "path": "lib/features/home/presentation/widgets/sync_status_badge.dart",
+      "lines": 100,
+      "bytes": 3772
+    },
+    {
+      "path": "lib/features/notes/presentation/providers/note_sort_provider.dart",
+      "lines": 62,
+      "bytes": 1880
+    },
+    {
+      "path": "lib/features/notes/presentation/screens/notes_screen.dart",
+      "lines": 334,
+      "bytes": 13293
+    },
+    {
+      "path": "lib/features/onboarding/presentation/screens/onboarding_screen.dart",
+      "lines": 556,
+      "bytes": 20226
+    },
+    {
+      "path": "lib/features/reminders/data/services/dnd_service.dart",
+      "lines": 69,
+      "bytes": 1826
+    },
+    {
+      "path": "lib/features/reminders/data/services/notification_service.dart",
+      "lines": 455,
+      "bytes": 15258
+    },
+    {
+      "path": "lib/features/reminders/domain/entities/reminder_models.dart",
+      "lines": 106,
+      "bytes": 2896
+    },
+    {
+      "path": "lib/features/reminders/domain/services/notification_ids.dart",
+      "lines": 53,
+      "bytes": 2369
+    },
+    {
+      "path": "lib/features/reminders/domain/services/recurrence_resolver.dart",
+      "lines": 104,
+      "bytes": 3787
+    },
+    {
+      "path": "lib/features/reminders/domain/services/reminder_scheduling_service.dart",
+      "lines": 571,
+      "bytes": 19848
+    },
+    {
+      "path": "lib/features/reminders/domain/usecases/overdue_reminder_usecase.dart",
+      "lines": 55,
+      "bytes": 1704
+    },
+    {
+      "path": "lib/features/reminders/domain/usecases/replay_dnd_notifications_usecase.dart",
+      "lines": 89,
+      "bytes": 3225
+    },
+    {
+      "path": "lib/features/reminders/domain/usecases/snooze_reminder_usecase.dart",
+      "lines": 34,
+      "bytes": 1170
+    },
+    {
+      "path": "lib/features/reminders/presentation/providers/reminder_providers.dart",
+      "lines": 53,
+      "bytes": 1701
+    },
+    {
+      "path": "lib/features/reminders/presentation/screens/reminders_screen.dart",
+      "lines": 88,
+      "bytes": 3353
+    },
+    {
+      "path": "lib/features/reminders/presentation/widgets/snooze_bottom_sheet.dart",
+      "lines": 220,
+      "bytes": 8174
+    },
+    {
+      "path": "lib/features/reminders/presentation/widgets/snooze_picker_sheet.dart",
+      "lines": 197,
+      "bytes": 6074
+    },
+    {
+      "path": "lib/features/settings/presentation/screens/settings_screen.dart",
+      "lines": 1148,
+      "bytes": 56356
+    },
+    {
+      "path": "lib/features/tasks/domain/usecases/recurring_task_reset_usecase.dart",
+      "lines": 87,
+      "bytes": 3158
+    },
+    {
+      "path": "lib/features/tasks/domain/usecases/search_usecase.dart",
+      "lines": 46,
+      "bytes": 1095
+    },
+    {
+      "path": "lib/features/tasks/domain/usecases/task_detail_usecases.dart",
+      "lines": 31,
+      "bytes": 936
+    },
+    {
+      "path": "lib/features/tasks/presentation/providers/task_detail_providers.dart",
+      "lines": 47,
+      "bytes": 1329
+    },
+    {
+      "path": "lib/features/tasks/presentation/screens/search_screen.dart",
+      "lines": 294,
+      "bytes": 10934
+    },
+    {
+      "path": "lib/features/tasks/presentation/screens/task_detail_screen.dart",
+      "lines": 726,
+      "bytes": 26080
+    },
+    {
+      "path": "lib/features/tasks/presentation/widgets/manual_task_sheet.dart",
+      "lines": 451,
+      "bytes": 17068
+    },
+    {
+      "path": "lib/features/tasks/presentation/widgets/task_deadline_card.dart",
+      "lines": 140,
+      "bytes": 4535
+    },
+    {
+      "path": "lib/features/tasks/presentation/widgets/task_options_sheet.dart",
+      "lines": 276,
+      "bytes": 8996
+    },
+    {
+      "path": "lib/features/tasks/presentation/widgets/task_stats_bento.dart",
+      "lines": 142,
+      "bytes": 5427
+    },
+    {
+      "path": "lib/features/tasks/presentation/widgets/task_subtasks_tab.dart",
+      "lines": 199,
+      "bytes": 7039
+    },
+    {
+      "path": "lib/features/workspaces/domain/workspace_taxonomy.dart",
+      "lines": 32,
+      "bytes": 1193
+    },
+    {
+      "path": "lib/features/workspaces/domain/entities/workspace_models.dart",
+      "lines": 34,
+      "bytes": 880
+    },
+    {
+      "path": "lib/features/workspaces/domain/usecases/workspace_usecases.dart",
+      "lines": 97,
+      "bytes": 2566
+    },
+    {
+      "path": "lib/features/workspaces/presentation/providers/workspace_providers.dart",
+      "lines": 116,
+      "bytes": 3379
+    },
+    {
+      "path": "lib/features/workspaces/presentation/screens/workspace_detail_screen.dart",
+      "lines": 374,
+      "bytes": 15148
+    },
+    {
+      "path": "lib/features/workspaces/presentation/screens/workspace_list_screen.dart",
+      "lines": 129,
+      "bytes": 5251
+    },
+    {
+      "path": "lib/features/workspaces/presentation/widgets/create_workspace_modal.dart",
+      "lines": 394,
+      "bytes": 16788
+    },
+    {
+      "path": "lib/features/workspaces/presentation/widgets/workspace_card.dart",
+      "lines": 144,
+      "bytes": 4882
+    },
+    {
+      "path": "lib/features/workspaces/presentation/widgets/workspace_options_sheet.dart",
+      "lines": 111,
+      "bytes": 4026
+    },
+    {
+      "path": "lib/platform/channels.dart",
+      "lines": 11,
+      "bytes": 525
+    },
+    {
+      "path": "lib/platform/dnd_channel.dart",
+      "lines": 44,
+      "bytes": 1441
+    },
+    {
+      "path": "lib/platform/overlay_channel.dart",
+      "lines": 144,
+      "bytes": 4480
+    },
+    {
+      "path": "lib/platform/share_channel.dart",
+      "lines": 69,
+      "bytes": 1875
+    },
+    {
+      "path": "lib/platform/speech_channel.dart",
+      "lines": 123,
+      "bytes": 4206
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260827-174906_AURA.png",
+      "lines": 2091,
+      "bytes": 280372
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260827-174924_AURA.png",
+      "lines": 923,
+      "bytes": 133252
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260827-174926_AURA.png",
+      "lines": 564,
+      "bytes": 97313
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260827-174930_AURA.png",
+      "lines": 543,
+      "bytes": 94989
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260827-174935_AURA.png",
+      "lines": 1133,
+      "bytes": 174078
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-013508_AURA.png",
+      "lines": 1242,
+      "bytes": 172567
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-013523_AURA.png",
+      "lines": 1252,
+      "bytes": 172257
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-013538_AURA.png",
+      "lines": 1037,
+      "bytes": 166239
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-013706_AURA.png",
+      "lines": 1150,
+      "bytes": 181044
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-013722_AURA.png",
+      "lines": 1348,
+      "bytes": 203073
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-013725_AURA.png",
+      "lines": 1879,
+      "bytes": 249827
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-013739_AURA.png",
+      "lines": 457,
+      "bytes": 82806
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-013748_AURA.png",
+      "lines": 1187,
+      "bytes": 175231
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-013825_AURA.png",
+      "lines": 783,
+      "bytes": 121154
+    },
+    {
+      "path": "screenshots-by-ishan/Screenshot_20260829-014509_AURA.png",
+      "lines": 2669,
+      "bytes": 334157
+    },
+    {
+      "path": "test/widget_test.dart",
+      "lines": 15,
+      "bytes": 398
+    },
+    {
+      "path": "test/data/llm_api_datasource_test.dart",
+      "lines": 184,
+      "bytes": 6095
+    },
+    {
+      "path": "test/data/rate_limiter_test.dart",
+      "lines": 71,
+      "bytes": 2509
+    },
+    {
+      "path": "test/database/app_database_test.dart",
+      "lines": 128,
+      "bytes": 3994
+    },
+    {
+      "path": "test/domain/day_cockpit_test.dart",
+      "lines": 71,
+      "bytes": 1946
+    },
+    {
+      "path": "test/domain/exact_alarm_diagnostics_test.dart",
+      "lines": 14,
+      "bytes": 440
+    },
+    {
+      "path": "test/domain/execute_ai_action_timed_test.dart",
+      "lines": 157,
+      "bytes": 5430
+    },
+    {
+      "path": "test/domain/execute_ai_action_usecase_test.dart",
+      "lines": 164,
+      "bytes": 5132
+    },
+    {
+      "path": "test/domain/greeting_test.dart",
+      "lines": 36,
+      "bytes": 1443
+    },
+    {
+      "path": "test/domain/local_intent_parser_test.dart",
+      "lines": 60,
+      "bytes": 2488
+    },
+    {
+      "path": "test/domain/notification_ids_test.dart",
+      "lines": 64,
+      "bytes": 2267
+    },
+    {
+      "path": "test/domain/offline_queue_processor_test.dart",
+      "lines": 184,
+      "bytes": 6457
+    },
+    {
+      "path": "test/domain/onboarding_gate_test.dart",
+      "lines": 67,
+      "bytes": 2373
+    },
+    {
+      "path": "test/domain/phase2_sorting_theme_test.dart",
+      "lines": 129,
+      "bytes": 4931
+    },
+    {
+      "path": "test/domain/recurrence_resolver_test.dart",
+      "lines": 127,
+      "bytes": 4182
+    },
+    {
+      "path": "test/domain/reminder_scheduling_service_test.dart",
+      "lines": 308,
+      "bytes": 10979
+    },
+    {
+      "path": "test/domain/workspace_router_test.dart",
+      "lines": 102,
+      "bytes": 3216
+    },
+    {
+      "path": "tool/analyze_codebase.py",
+      "lines": 82,
+      "bytes": 2921
+    },
+    {
+      "path": "tool/file_manifest.json",
+      "lines": 1066,
+      "bytes": 25147
+    }
+  ],
+  "empty_catches": [
+    {
+      "file": "lib/app.dart",
+      "line": 144,
+      "snippet": "catch (_) {}"
+    },
+    {
+      "file": "lib/main.dart",
+      "line": 16,
+      "snippet": "catch (_) {\n    // If .env is missing, app runs using fallback or defaults\n  }"
+    },
+    {
+      "file": "lib/features/capture/data/datasources/link_reader_data_source.dart",
+      "line": 37,
+      "snippet": "catch (_) {}"
+    },
+    {
+      "file": "lib/features/capture/data/datasources/ocr_data_source.dart",
+      "line": 36,
+      "snippet": "catch (_) {\n      // Already closed / not yet initialized \u2014 nothing to do.\n    }"
+    },
+    {
+      "file": "lib/features/reminders/data/services/dnd_service.dart",
+      "line": 44,
+      "snippet": "catch (_) {}"
+    },
+    {
+      "file": "lib/features/reminders/domain/usecases/replay_dnd_notifications_usecase.dart",
+      "line": 83,
+      "snippet": "catch (_) {\n      // Fall through to the briefing route below.\n    }"
+    },
+    {
+      "file": "lib/features/settings/presentation/screens/settings_screen.dart",
+      "line": 1097,
+      "snippet": "catch (_) {\n                          // Secure storage unavailable \u2014 nothing to scrub.\n                        }"
+    },
+    {
+      "file": "lib/platform/speech_channel.dart",
+      "line": 107,
+      "snippet": "catch (_) {}"
+    },
+    {
+      "file": "lib/platform/speech_channel.dart",
+      "line": 114,
+      "snippet": "catch (_) {}"
+    }
+  ],
+  "todos": [],
+  "hardcoded_strings": [],
+  "providers": [
+    {
+      "name": "dayRefreshProvider",
+      "file": "lib/core/providers/clock_providers.dart"
+    },
+    {
+      "name": "isOnlineProvider",
+      "file": "lib/core/providers/connectivity_provider.dart"
+    },
+    {
+      "name": "databaseProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "itemDaoProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "workspaceDaoProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "notificationDaoProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "offlineQueueDaoProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "allActiveItemsProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "urgentItemsProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "todayFocusItemsProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "alarmsListProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "workspacesListProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "notesListProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "userNameProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "quickStatsProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "snoozeReminderUseCaseProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "overdueReminderUseCaseProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "briefingSchedulerProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "recurringTaskResetProvider",
+      "file": "lib/core/providers/providers.dart"
+    },
+    {
+      "name": "onboardingGateProvider",
+      "file": "lib/core/router/app_router.dart"
+    },
+    {
+      "name": "appRouterProvider",
+      "file": "lib/core/router/app_router.dart"
+    },
+    {
+      "name": "connectivityServiceProvider",
+      "file": "lib/core/services/connectivity_service.dart"
+    },
+    {
+      "name": "themeAccentProvider",
+      "file": "lib/core/theme/theme_provider.dart"
+    },
+    {
+      "name": "themeModeProvider",
+      "file": "lib/core/theme/theme_provider.dart"
+    },
+    {
+      "name": "dailyLogDaoProvider",
+      "file": "lib/database/daos/daily_log_dao.dart"
+    },
+    {
+      "name": "exactAlarmStatusProvider",
+      "file": "lib/features/alarms/presentation/providers/alarm_diagnostics_provider.dart"
+    },
+    {
+      "name": "offlineQueueProcessorProvider",
+      "file": "lib/features/capture/domain/services/offline_queue_processor.dart"
+    },
+    {
+      "name": "speechChannelProvider",
+      "file": "lib/features/capture/presentation/providers/capture_provider.dart"
+    },
+    {
+      "name": "llmApiDataSourceProvider",
+      "file": "lib/features/capture/presentation/providers/capture_provider.dart"
+    },
+    {
+      "name": "workspaceRouterUseCaseProvider",
+      "file": "lib/features/capture/presentation/providers/capture_provider.dart"
+    },
+    {
+      "name": "createTaskUseCaseProvider",
+      "file": "lib/features/capture/presentation/providers/capture_provider.dart"
+    },
+    {
+      "name": "queueOfflineTranscriptUseCaseProvider",
+      "file": "lib/features/capture/presentation/providers/capture_provider.dart"
+    },
+    {
+      "name": "executeAiActionUseCaseProvider",
+      "file": "lib/features/capture/presentation/providers/capture_provider.dart"
+    },
+    {
+      "name": "captureProvider",
+      "file": "lib/features/capture/presentation/providers/capture_provider.dart"
+    },
+    {
+      "name": "shareChannelProvider",
+      "file": "lib/features/capture/presentation/screens/share_receive_screen.dart"
+    },
+    {
+      "name": "processSharedContentUseCaseProvider",
+      "file": "lib/features/capture/presentation/screens/share_receive_screen.dart"
+    },
+    {
+      "name": "selectedDateProvider",
+      "file": "lib/features/home/presentation/providers/home_providers.dart"
+    },
+    {
+      "name": "selectedDayFilterProvider",
+      "file": "lib/features/home/presentation/providers/home_providers.dart"
+    },
+    {
+      "name": "workspaceItemCountProvider",
+      "file": "lib/features/home/presentation/providers/home_providers.dart"
+    },
+    {
+      "name": "nudgeEngineProvider",
+      "file": "lib/features/home/presentation/providers/home_providers.dart"
+    },
+    {
+      "name": "todayStatsProvider",
+      "file": "lib/features/home/presentation/providers/home_providers.dart"
+    },
+    {
+      "name": "overdueItemsProvider",
+      "file": "lib/features/home/presentation/providers/home_providers.dart"
+    },
+    {
+      "name": "dayAgendaProvider",
+      "file": "lib/features/home/presentation/providers/home_providers.dart"
+    },
+    {
+      "name": "weekActivityMapProvider",
+      "file": "lib/features/home/presentation/providers/home_providers.dart"
+    },
+    {
+      "name": "noteSortOrderProvider",
+      "file": "lib/features/notes/presentation/providers/note_sort_provider.dart"
+    },
+    {
+      "name": "sortedNotesProvider",
+      "file": "lib/features/notes/presentation/providers/note_sort_provider.dart"
+    },
+    {
+      "name": "dndServiceProvider",
+      "file": "lib/features/reminders/data/services/dnd_service.dart"
+    },
+    {
+      "name": "reminderSchedulingServiceProvider",
+      "file": "lib/features/reminders/domain/services/reminder_scheduling_service.dart"
+    },
+    {
+      "name": "dndChannelProvider",
+      "file": "lib/features/reminders/presentation/providers/reminder_providers.dart"
+    },
+    {
+      "name": "dndStatusStreamProvider",
+      "file": "lib/features/reminders/presentation/providers/reminder_providers.dart"
+    },
+    {
+      "name": "isDndActiveProvider",
+      "file": "lib/features/reminders/presentation/providers/reminder_providers.dart"
+    },
+    {
+      "name": "reminderActionProvider",
+      "file": "lib/features/reminders/presentation/providers/reminder_providers.dart"
+    },
+    {
+      "name": "archivedWorkspacesProvider",
+      "file": "lib/features/settings/presentation/screens/settings_screen.dart"
+    },
+    {
+      "name": "itemDetailStreamProvider",
+      "file": "lib/features/tasks/presentation/providers/task_detail_providers.dart"
+    },
+    {
+      "name": "updateTaskDetailUseCaseProvider",
+      "file": "lib/features/tasks/presentation/providers/task_detail_providers.dart"
+    },
+    {
+      "name": "taskDetailActionProvider",
+      "file": "lib/features/tasks/presentation/providers/task_detail_providers.dart"
+    },
+    {
+      "name": "workspaceUseCasesProvider",
+      "file": "lib/features/workspaces/domain/usecases/workspace_usecases.dart"
+    },
+    {
+      "name": "archivedWorkspacesProvider",
+      "file": "lib/features/workspaces/presentation/providers/workspace_providers.dart"
+    },
+    {
+      "name": "workspaceSectionsProvider",
+      "file": "lib/features/workspaces/presentation/providers/workspace_providers.dart"
+    },
+    {
+      "name": "workspaceItemsProvider",
+      "file": "lib/features/workspaces/presentation/providers/workspace_providers.dart"
+    },
+    {
+      "name": "workspaceSharedItemsProvider",
+      "file": "lib/features/workspaces/presentation/providers/workspace_providers.dart"
+    },
+    {
+      "name": "workspaceByIdProvider",
+      "file": "lib/features/workspaces/presentation/providers/workspace_providers.dart"
+    },
+    {
+      "name": "workspaceActionNotifierProvider",
+      "file": "lib/features/workspaces/presentation/providers/workspace_providers.dart"
+    }
+  ],
+  "database_tables": [],
+  "daos": [],
+  "routes": [],
+  "channels": [],
+  "services": [],
+  "usecases": []
+}

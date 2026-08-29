@@ -1,0 +1,1066 @@
+[
+  {
+    "path": ".env",
+    "size": 1007
+  },
+  {
+    "path": ".env.example",
+    "size": 572
+  },
+  {
+    "path": ".flutter-plugins-dependencies",
+    "size": 15421
+  },
+  {
+    "path": ".gitignore",
+    "size": 762
+  },
+  {
+    "path": ".metadata",
+    "size": 998
+  },
+  {
+    "path": "README.md",
+    "size": 7159
+  },
+  {
+    "path": "analysis_options.yaml",
+    "size": 1448
+  },
+  {
+    "path": "aura.iml",
+    "size": 859
+  },
+  {
+    "path": "aura_audit_report.md",
+    "size": 25810
+  },
+  {
+    "path": "pubspec.lock",
+    "size": 35149
+  },
+  {
+    "path": "pubspec.yaml",
+    "size": 2966
+  },
+  {
+    "path": ".agents\\skills\\AURA-adr-writer\\SKILL.md",
+    "size": 4774
+  },
+  {
+    "path": ".agents\\skills\\AURA-ai-architect\\SKILL.md",
+    "size": 7025
+  },
+  {
+    "path": ".agents\\skills\\AURA-context-guardian\\SKILL.md",
+    "size": 4835
+  },
+  {
+    "path": ".agents\\skills\\AURA-database-designer\\SKILL.md",
+    "size": 8335
+  },
+  {
+    "path": ".agents\\skills\\AURA-flutter-developer\\SKILL.md",
+    "size": 6519
+  },
+  {
+    "path": ".agents\\skills\\AURA-prd-writer\\SKILL.md",
+    "size": 3943
+  },
+  {
+    "path": ".agents\\skills\\AURA-ux-designer\\SKILL.md",
+    "size": 7741
+  },
+  {
+    "path": ".claude\\settings.local.json",
+    "size": 66
+  },
+  {
+    "path": ".claude\\commands\\handover.md",
+    "size": 980
+  },
+  {
+    "path": ".claude\\handover\\2026-08-24-22-20.md",
+    "size": 14687
+  },
+  {
+    "path": "android\\.gitignore",
+    "size": 267
+  },
+  {
+    "path": "android\\aura_android.iml",
+    "size": 1630
+  },
+  {
+    "path": "android\\build.gradle.kts",
+    "size": 536
+  },
+  {
+    "path": "android\\gradle.properties",
+    "size": 257
+  },
+  {
+    "path": "android\\gradlew",
+    "size": 4971
+  },
+  {
+    "path": "android\\gradlew.bat",
+    "size": 2404
+  },
+  {
+    "path": "android\\key.properties.example",
+    "size": 382
+  },
+  {
+    "path": "android\\local.properties",
+    "size": 120
+  },
+  {
+    "path": "android\\settings.gradle.kts",
+    "size": 763
+  },
+  {
+    "path": "android\\.gradle\\file-system.probe",
+    "size": 8
+  },
+  {
+    "path": "android\\.gradle\\8.12\\gc.properties",
+    "size": 0
+  },
+  {
+    "path": "android\\.gradle\\8.12\\checksums\\checksums.lock",
+    "size": 17
+  },
+  {
+    "path": "android\\.gradle\\8.12\\checksums\\md5-checksums.bin",
+    "size": 39697
+  },
+  {
+    "path": "android\\.gradle\\8.12\\checksums\\sha1-checksums.bin",
+    "size": 126971
+  },
+  {
+    "path": "android\\.gradle\\8.12\\executionHistory\\executionHistory.bin",
+    "size": 23425835
+  },
+  {
+    "path": "android\\.gradle\\8.12\\executionHistory\\executionHistory.lock",
+    "size": 17
+  },
+  {
+    "path": "android\\.gradle\\8.12\\fileChanges\\last-build.bin",
+    "size": 1
+  },
+  {
+    "path": "android\\.gradle\\8.12\\fileHashes\\fileHashes.bin",
+    "size": 1649737
+  },
+  {
+    "path": "android\\.gradle\\8.12\\fileHashes\\fileHashes.lock",
+    "size": 17
+  },
+  {
+    "path": "android\\.gradle\\8.12\\fileHashes\\resourceHashesCache.bin",
+    "size": 35089
+  },
+  {
+    "path": "android\\.gradle\\buildOutputCleanup\\buildOutputCleanup.lock",
+    "size": 17
+  },
+  {
+    "path": "android\\.gradle\\buildOutputCleanup\\cache.properties",
+    "size": 52
+  },
+  {
+    "path": "android\\.gradle\\buildOutputCleanup\\outputFiles.bin",
+    "size": 313919
+  },
+  {
+    "path": "android\\.gradle\\noVersion\\buildLogic.lock",
+    "size": 17
+  },
+  {
+    "path": "android\\.gradle\\vcs-1\\gc.properties",
+    "size": 0
+  },
+  {
+    "path": "android\\app\\build.gradle.kts",
+    "size": 1927
+  },
+  {
+    "path": "android\\app\\proguard-rules.pro",
+    "size": 2585
+  },
+  {
+    "path": "android\\app\\src\\debug\\AndroidManifest.xml",
+    "size": 385
+  },
+  {
+    "path": "android\\app\\src\\main\\AndroidManifest.xml",
+    "size": 7667
+  },
+  {
+    "path": "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+    "size": 3834
+  },
+  {
+    "path": "android\\app\\src\\main\\kotlin\\com\\aura\\aura\\AuraBootReceiver.kt",
+    "size": 780
+  },
+  {
+    "path": "android\\app\\src\\main\\kotlin\\com\\aura\\aura\\AuraCaptureActivity.kt",
+    "size": 1687
+  },
+  {
+    "path": "android\\app\\src\\main\\kotlin\\com\\aura\\aura\\AuraChannelRegistrar.kt",
+    "size": 11070
+  },
+  {
+    "path": "android\\app\\src\\main\\kotlin\\com\\aura\\aura\\AuraOverlayService.kt",
+    "size": 10660
+  },
+  {
+    "path": "android\\app\\src\\main\\kotlin\\com\\aura\\aura\\AuraShareActivity.kt",
+    "size": 7920
+  },
+  {
+    "path": "android\\app\\src\\main\\kotlin\\com\\aura\\aura\\AuraSpeechChannel.kt",
+    "size": 7892
+  },
+  {
+    "path": "android\\app\\src\\main\\kotlin\\com\\aura\\aura\\AuraTileService.kt",
+    "size": 1314
+  },
+  {
+    "path": "android\\app\\src\\main\\kotlin\\com\\aura\\aura\\MainActivity.kt",
+    "size": 1189
+  },
+  {
+    "path": "android\\app\\src\\main\\kotlin\\com\\aura\\aura\\OrbMenuActivity.kt",
+    "size": 7544
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\drawable\\ic_qs_aura_mic.xml",
+    "size": 528
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\drawable\\ic_shortcut_alarm.xml",
+    "size": 538
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\drawable\\launch_background.xml",
+    "size": 446
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\drawable-v21\\launch_background.xml",
+    "size": 450
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.png",
+    "size": 544
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.png",
+    "size": 442
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.png",
+    "size": 721
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.png",
+    "size": 1031
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png",
+    "size": 1443
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\values\\strings.xml",
+    "size": 420
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\values\\styles.xml",
+    "size": 1565
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\values-night\\styles.xml",
+    "size": 1013
+  },
+  {
+    "path": "android\\app\\src\\main\\res\\xml\\shortcuts.xml",
+    "size": 1254
+  },
+  {
+    "path": "android\\app\\src\\profile\\AndroidManifest.xml",
+    "size": 385
+  },
+  {
+    "path": "android\\gradle\\wrapper\\gradle-wrapper.jar",
+    "size": 53636
+  },
+  {
+    "path": "android\\gradle\\wrapper\\gradle-wrapper.properties",
+    "size": 206
+  },
+  {
+    "path": "assets\\.gitkeep",
+    "size": 31
+  },
+  {
+    "path": "aura-visuals\\01_home_screen.svg",
+    "size": 15904
+  },
+  {
+    "path": "aura-visuals\\02_voice_capture_overlay.svg",
+    "size": 7277
+  },
+  {
+    "path": "aura-visuals\\03_task_detail_sheet.svg",
+    "size": 9390
+  },
+  {
+    "path": "aura-visuals\\04_workspaces_screen.svg",
+    "size": 10787
+  },
+  {
+    "path": "aura-visuals\\05_alarms_screen.svg",
+    "size": 12751
+  },
+  {
+    "path": "aura-visuals\\06_notes_screen.svg",
+    "size": 9977
+  },
+  {
+    "path": "aura-visuals\\07_settings_screen.svg",
+    "size": 9008
+  },
+  {
+    "path": "aura-visuals\\08_morning_briefing.svg",
+    "size": 7355
+  },
+  {
+    "path": "aura-visuals\\09_light_mode_home.svg",
+    "size": 14339
+  },
+  {
+    "path": "aura-visuals\\index.html",
+    "size": 12555
+  },
+  {
+    "path": "aura-visuals\\style.css",
+    "size": 4184
+  },
+  {
+    "path": "docs\\AI_ARCHITECTURE.md",
+    "size": 15835
+  },
+  {
+    "path": "docs\\ARCHITECTURE.md",
+    "size": 28525
+  },
+  {
+    "path": "docs\\CHANGELOG.md",
+    "size": 31847
+  },
+  {
+    "path": "docs\\CONTEXT.md",
+    "size": 9233
+  },
+  {
+    "path": "docs\\DECISIONS.md",
+    "size": 19452
+  },
+  {
+    "path": "docs\\PRD.md",
+    "size": 50442
+  },
+  {
+    "path": "docs\\PRINCIPLES.md",
+    "size": 4717
+  },
+  {
+    "path": "docs\\PRIVACY_POLICY.md",
+    "size": 3202
+  },
+  {
+    "path": "docs\\ROADMAP.md",
+    "size": 11415
+  },
+  {
+    "path": "docs\\SCHEMA.md",
+    "size": 20219
+  },
+  {
+    "path": "docs\\VISION.md",
+    "size": 3736
+  },
+  {
+    "path": "docs\\design_system.md",
+    "size": 14165
+  },
+  {
+    "path": "docs\\flows\\user_flows.md",
+    "size": 10136
+  },
+  {
+    "path": "docs\\wireframes\\.gitkeep",
+    "size": 0
+  },
+  {
+    "path": "docs\\wireframes\\01_home_screen.md",
+    "size": 8894
+  },
+  {
+    "path": "docs\\wireframes\\02_voice_capture.md",
+    "size": 7652
+  },
+  {
+    "path": "docs\\wireframes\\03_confirmation_box.md",
+    "size": 10777
+  },
+  {
+    "path": "docs\\wireframes\\04_workspace_screen.md",
+    "size": 14355
+  },
+  {
+    "path": "docs\\wireframes\\05_task_detail.md",
+    "size": 8665
+  },
+  {
+    "path": "docs\\wireframes\\06_morning_briefing.md",
+    "size": 9150
+  },
+  {
+    "path": "docs\\wireframes\\07_onboarding.md",
+    "size": 12494
+  },
+  {
+    "path": "lib\\app.dart",
+    "size": 6271
+  },
+  {
+    "path": "lib\\main.dart",
+    "size": 1060
+  },
+  {
+    "path": "lib\\core\\config\\app_config.dart",
+    "size": 657
+  },
+  {
+    "path": "lib\\core\\constants\\colors.dart",
+    "size": 7061
+  },
+  {
+    "path": "lib\\core\\constants\\durations.dart",
+    "size": 667
+  },
+  {
+    "path": "lib\\core\\constants\\icons.dart",
+    "size": 7844
+  },
+  {
+    "path": "lib\\core\\constants\\spacing.dart",
+    "size": 1582
+  },
+  {
+    "path": "lib\\core\\constants\\typography.dart",
+    "size": 7239
+  },
+  {
+    "path": "lib\\core\\errors\\aura_failure.dart",
+    "size": 1329
+  },
+  {
+    "path": "lib\\core\\providers\\clock_providers.dart",
+    "size": 1473
+  },
+  {
+    "path": "lib\\core\\providers\\connectivity_provider.dart",
+    "size": 598
+  },
+  {
+    "path": "lib\\core\\providers\\providers.dart",
+    "size": 8437
+  },
+  {
+    "path": "lib\\core\\router\\app_router.dart",
+    "size": 9816
+  },
+  {
+    "path": "lib\\core\\security\\secret_store.dart",
+    "size": 3029
+  },
+  {
+    "path": "lib\\core\\services\\connectivity_service.dart",
+    "size": 2170
+  },
+  {
+    "path": "lib\\core\\services\\notification_service.dart",
+    "size": 76
+  },
+  {
+    "path": "lib\\core\\theme\\app_theme.dart",
+    "size": 30415
+  },
+  {
+    "path": "lib\\core\\theme\\theme_provider.dart",
+    "size": 3042
+  },
+  {
+    "path": "lib\\core\\utils\\greeting.dart",
+    "size": 509
+  },
+  {
+    "path": "lib\\core\\widgets\\bottom_nav.dart",
+    "size": 3860
+  },
+  {
+    "path": "lib\\core\\widgets\\empty_state.dart",
+    "size": 2348
+  },
+  {
+    "path": "lib\\database\\app_database.dart",
+    "size": 4096
+  },
+  {
+    "path": "lib\\database\\app_database.g.dart",
+    "size": 397898
+  },
+  {
+    "path": "lib\\database\\daos\\daily_log_dao.dart",
+    "size": 746
+  },
+  {
+    "path": "lib\\database\\daos\\item_dao.dart",
+    "size": 8521
+  },
+  {
+    "path": "lib\\database\\daos\\item_dao.g.dart",
+    "size": 460
+  },
+  {
+    "path": "lib\\database\\daos\\notification_dao.dart",
+    "size": 734
+  },
+  {
+    "path": "lib\\database\\daos\\notification_dao.g.dart",
+    "size": 566
+  },
+  {
+    "path": "lib\\database\\daos\\offline_queue_dao.dart",
+    "size": 3448
+  },
+  {
+    "path": "lib\\database\\daos\\offline_queue_dao.g.dart",
+    "size": 249
+  },
+  {
+    "path": "lib\\database\\daos\\shared_content_dao.dart",
+    "size": 633
+  },
+  {
+    "path": "lib\\database\\daos\\workspace_dao.dart",
+    "size": 5115
+  },
+  {
+    "path": "lib\\database\\daos\\workspace_dao.g.dart",
+    "size": 377
+  },
+  {
+    "path": "lib\\database\\tables\\ai_actions_log_table.dart",
+    "size": 625
+  },
+  {
+    "path": "lib\\database\\tables\\daily_log_table.dart",
+    "size": 426
+  },
+  {
+    "path": "lib\\database\\tables\\items_table.dart",
+    "size": 2107
+  },
+  {
+    "path": "lib\\database\\tables\\notes_table.dart",
+    "size": 747
+  },
+  {
+    "path": "lib\\database\\tables\\notification_log_table.dart",
+    "size": 673
+  },
+  {
+    "path": "lib\\database\\tables\\offline_queue_table.dart",
+    "size": 622
+  },
+  {
+    "path": "lib\\database\\tables\\reminders_schedule_table.dart",
+    "size": 693
+  },
+  {
+    "path": "lib\\database\\tables\\shared_content_table.dart",
+    "size": 862
+  },
+  {
+    "path": "lib\\database\\tables\\sync_queue_table.dart",
+    "size": 600
+  },
+  {
+    "path": "lib\\database\\tables\\workspace_sections_table.dart",
+    "size": 788
+  },
+  {
+    "path": "lib\\database\\tables\\workspaces_table.dart",
+    "size": 813
+  },
+  {
+    "path": "lib\\features\\alarms\\presentation\\providers\\alarm_diagnostics_provider.dart",
+    "size": 970
+  },
+  {
+    "path": "lib\\features\\alarms\\presentation\\screens\\alarms_screen.dart",
+    "size": 12236
+  },
+  {
+    "path": "lib\\features\\alarms\\presentation\\widgets\\edit_alarm_modal.dart",
+    "size": 21729
+  },
+  {
+    "path": "lib\\features\\capture\\data\\datasources\\link_reader_data_source.dart",
+    "size": 1635
+  },
+  {
+    "path": "lib\\features\\capture\\data\\datasources\\llm_api_datasource.dart",
+    "size": 13945
+  },
+  {
+    "path": "lib\\features\\capture\\data\\datasources\\ocr_data_source.dart",
+    "size": 1376
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\entities\\capture_state.dart",
+    "size": 2270
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\entities\\intent_result.dart",
+    "size": 6370
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\entities\\workspace_match_result.dart",
+    "size": 1570
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\services\\local_intent_parser.dart",
+    "size": 6877
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\services\\offline_queue_processor.dart",
+    "size": 6062
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\usecases\\create_task_usecase.dart",
+    "size": 5663
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\usecases\\execute_ai_action_usecase.dart",
+    "size": 7794
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\usecases\\process_shared_content_usecase.dart",
+    "size": 3864
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\usecases\\queue_offline_transcript_usecase.dart",
+    "size": 678
+  },
+  {
+    "path": "lib\\features\\capture\\domain\\usecases\\workspace_router_usecase.dart",
+    "size": 3207
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\providers\\capture_provider.dart",
+    "size": 13553
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\screens\\floating_capture_overlay_screen.dart",
+    "size": 1560
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\screens\\share_receive_screen.dart",
+    "size": 15624
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\widgets\\alarm_confirmation_card.dart",
+    "size": 7429
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\widgets\\confirmation_box.dart",
+    "size": 32054
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\widgets\\delete_confirmation_card.dart",
+    "size": 5814
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\widgets\\note_confirmation_card.dart",
+    "size": 6205
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\widgets\\voice_capture_overlay.dart",
+    "size": 18748
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\widgets\\waveform_widget.dart",
+    "size": 2744
+  },
+  {
+    "path": "lib\\features\\capture\\presentation\\widgets\\workspace_confirmation_card.dart",
+    "size": 6986
+  },
+  {
+    "path": "lib\\features\\home\\domain\\services\\briefing_scheduler.dart",
+    "size": 5298
+  },
+  {
+    "path": "lib\\features\\home\\domain\\services\\nudge_engine.dart",
+    "size": 2461
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\providers\\home_providers.dart",
+    "size": 8334
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\screens\\home_screen.dart",
+    "size": 5710
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\screens\\morning_briefing_screen.dart",
+    "size": 12817
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\widgets\\aura_date_navigator.dart",
+    "size": 14906
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\widgets\\bento_card.dart",
+    "size": 2435
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\widgets\\day_agenda_view.dart",
+    "size": 12114
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\widgets\\floating_orb.dart",
+    "size": 5073
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\widgets\\home_bento_cells.dart",
+    "size": 23164
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\widgets\\overdue_triage_sheet.dart",
+    "size": 11532
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\widgets\\quick_stats_row.dart",
+    "size": 7662
+  },
+  {
+    "path": "lib\\features\\home\\presentation\\widgets\\sync_status_badge.dart",
+    "size": 3772
+  },
+  {
+    "path": "lib\\features\\notes\\presentation\\providers\\note_sort_provider.dart",
+    "size": 1880
+  },
+  {
+    "path": "lib\\features\\notes\\presentation\\screens\\notes_screen.dart",
+    "size": 13293
+  },
+  {
+    "path": "lib\\features\\onboarding\\presentation\\screens\\onboarding_screen.dart",
+    "size": 20226
+  },
+  {
+    "path": "lib\\features\\reminders\\data\\services\\dnd_service.dart",
+    "size": 1826
+  },
+  {
+    "path": "lib\\features\\reminders\\data\\services\\notification_service.dart",
+    "size": 15258
+  },
+  {
+    "path": "lib\\features\\reminders\\domain\\entities\\reminder_models.dart",
+    "size": 2896
+  },
+  {
+    "path": "lib\\features\\reminders\\domain\\services\\notification_ids.dart",
+    "size": 2369
+  },
+  {
+    "path": "lib\\features\\reminders\\domain\\services\\recurrence_resolver.dart",
+    "size": 3787
+  },
+  {
+    "path": "lib\\features\\reminders\\domain\\services\\reminder_scheduling_service.dart",
+    "size": 19848
+  },
+  {
+    "path": "lib\\features\\reminders\\domain\\usecases\\overdue_reminder_usecase.dart",
+    "size": 1704
+  },
+  {
+    "path": "lib\\features\\reminders\\domain\\usecases\\replay_dnd_notifications_usecase.dart",
+    "size": 3225
+  },
+  {
+    "path": "lib\\features\\reminders\\domain\\usecases\\snooze_reminder_usecase.dart",
+    "size": 1170
+  },
+  {
+    "path": "lib\\features\\reminders\\presentation\\providers\\reminder_providers.dart",
+    "size": 1701
+  },
+  {
+    "path": "lib\\features\\reminders\\presentation\\screens\\reminders_screen.dart",
+    "size": 3353
+  },
+  {
+    "path": "lib\\features\\reminders\\presentation\\widgets\\snooze_bottom_sheet.dart",
+    "size": 8174
+  },
+  {
+    "path": "lib\\features\\reminders\\presentation\\widgets\\snooze_picker_sheet.dart",
+    "size": 6074
+  },
+  {
+    "path": "lib\\features\\settings\\presentation\\screens\\settings_screen.dart",
+    "size": 56356
+  },
+  {
+    "path": "lib\\features\\tasks\\domain\\usecases\\recurring_task_reset_usecase.dart",
+    "size": 3158
+  },
+  {
+    "path": "lib\\features\\tasks\\domain\\usecases\\search_usecase.dart",
+    "size": 1095
+  },
+  {
+    "path": "lib\\features\\tasks\\domain\\usecases\\task_detail_usecases.dart",
+    "size": 936
+  },
+  {
+    "path": "lib\\features\\tasks\\presentation\\providers\\task_detail_providers.dart",
+    "size": 1329
+  },
+  {
+    "path": "lib\\features\\tasks\\presentation\\screens\\search_screen.dart",
+    "size": 10934
+  },
+  {
+    "path": "lib\\features\\tasks\\presentation\\screens\\task_detail_screen.dart",
+    "size": 26080
+  },
+  {
+    "path": "lib\\features\\tasks\\presentation\\widgets\\manual_task_sheet.dart",
+    "size": 17068
+  },
+  {
+    "path": "lib\\features\\tasks\\presentation\\widgets\\task_deadline_card.dart",
+    "size": 4535
+  },
+  {
+    "path": "lib\\features\\tasks\\presentation\\widgets\\task_options_sheet.dart",
+    "size": 8996
+  },
+  {
+    "path": "lib\\features\\tasks\\presentation\\widgets\\task_stats_bento.dart",
+    "size": 5427
+  },
+  {
+    "path": "lib\\features\\tasks\\presentation\\widgets\\task_subtasks_tab.dart",
+    "size": 7039
+  },
+  {
+    "path": "lib\\features\\workspaces\\domain\\workspace_taxonomy.dart",
+    "size": 1193
+  },
+  {
+    "path": "lib\\features\\workspaces\\domain\\entities\\workspace_models.dart",
+    "size": 880
+  },
+  {
+    "path": "lib\\features\\workspaces\\domain\\usecases\\workspace_usecases.dart",
+    "size": 2566
+  },
+  {
+    "path": "lib\\features\\workspaces\\presentation\\providers\\workspace_providers.dart",
+    "size": 3379
+  },
+  {
+    "path": "lib\\features\\workspaces\\presentation\\screens\\workspace_detail_screen.dart",
+    "size": 15148
+  },
+  {
+    "path": "lib\\features\\workspaces\\presentation\\screens\\workspace_list_screen.dart",
+    "size": 5251
+  },
+  {
+    "path": "lib\\features\\workspaces\\presentation\\widgets\\create_workspace_modal.dart",
+    "size": 16788
+  },
+  {
+    "path": "lib\\features\\workspaces\\presentation\\widgets\\workspace_card.dart",
+    "size": 4882
+  },
+  {
+    "path": "lib\\features\\workspaces\\presentation\\widgets\\workspace_options_sheet.dart",
+    "size": 4026
+  },
+  {
+    "path": "lib\\platform\\channels.dart",
+    "size": 525
+  },
+  {
+    "path": "lib\\platform\\dnd_channel.dart",
+    "size": 1441
+  },
+  {
+    "path": "lib\\platform\\overlay_channel.dart",
+    "size": 4480
+  },
+  {
+    "path": "lib\\platform\\share_channel.dart",
+    "size": 1875
+  },
+  {
+    "path": "lib\\platform\\speech_channel.dart",
+    "size": 4206
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260827-174906_AURA.png",
+    "size": 280372
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260827-174924_AURA.png",
+    "size": 133252
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260827-174926_AURA.png",
+    "size": 97313
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260827-174930_AURA.png",
+    "size": 94989
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260827-174935_AURA.png",
+    "size": 174078
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-013508_AURA.png",
+    "size": 172567
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-013523_AURA.png",
+    "size": 172257
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-013538_AURA.png",
+    "size": 166239
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-013706_AURA.png",
+    "size": 181044
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-013722_AURA.png",
+    "size": 203073
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-013725_AURA.png",
+    "size": 249827
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-013739_AURA.png",
+    "size": 82806
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-013748_AURA.png",
+    "size": 175231
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-013825_AURA.png",
+    "size": 121154
+  },
+  {
+    "path": "screenshots-by-ishan\\Screenshot_20260829-014509_AURA.png",
+    "size": 334157
+  },
+  {
+    "path": "test\\widget_test.dart",
+    "size": 398
+  },
+  {
+    "path": "test\\data\\llm_api_datasource_test.dart",
+    "size": 6095
+  },
+  {
+    "path": "test\\data\\rate_limiter_test.dart",
+    "size": 2509
+  },
+  {
+    "path": "test\\database\\app_database_test.dart",
+    "size": 3994
+  },
+  {
+    "path": "test\\domain\\day_cockpit_test.dart",
+    "size": 1946
+  },
+  {
+    "path": "test\\domain\\exact_alarm_diagnostics_test.dart",
+    "size": 440
+  },
+  {
+    "path": "test\\domain\\execute_ai_action_timed_test.dart",
+    "size": 5430
+  },
+  {
+    "path": "test\\domain\\execute_ai_action_usecase_test.dart",
+    "size": 5132
+  },
+  {
+    "path": "test\\domain\\greeting_test.dart",
+    "size": 1443
+  },
+  {
+    "path": "test\\domain\\local_intent_parser_test.dart",
+    "size": 2488
+  },
+  {
+    "path": "test\\domain\\notification_ids_test.dart",
+    "size": 2267
+  },
+  {
+    "path": "test\\domain\\offline_queue_processor_test.dart",
+    "size": 6457
+  },
+  {
+    "path": "test\\domain\\onboarding_gate_test.dart",
+    "size": 2373
+  },
+  {
+    "path": "test\\domain\\phase2_sorting_theme_test.dart",
+    "size": 4931
+  },
+  {
+    "path": "test\\domain\\recurrence_resolver_test.dart",
+    "size": 4182
+  },
+  {
+    "path": "test\\domain\\reminder_scheduling_service_test.dart",
+    "size": 10979
+  },
+  {
+    "path": "test\\domain\\workspace_router_test.dart",
+    "size": 3216
+  }
+]
