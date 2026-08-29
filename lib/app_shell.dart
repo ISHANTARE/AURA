@@ -94,7 +94,7 @@ class _AuraBottomNav extends StatelessWidget {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isSelected ? accent.withOpacity(0.12) : Colors.transparent,
+                          color: isSelected ? accent.withValues(alpha: 0.12) : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Icon(

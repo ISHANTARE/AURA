@@ -15,7 +15,8 @@
     <application
         android:label="AURA"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
 
         <!-- Main Flutter Activity -->
         <activity

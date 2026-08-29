@@ -131,7 +131,7 @@ class _FloatingCaptureOverlayScreenState extends ConsumerState<FloatingCaptureOv
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.black.withOpacity(0.6),
+        backgroundColor: Colors.black.withValues(alpha: 0.6),
         body: SafeArea(
           child: Stack(
             children: [
@@ -248,7 +248,7 @@ class _FloatingCaptureOverlayScreenState extends ConsumerState<FloatingCaptureOv
               width: 56, height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AuraColors.accentGreen.withOpacity(0.15),
+                color: AuraColors.accentGreen.withValues(alpha: 0.15),
               ),
               child: const Icon(LucideIcons.checkCircle2, size: 32, color: AuraColors.accentGreen),
             ),
@@ -364,7 +364,7 @@ class _AnimatedMicOrbState extends State<_AnimatedMicOrb> with SingleTickerProvi
                 height: ringRadius * 2,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: widget.accent.withOpacity(0.3), width: 1.5),
+                  border: Border.all(color: widget.accent.withValues(alpha: 0.3), width: 1.5),
                 ),
               ),
             Container(
@@ -372,9 +372,9 @@ class _AnimatedMicOrbState extends State<_AnimatedMicOrb> with SingleTickerProvi
               height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: widget.accent.withOpacity(0.15),
-                border: Border.all(color: widget.accent.withOpacity(0.6), width: 1.5),
-                boxShadow: [BoxShadow(color: widget.accent.withOpacity(0.25), blurRadius: 20, spreadRadius: 4)],
+                color: widget.accent.withValues(alpha: 0.15),
+                border: Border.all(color: widget.accent.withValues(alpha: 0.6), width: 1.5),
+                boxShadow: [BoxShadow(color: widget.accent.withValues(alpha: 0.25), blurRadius: 20, spreadRadius: 4)],
               ),
               child: const Icon(LucideIcons.mic, size: 24, color: Colors.white),
             ),
@@ -405,7 +405,7 @@ class _WaveformBar extends StatelessWidget {
           height: height.clamp(4.0, 32.0),
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: accent.withOpacity(0.4 + audioLevel * 0.6),
+            color: accent.withValues(alpha: 0.4 + audioLevel * 0.6),
             borderRadius: BorderRadius.circular(AuraRadius.full),
           ),
         );

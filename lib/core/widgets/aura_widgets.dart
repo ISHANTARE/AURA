@@ -46,7 +46,7 @@ class BentoCard extends StatelessWidget {
           width: 1.0,
         ),
         boxShadow: glow != null
-            ? [BoxShadow(color: glow.withOpacity(0.12), blurRadius: 16, spreadRadius: 0)]
+            ? [BoxShadow(color: glow.withValues(alpha: 0.12), blurRadius: 16, spreadRadius: 0)]
             : null,
       ),
       child: Material(
@@ -60,8 +60,8 @@ class BentoCard extends StatelessWidget {
                 }
               : null,
           borderRadius: BorderRadius.circular(borderRadius ?? AuraRadius.lg),
-          splashColor: accentColor.withOpacity(0.08),
-          highlightColor: accentColor.withOpacity(0.04),
+          splashColor: accentColor.withValues(alpha: 0.08),
+          highlightColor: accentColor.withValues(alpha: 0.04),
           child: Padding(
             padding: padding ?? const EdgeInsets.all(AuraSpacing.md),
             child: child,
@@ -99,10 +99,10 @@ class GlassmorphicContainer extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
         child: Container(
           decoration: BoxDecoration(
-            color: AuraColors.bgBase.withOpacity(0.85),
+            color: AuraColors.bgBase.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(borderRadius ?? AuraRadius.xl),
             border: Border.all(
-              color: borderColor ?? Colors.white.withOpacity(0.08),
+              color: borderColor ?? Colors.white.withValues(alpha: 0.08),
               width: 1,
             ),
           ),
@@ -159,9 +159,9 @@ class AuraButton extends StatelessWidget {
         fg = accent;
         border = accent;
       case AuraButtonVariant.destructive:
-        bg = AuraColors.accentRed.withOpacity(0.12);
+        bg = AuraColors.accentRed.withValues(alpha: 0.12);
         fg = AuraColors.accentRed;
-        border = AuraColors.accentRed.withOpacity(0.4);
+        border = AuraColors.accentRed.withValues(alpha: 0.4);
     }
 
     final content = isLoading
@@ -252,7 +252,7 @@ class AuraChip extends StatelessWidget {
           vertical: AuraSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: selected ? chipColor.withOpacity(0.15) : Colors.transparent,
+          color: selected ? chipColor.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(AuraRadius.full),
           border: Border.all(
             color: selected ? chipColor : AuraColors.border,
@@ -297,9 +297,9 @@ class SyncStatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AuraRadius.full),
-        border: Border.all(color: color.withOpacity(0.4), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -348,9 +348,9 @@ class PriorityBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AuraRadius.xs),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Text(
         priority.toUpperCase(),

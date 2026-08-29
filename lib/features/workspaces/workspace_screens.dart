@@ -147,11 +147,11 @@ class _WorkspaceCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final countAsync = ref.watch(workspaceItemCountProvider(workspace.id));
-    final hexStr = workspace.colorHex ?? '#C8FF00';
+    final hexStr = workspace.colorHex;
     final color = Color(int.parse(hexStr.replaceFirst('#', '0xFF')));
 
     return BentoCard(
-      borderColor: color.withOpacity(0.3),
+      borderColor: color.withValues(alpha: 0.3),
       onTap: () => context.push('/workspace/${workspace.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,10 +161,10 @@ class _WorkspaceCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AuraRadius.sm),
                 ),
-                child: Icon(_iconFor(workspace.iconKey ?? 'folder'), size: 16, color: color),
+                child: Icon(_iconFor(workspace.iconKey), size: 16, color: color),
               ),
               const Spacer(),
               PopupMenuButton<String>(
@@ -333,7 +333,7 @@ class WorkspaceDetailScreen extends ConsumerWidget {
           );
         }
 
-        final hexStr = ws.colorHex ?? '#C8FF00';
+        final hexStr = ws.colorHex;
         final color = Color(int.parse(hexStr.replaceFirst('#', '0xFF')));
 
         return Scaffold(
@@ -345,7 +345,7 @@ class WorkspaceDetailScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(AuraSpacing.md),
                   decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: color.withOpacity(0.3), width: 1)),
+                    border: Border(bottom: BorderSide(color: color.withValues(alpha: 0.3), width: 1)),
                   ),
                   child: Row(
                     children: [
@@ -356,7 +356,7 @@ class WorkspaceDetailScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.15),
+                          color: color.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(AuraRadius.sm),
                         ),
                         child: Icon(LucideIcons.folder, size: 18, color: color),
@@ -383,7 +383,7 @@ class WorkspaceDetailScreen extends ConsumerWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(LucideIcons.inbox, size: 40, color: AuraColors.textMuted.withOpacity(0.3)),
+                              Icon(LucideIcons.inbox, size: 40, color: AuraColors.textMuted.withValues(alpha: 0.3)),
                               const SizedBox(height: AuraSpacing.md),
                               Text('No tasks in this workspace', style: AuraTypography.body.copyWith(color: AuraColors.textMuted)),
                               const SizedBox(height: AuraSpacing.md),
@@ -456,7 +456,7 @@ class _EmptyWorkspacesState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.folderPlus, size: 48, color: AuraColors.textMuted.withOpacity(0.3)),
+          Icon(LucideIcons.folderPlus, size: 48, color: AuraColors.textMuted.withValues(alpha: 0.3)),
           const SizedBox(height: AuraSpacing.md),
           Text('No workspaces yet', style: AuraTypography.body.copyWith(color: AuraColors.textMuted)),
           const SizedBox(height: AuraSpacing.md),

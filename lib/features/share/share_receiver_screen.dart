@@ -67,7 +67,7 @@ class _ShareReceiverScreenState extends ConsumerState<ShareReceiverScreen> {
     final accent = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.6),
+      backgroundColor: Colors.black.withValues(alpha: 0.6),
       body: SafeArea(
         child: Center(
           child: Padding(

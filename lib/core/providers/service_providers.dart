@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../database/app_database.dart';
 import '../../features/capture/domain/execute_ai_action_usecase.dart';
 import '../../features/capture/services/offline_queue_processor.dart';
 import '../../features/reminders/services/dnd_service.dart';

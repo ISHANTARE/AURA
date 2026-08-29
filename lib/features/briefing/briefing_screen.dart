@@ -193,7 +193,7 @@ class MorningBriefingScreen extends ConsumerWidget {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: AuraSpacing.xs),
                             child: BentoCard(
-                              borderColor: isAlarm ? accent.withOpacity(0.4) : AuraColors.accentRed.withOpacity(0.4),
+                              borderColor: isAlarm ? accent.withValues(alpha: 0.4) : AuraColors.accentRed.withValues(alpha: 0.4),
                               padding: const EdgeInsets.all(AuraSpacing.sm),
                               onTap: () => context.push('/task/${item.id}'),
                               child: Row(

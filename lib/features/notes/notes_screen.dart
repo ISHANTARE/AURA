@@ -448,7 +448,7 @@ class _EmptyNotesView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.fileText, size: 48, color: AuraColors.textMuted.withOpacity(0.3)),
+          Icon(LucideIcons.fileText, size: 48, color: AuraColors.textMuted.withValues(alpha: 0.3)),
           const SizedBox(height: AuraSpacing.md),
           Text('No notes found', style: AuraTypography.body.copyWith(color: AuraColors.textMuted)),
           const SizedBox(height: AuraSpacing.md),

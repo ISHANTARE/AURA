@@ -87,7 +87,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _finish() async {
     final dao = ref.read(workspaceDaoProvider);
-    final uuid = const Uuid();
+    const uuid = Uuid();
     var colorIndex = 0;
 
     for (final ws in _seedWorkspaces) {
@@ -329,13 +329,13 @@ class _PermissionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = Theme.of(context).colorScheme.primary;
     return BentoCard(
-      borderColor: granted ? AuraColors.accentGreen.withOpacity(0.4) : AuraColors.border,
+      borderColor: granted ? AuraColors.accentGreen.withValues(alpha: 0.4) : AuraColors.border,
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: (granted ? AuraColors.accentGreen : accent).withOpacity(0.12),
+              color: (granted ? AuraColors.accentGreen : accent).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AuraRadius.sm),
             ),
             child: Icon(icon, size: 18, color: granted ? AuraColors.accentGreen : accent),
@@ -503,10 +503,10 @@ class _PulsingOrbState extends State<_PulsingOrb> with SingleTickerProviderState
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
-            colors: [widget.color, widget.color.withOpacity(0.5)],
+            colors: [widget.color, widget.color.withValues(alpha: 0.5)],
           ),
           boxShadow: [
-            BoxShadow(color: widget.color.withOpacity(0.4), blurRadius: 32, spreadRadius: 8),
+            BoxShadow(color: widget.color.withValues(alpha: 0.4), blurRadius: 32, spreadRadius: 8),
           ],
         ),
       ),

@@ -172,7 +172,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: accent.withOpacity(0.15)),
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: accent.withValues(alpha: 0.15)),
                   child: Center(
                     child: Text(
                       _nameController.text.isNotEmpty ? _nameController.text[0].toUpperCase() : 'A',
@@ -214,7 +214,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isSelected ? Color(acc.$3).withOpacity(0.15) : Colors.transparent,
+                          color: isSelected ? Color(acc.$3).withValues(alpha: 0.15) : Colors.transparent,
                           borderRadius: BorderRadius.circular(AuraRadius.full),
                           border: Border.all(
                             color: isSelected ? Color(acc.$3) : AuraColors.border,

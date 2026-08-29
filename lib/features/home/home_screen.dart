@@ -172,8 +172,8 @@ class _HomeHeader extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: accent.withOpacity(0.15),
-              border: Border.all(color: accent.withOpacity(0.4), width: 1.5),
+              color: accent.withValues(alpha: 0.15),
+              border: Border.all(color: accent.withValues(alpha: 0.4), width: 1.5),
             ),
             child: Center(
               child: Text(
@@ -289,7 +289,7 @@ class _OverdueAlertCard extends ConsumerWidget {
       data: (items) {
         if (items.isEmpty) return const _EmptyOverdueBento();
         return BentoCard(
-          borderColor: AuraColors.accentRed.withOpacity(0.5),
+          borderColor: AuraColors.accentRed.withValues(alpha: 0.5),
           glowColor: AuraColors.accentRed,
           onTap: () => _showOverdueTriage(context, ref, items),
           child: Column(
@@ -347,7 +347,7 @@ class _EmptyOverdueBento extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BentoCard(
-      borderColor: AuraColors.accentGreen.withOpacity(0.3),
+      borderColor: AuraColors.accentGreen.withValues(alpha: 0.3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -568,7 +568,7 @@ class _AuraDateNavigatorState extends ConsumerState<_AuraDateNavigator> {
                     width: 36,
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     decoration: BoxDecoration(
-                      color: isSelected ? accent.withOpacity(0.15) : Colors.transparent,
+                      color: isSelected ? accent.withValues(alpha: 0.15) : Colors.transparent,
                       borderRadius: BorderRadius.circular(AuraRadius.md),
                       border: isToday
                           ? Border.all(color: accent, width: 1.5)
@@ -707,7 +707,7 @@ class _TimedAgendaItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: accent.withOpacity(0.1),
+                color: accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AuraRadius.xs),
               ),
               child: Text(
@@ -805,7 +805,7 @@ class _EmptyDayState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.sunMedium, size: 40, color: AuraColors.textMuted.withOpacity(0.3)),
+          Icon(LucideIcons.sunMedium, size: 40, color: AuraColors.textMuted.withValues(alpha: 0.3)),
           const SizedBox(height: AuraSpacing.md),
           Text(
             'Nothing scheduled for this day',

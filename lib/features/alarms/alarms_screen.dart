@@ -84,9 +84,9 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen> with SingleTickerPr
                 child: TabBar(
                   controller: _tabController,
                   indicator: BoxDecoration(
-                    color: accent.withOpacity(0.15),
+                    color: accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AuraRadius.sm),
-                    border: Border.all(color: accent.withOpacity(0.4)),
+                    border: Border.all(color: accent.withValues(alpha: 0.4)),
                   ),
                   labelColor: accent,
                   unselectedLabelColor: AuraColors.textMuted,
@@ -148,7 +148,7 @@ class _UpcomingList extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(LucideIcons.bellOff, size: 48, color: AuraColors.textMuted.withOpacity(0.3)),
+            Icon(LucideIcons.bellOff, size: 48, color: AuraColors.textMuted.withValues(alpha: 0.3)),
             const SizedBox(height: AuraSpacing.md),
             Text('No upcoming reminders', style: AuraTypography.body.copyWith(color: AuraColors.textMuted)),
             const SizedBox(height: AuraSpacing.md),
@@ -189,7 +189,7 @@ class _ReminderCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: AuraSpacing.xs),
       child: BentoCard(
-        borderColor: isOverdue ? AuraColors.accentRed.withOpacity(0.4) : AuraColors.border,
+        borderColor: isOverdue ? AuraColors.accentRed.withValues(alpha: 0.4) : AuraColors.border,
         onTap: () => context.push('/task/${item.id}'),
         child: Row(
           children: [
@@ -242,7 +242,7 @@ class _AlarmList extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(LucideIcons.alarmClock, size: 48, color: AuraColors.textMuted.withOpacity(0.3)),
+            Icon(LucideIcons.alarmClock, size: 48, color: AuraColors.textMuted.withValues(alpha: 0.3)),
             const SizedBox(height: AuraSpacing.md),
             Text('No alarms set', style: AuraTypography.body.copyWith(color: AuraColors.textMuted)),
           ],
