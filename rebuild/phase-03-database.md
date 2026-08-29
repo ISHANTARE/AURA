@@ -1,7 +1,7 @@
 # Phase 3: Drift Database & Persistence Layer
 
 > **Authority Document:** [`overhaul-docs/03-database-schema.md`](file:///c:/Users/Admin/VIT_Projects/AURA/overhaul-docs/03-database-schema.md)  
-> **Status:** Pending Execution  
+> **Status:** Complete (Verified)  
 
 ---
 
@@ -17,19 +17,19 @@ Phase 3 builds AURA's local-first single source of truth: 11 Drift tables under 
 **Objective:** Define all 11 database tables with exact column types, nullabilities, and defaults.
 
 #### Tasks:
-- [ ] **Task 3.1.1: Workspaces & Sections Tables**
+- [x] **Task 3.1.1: Workspaces & Sections Tables**
   - `Workspaces` (`id` UUID, `name`, `color_hex` default `#C8FF00`, `icon_key`, `sort_order`, `created_by`, `is_archived`, `created_at`, `updated_at`, `deleted_at`).
   - `WorkspaceSections` (`id`, `workspace_id` FK, `name`, `sort_order`, `created_by`, `is_archived`, `created_at`, `updated_at`, `deleted_at`).
-- [ ] **Task 3.1.2: Unified Items Table (`items`)**
+- [x] **Task 3.1.2: Unified Items Table (`items`)**
   - `id` UUID PK, `workspace_id` FK, `section_id` FK nullable, `title`, `notes` nullable.
   - `kind` ('task'|'event'|'reminder'|'alarm'|'note'), `category` ('academic'|'exam'|'personal'|'project'|'meeting'|'workout'|'habit'|'general').
   - `priority` ('high'|'medium'|'low'), `is_completed`, `completed_at` nullable.
   - `scheduled_date` (YYYY-MM-DD), `scheduled_time` (HH:MM), `deadline_date`, `deadline_time`, `duration_minutes`.
   - `fire_at` (epoch ms), `recurrence_rule`, `is_recurring`, `sound_uri` (v4 nullable), `parent_id` (v3 FK nullable), `sort_order`, `created_at`, `updated_at`, `deleted_at`.
-- [ ] **Task 3.1.3: Scheduling & Notes Tables**
+- [x] **Task 3.1.3: Scheduling & Notes Tables**
   - `RemindersSchedule` (`id`, `item_id` FK, `trigger_time` epoch ms, `offset_minutes`, `status`, `created_at`).
   - `Notes` (`id`, `workspace_id` FK nullable, `item_id` FK nullable, `title`, `body`, `tags`, `is_pinned`, `created_at`, `updated_at`, `deleted_at`).
-- [ ] **Task 3.1.4: Logs, Queues & Sharing Tables**
+- [x] **Task 3.1.4: Logs, Queues & Sharing Tables**
   - `SharedContents` (`id`, `mime_type`, `raw_text`, `cached_file_path`, `ocr_extracted_text`, `source_app`, `status`, `created_at`).
   - `NotificationLogs` (`id`, `item_id` FK nullable, `notification_id` int, `channel_id`, `fired_at`, `action_taken`, `action_timestamp`).
   - `AiActionsLogs` (`id`, `raw_transcript`, `intent_detected`, `confidence`, `executed_action`, `success`, `error_message`, `created_at`).
@@ -43,7 +43,7 @@ Phase 3 builds AURA's local-first single source of truth: 11 Drift tables under 
 **Objective:** Implement `lib/database/app_database.dart` with WAL, foreign keys, and migration strategy.
 
 #### Tasks:
-- [ ] **Task 3.2.1: AppDatabase Setup & Pragmas**
+- [x] **Task 3.2.1: AppDatabase Setup & Pragmas**
   - Configure `schemaVersion = 4`.
   - In `beforeOpen`:
     ```dart
@@ -51,7 +51,7 @@ Phase 3 builds AURA's local-first single source of truth: 11 Drift tables under 
     await customStatement('PRAGMA journal_mode = WAL');
     await customStatement('PRAGMA cache_size = 2000');
     ```
-- [ ] **Task 3.2.2: Additive Migration Strategy (v1 $\rightarrow$ v4)**
+- [x] **Task 3.2.2: Additive Migration Strategy (v1 $\rightarrow$ v4)**
   - Implement `onCreate`: `await m.createAll()`.
   - Implement `onUpgrade`:
     - `from < 2`: create missing auxiliary tables.
@@ -64,18 +64,18 @@ Phase 3 builds AURA's local-first single source of truth: 11 Drift tables under 
 **Objective:** Implement reactive Drift DAOs for all domain operations.
 
 #### Tasks:
-- [ ] **Task 3.3.1: ItemDao**
+- [x] **Task 3.3.1: ItemDao**
   - CRUD operations with soft-delete filtering (`deleted_at IS NULL`).
   - Streams: `watchAllActiveItems()`, `watchTodayItems(date)`, `watchOverdueItems(now)`, `watchItemsByWorkspace(workspaceId)`.
   - Cascade soft-delete for subtasks.
-- [ ] **Task 3.3.2: WorkspaceDao & SectionDao**
+- [x] **Task 3.3.2: WorkspaceDao & SectionDao**
   - CRUD operations for workspaces and sections.
   - Cascade soft-delete: Workspace $\rightarrow$ Sections $\rightarrow$ Items.
-- [ ] **Task 3.3.3: NotificationDao**
+- [x] **Task 3.3.3: NotificationDao**
   - Log notification dispatches, actions, and DND queue entries.
-- [ ] **Task 3.3.4: OfflineQueueDao**
+- [x] **Task 3.3.4: OfflineQueueDao**
   - Enqueue actions, retrieve FIFO pending items, update retry counts and status.
-- [ ] **Task 3.3.5: SharedContentDao**
+- [x] **Task 3.3.5: SharedContentDao**
   - Ingest shared items, update OCR results, cleanup entries older than 24 hours.
 
 ---
@@ -84,10 +84,10 @@ Phase 3 builds AURA's local-first single source of truth: 11 Drift tables under 
 **Objective:** Run `build_runner` and pass the comprehensive database test suite.
 
 #### Tasks:
-- [ ] **Task 3.4.1: Drift Code Generation**
+- [x] **Task 3.4.1: Drift Code Generation**
   - Execute `dart run build_runner build --delete-conflicting-outputs`.
   - Verify `app_database.g.dart` generated without errors.
-- [ ] **Task 3.4.2: In-Memory Database Tests**
+- [x] **Task 3.4.2: In-Memory Database Tests**
   - Implement `test/database/app_database_test.dart` (in-memory SQLite, Foreign Key validation, v1 $\rightarrow$ v4 migration data preservation, soft-delete cascading).
   - Execute `flutter test test/database/app_database_test.dart`.
 
