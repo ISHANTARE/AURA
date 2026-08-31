@@ -1,120 +1,221 @@
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 import '../app_database.dart';
-import '../tables/items.dart';
-import '../tables/reminders_schedule.dart';
-import '../tables/workspaces.dart';
 
 part 'item_dao.g.dart';
 
-/// DAO managing Unified Items and Reminders Schedule operations.
-/// Reference: overhaul-docs/03-database-schema.md Section 3
-@DriftAccessor(tables: [Items, RemindersSchedule, Workspaces])
+@DriftAccessor(tables: [Items, RemindersSchedule])
 class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
   ItemDao(super.db);
 
-  /// Streams all active, non-deleted items ordered by creation date descending.
-  Stream<List<Item>> watchAllActive() {
+  // ── Queries ─────────────────────────────────────────────────────────────────
+
+  /// Get single item by ID
+  Future<Item?> getById(String id) =>
+      (select(items)..where((t) => t.id.equals(id))).getSingleOrNull();
+
+  /// Watch single item by ID
+  Stream<Item?> watchById(String id) =>
+      (select(items)..where((t) => t.id.equals(id))).watchSingleOrNull();
+
+  /// Watch all active (non-deleted) items
+  Stream<List<Item>> watchAllActive() =>
+      (select(items)
+        ..where((t) => t.deletedAt.isNull())
+        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+      .watch();
+
+  /// Get all active (non-deleted) items
+  Future<List<Item>> getAllActive() =>
+      (select(items)
+        ..where((t) => t.deletedAt.isNull())
+        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+      .get();
+
+  /// Watch items by Category ('alarm' | 'reminder')
+  Stream<List<Item>> watchByCategory(String category) =>
+      (select(items)
+        ..where((t) => t.category.equals(category) & t.deletedAt.isNull())
+        ..orderBy([(t) => OrderingTerm.asc(t.fireAt)]))
+      .watch();
+
+  /// Watch items by Kind ('generic' | 'task' | 'event')
+  Stream<List<Item>> watchByKind(String kind) =>
+      (select(items)
+        ..where((t) => t.kind.equals(kind) & t.deletedAt.isNull())
+        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+      .watch();
+
+  /// Watch items by Workspace ID
+  Stream<List<Item>> watchByWorkspace(String workspaceId) =>
+      (select(items)
+        ..where((t) => t.workspaceId.equals(workspaceId) & t.deletedAt.isNull())
+        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+      .watch();
+
+  /// Watch urgent items (High priority pending tasks/reminders)
+  Stream<List<Item>> watchUrgent() =>
+      (select(items)
+        ..where((t) =>
+            t.priority.equals('high') &
+            t.status.equals('pending') &
+            t.deletedAt.isNull())
+        ..orderBy([(t) => OrderingTerm.asc(t.deadline)]))
+      .watch();
+
+  /// Watch today's focus items: pending items due today (or created today).
+  ///
+  /// [now] is injectable for tests; callers should re-subscribe when the day
+  /// rolls over (see dayRefreshProvider) because drift watches do not react
+  /// to wall-clock changes.
+  ///
+  /// Bounded on BOTH ends: deadline/fireAt/startTime must fall within today,
+  /// so months-old never-completed items no longer accumulate forever here —
+  /// they surface through the overdue stat and urgent list instead.
+  Stream<List<Item>> watchTodayFocus({DateTime? now}) {
+    final effectiveNow = now ?? DateTime.now();
+    final startOfDay = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day).millisecondsSinceEpoch;
+    final endOfDay = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day, 23, 59, 59).millisecondsSinceEpoch;
+
     return (select(items)
-          ..where((t) => t.deletedAt.isNull())
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
-        .watch();
+      ..where((t) =>
+          t.deletedAt.isNull() &
+          t.status.equals('pending') &
+          (
+            (t.deadline.isNotNull() & t.deadline.isBiggerOrEqualValue(startOfDay) & t.deadline.isSmallerOrEqualValue(endOfDay)) |
+            (t.fireAt.isNotNull() & t.fireAt.isBiggerOrEqualValue(startOfDay) & t.fireAt.isSmallerOrEqualValue(endOfDay)) |
+            (t.startTime.isNotNull() & t.startTime.isBiggerOrEqualValue(startOfDay) & t.startTime.isSmallerOrEqualValue(endOfDay)) |
+            (t.createdAt.isBiggerOrEqualValue(startOfDay) & t.createdAt.isSmallerOrEqualValue(endOfDay))
+          )
+      )
+      ..orderBy([
+        (t) => OrderingTerm.asc(coalesce([t.fireAt, t.startTime, t.deadline, t.createdAt]))
+      ]))
+    .watch();
   }
 
-  /// Streams today's items: active items scheduled or due on [dateFormatted] (or matching epoch bounds).
-  Stream<List<Item>> watchTodayItems(int startOfDayMs, int endOfDayMs) {
-    return (select(items)
-          ..where((t) =>
-              t.deletedAt.isNull() &
-              ((t.fireAt.isBiggerOrEqualValue(startOfDayMs) &
-                      t.fireAt.isSmallerOrEqualValue(endOfDayMs)) |
-                  (t.deadline.isBiggerOrEqualValue(startOfDayMs) &
-                      t.deadline.isSmallerOrEqualValue(endOfDayMs))))
-          ..orderBy([(t) => OrderingTerm.asc(t.fireAt)]))
-        .watch();
-  }
+  /// Search items by title, notes body, or AI transcript
+  Future<List<Item>> search(String query) =>
+      (select(items)
+        ..where((t) =>
+            (t.title.like('%$query%') |
+             t.notes.like('%$query%') |
+             t.aiTranscript.like('%$query%')) &
+            t.deletedAt.isNull())
+        ..limit(30))
+      .get();
 
-  /// Streams active overdue items where deadline has passed.
-  Stream<List<Item>> watchOverdue(int nowMs) {
-    return (select(items)
-          ..where((t) =>
-              t.deletedAt.isNull() &
-              t.deadline.isSmallerThanValue(nowMs) &
-              t.status.isNotValue('completed'))
-          ..orderBy([(t) => OrderingTerm.asc(t.deadline)]))
-        .watch();
-  }
+  // ── Sub-Reminders Schedule Queries ─────────────────────────────────────────
 
-  /// Streams active alarms.
-  Stream<List<Item>> watchAlarms() {
-    return (select(items)
-          ..where(
-              (t) => t.deletedAt.isNull() & t.category.equals('alarm'))
-          ..orderBy([(t) => OrderingTerm.asc(t.fireAt)]))
-        .watch();
-  }
+  /// Get sub-reminders for an item
+  Future<List<ReminderSchedule>> getRemindersForItem(String itemId) =>
+      (select(remindersSchedule)..where((r) => r.itemId.equals(itemId))).get();
 
-  /// Streams subtasks of a parent item.
-  Stream<List<Item>> watchSubtasks(String parentId) {
-    return (select(items)
-          ..where(
-              (t) => t.deletedAt.isNull() & t.parentId.equals(parentId))
-          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
-        .watch();
-  }
+  /// Watch sub-reminders for an item
+  Stream<List<ReminderSchedule>> watchRemindersForItem(String itemId) =>
+      (select(remindersSchedule)..where((r) => r.itemId.equals(itemId))).watch();
 
-  /// Streams active items within a specific workspace.
-  Stream<List<Item>> watchItemsByWorkspace(String workspaceId) {
-    return (select(items)
-          ..where((t) =>
-              t.deletedAt.isNull() & t.workspaceId.equals(workspaceId))
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
-        .watch();
-  }
+  // ── Mutators ────────────────────────────────────────────────────────────────
 
-  /// Retrieves an item by its UUID.
-  Future<Item?> getItemById(String id) {
-    return (select(items)..where((t) => t.id.equals(id))).getSingleOrNull();
-  }
+  /// Insert single item
+  Future<int> insertItem(ItemsCompanion companion) =>
+      into(items).insert(companion);
 
-  /// Inserts a new item.
-  Future<int> insertItem(ItemsCompanion item) {
-    return into(items).insert(item);
-  }
+  /// Insert or update single item on primary key conflict
+  Future<int> upsertItem(ItemsCompanion companion) =>
+      into(items).insertOnConflictUpdate(companion);
 
-  /// Updates an existing item.
-  Future<bool> updateItem(ItemsCompanion item) {
-    return update(items).replace(item);
-  }
-
-  /// Soft deletes an item and cascades soft-delete to its subtasks.
-  Future<void> softDeleteItem(String id, int nowMs) async {
+  /// Insert item along with optional sub-reminders inside a transaction
+  Future<void> insertItemWithReminders(
+    ItemsCompanion item,
+    List<RemindersScheduleCompanion> reminders,
+  ) async {
     await transaction(() async {
-      await (update(items)..where((t) => t.id.equals(id))).write(
-        ItemsCompanion(deletedAt: Value(nowMs), updatedAt: Value(nowMs)),
-      );
-      await (update(items)..where((t) => t.parentId.equals(id))).write(
-        ItemsCompanion(deletedAt: Value(nowMs), updatedAt: Value(nowMs)),
-      );
+      await into(items).insert(item);
+      for (final r in reminders) {
+        await into(remindersSchedule).insert(r);
+      }
     });
   }
 
-  /// Marks an item completed or pending.
-  Future<void> completeItem(String id, bool isCompleted, int nowMs) async {
-    await (update(items)..where((t) => t.id.equals(id))).write(
+  /// Replace entire item
+  Future<bool> updateItem(ItemsCompanion companion) =>
+      update(items).replace(companion);
+
+  /// Partial update of specified fields on an item
+  Future<int> updateItemPartial(ItemsCompanion companion) {
+    return (update(items)..where((t) => t.id.equals(companion.id.value))).write(companion);
+  }
+
+  /// Soft delete item by ID
+  Future<int> softDelete(String id) async {
+    final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+    return (update(items)..where((t) => t.id.equals(id))).write(
       ItemsCompanion(
-        status: Value(isCompleted ? 'completed' : 'pending'),
-        updatedAt: Value(nowMs),
+        deletedAt: Value(nowEpoch),
+        updatedAt: Value(nowEpoch),
       ),
     );
   }
 
-  /// Searches items by title.
-  Future<List<Item>> search(String query) {
-    return (select(items)
-          ..where((t) =>
-              t.deletedAt.isNull() & t.title.contains(query))
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
-        .get();
+  /// Update item status by ID ('pending' | 'completed')
+  Future<int> updateStatus(String id, String status) async {
+    final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+    return (update(items)..where((t) => t.id.equals(id))).write(
+      ItemsCompanion(
+        status: Value(status),
+        updatedAt: Value(nowEpoch),
+      ),
+    );
   }
+
+  /// Watch subtasks for a given parent item ID
+  Stream<List<Item>> watchSubtasks(String parentId) =>
+      (select(items)
+        ..where((t) => t.parentId.equals(parentId) & t.deletedAt.isNull())
+        ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+      .watch();
+
+  /// Update workspace ID for an item
+  Future<int> updateWorkspace(String id, String workspaceId) async {
+    final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+    return (update(items)..where((t) => t.id.equals(id))).write(
+      ItemsCompanion(
+        workspaceId: Value(workspaceId),
+        updatedAt: Value(nowEpoch),
+      ),
+    );
+  }
+
+  /// Duplicate an existing item
+  Future<String?> duplicateItem(String id) async {
+    final original = await getById(id);
+    if (original == null) return null;
+    final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+    // UUID primary key — title-hash-derived IDs collided when the same item
+    // was duplicated twice within one millisecond.
+    final newId = const Uuid().v4();
+    final companion = ItemsCompanion(
+      id: Value(newId),
+      title: Value('${original.title} (Copy)'),
+      category: Value(original.category),
+      kind: Value(original.kind),
+      status: const Value('pending'),
+      priority: Value(original.priority),
+      notes: Value(original.notes),
+      workspaceId: Value(original.workspaceId),
+      parentId: Value(original.parentId),
+      fireAt: Value(original.fireAt),
+      deadline: Value(original.deadline),
+      createdAt: Value(nowEpoch),
+      updatedAt: Value(nowEpoch),
+    );
+    await insertItem(companion);
+    return newId;
+  }
+
+  /// Hard delete item by ID
+  Future<int> hardDelete(String id) =>
+      (delete(items)..where((t) => t.id.equals(id))).go();
 }

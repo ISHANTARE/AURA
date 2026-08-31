@@ -1,0 +1,218 @@
+:root {
+  --bg-main: #07080B;
+  --bg-card: #13151C;
+  --bg-elevated: #1C1F2B;
+  --border: #2A2D3E;
+  --text-primary: #F0F0F5;
+  --text-secondary: #8A8EA8;
+  --text-muted: #4A4E6A;
+  --accent-indigo: #7B6FF0;
+  --accent-cyan: #22D3EE;
+  --accent-purple: #C084FC;
+  --accent-orange: #FF9966;
+  --accent-rose: #F472B6;
+  --accent-red: #FF5C72;
+  --accent-green: #4ADE80;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  line-height: 1.5;
+  padding-bottom: 60px;
+}
+
+/* Header Banner */
+.gallery-header {
+  background: linear-gradient(135deg, #1A1730 0%, #0D0F14 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 32px 24px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(123, 111, 240, 0.15);
+  border: 1px solid var(--accent-indigo);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-indigo);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-indigo);
+  box-shadow: 0 0 8px var(--accent-indigo);
+}
+
+.gallery-header h1 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+
+.gallery-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  max-width: 680px;
+  margin: 0 auto 16px auto;
+}
+
+/* Category Filter Bar */
+.filter-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.tab-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover, .tab-btn.active {
+  background: var(--accent-indigo);
+  color: #FFFFFF;
+  border-color: var(--accent-indigo);
+  box-shadow: 0 4px 14px rgba(123, 111, 240, 0.35);
+}
+
+/* Screen Grid Layout */
+.gallery-container {
+  max-width: 1400px;
+  margin: 40px auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 36px;
+}
+
+.screen-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.screen-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(123, 111, 240, 0.6);
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.screen-number {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent-indigo);
+  letter-spacing: 0.5px;
+}
+
+.screen-tag {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.card-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.mockup-wrapper {
+  background: #000000;
+  border-radius: 28px;
+  padding: 8px;
+  border: 2px solid var(--border);
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.8);
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mockup-wrapper svg, .mockup-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 22px;
+}
+
+.spec-list {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  list-style: none;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.spec-list li {
+  margin-bottom: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.spec-list li:last-child {
+  margin-bottom: 0;
+}
+
+.spec-list li strong {
+  color: var(--text-primary);
+}
+
+.bullet-dot {
+  color: var(--accent-indigo);
+  font-weight: bold;
+}

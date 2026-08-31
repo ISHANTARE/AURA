@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURA — Complete UI/UX Visual Specification</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Gallery Header -->
+  <header class="gallery-header">
+    <div class="brand-badge">
+      <span class="brand-dot"></span>
+      AURA VISUAL DESIGN SYSTEM
+    </div>
+    <h1>AURA UI/UX Visual Blueprint &amp; Specs</h1>
+    <p>
+      Pixel-accurate visual guides for all core views, overlays, bottom sheets, and theme variations. Clean Bento layout with 2-part stats and reactive theme accents.
+    </p>
+
+    <div class="filter-tabs">
+      <button class="tab-btn active" onclick="filterScreens('all')">All Screens (9)</button>
+      <button class="tab-btn" onclick="filterScreens('core')">Core Bento &amp; Home</button>
+      <button class="tab-btn" onclick="filterScreens('overlays')">Overlays &amp; Sheets</button>
+      <button class="tab-btn" onclick="filterScreens('domains')">Dedicated Domains</button>
+      <button class="tab-btn" onclick="filterScreens('themes')">Theme &amp; Settings</button>
+    </div>
+  </header>
+
+  <!-- Gallery Grid Container -->
+  <main class="gallery-container">
+
+    <!-- 01: Home Screen Bento View -->
+    <div class="screen-card" data-category="core">
+      <div class="card-meta">
+        <span class="screen-number">SCREEN 01</span>
+        <span class="screen-tag">Primary Landing</span>
+      </div>
+      <h2 class="card-title">Home Screen Bento (Clean 2-Part Stats)</h2>
+      <p class="card-desc">
+        Restored clean Bento layout with split stats (Today's Tasks vs Overdue Alert), Urgent deadlines cell (60%), Glowing Voice Orb cell (40%), and Today's Focus task list.
+      </p>
+      <div class="mockup-wrapper">
+        <img src="01_home_screen.svg" alt="Home Screen Bento">
+      </div>
+      <ul class="spec-list">
+        <li><span class="bullet-dot">•</span> <strong>Header:</strong> Time-aware greeting, date, sync badge, search &amp; settings.</li>
+        <li><span class="bullet-dot">•</span> <strong>2-Part Stats:</strong> Left (Pending/Done progress) + Right (Overdue alert).</li>
+        <li><span class="bullet-dot">•</span> <strong>Bento Grid:</strong> Urgent deadlines + quick voice capture Orb.</li>
+        <li><span class="bullet-dot">•</span> <strong>Clean Focus:</strong> No cluttered alarms/notes/workspaces on home.</li>
+      </ul>
+    </div>
+
+    <!-- 02: Voice Capture Overlay -->
+    <div class="screen-card" data-category="overlays">
+      <div class="card-meta">
+        <span class="screen-number">SCREEN 02</span>
+        <span class="screen-tag">Voice &amp; AI Capture</span>
+      </div>
+      <h2 class="card-title">Voice Capture &amp; AI Intent Modal</h2>
+      <p class="card-desc">
+        Floating voice capture overlay with pulsing multi-layer glowing orb, real-time speech transcription bubble, and structured AI intent preview with confirm CTA.
+      </p>
+      <div class="mockup-wrapper">
+        <img src="02_voice_capture_overlay.svg" alt="Voice Capture Overlay">
+      </div>
+      <ul class="spec-list">
+        <li><span class="bullet-dot">•</span> <strong>Pulsing Orb:</strong> Indigo/Purple gradient with concentric waveform rings.</li>
+        <li><span class="bullet-dot">•</span> <strong>Transcription:</strong> Live STT feedback with pulsing listening cursor.</li>
+        <li><span class="bullet-dot">•</span> <strong>AI Intent Box:</strong> Extracted title, workspace, deadline, and confidence badge.</li>
+        <li><span class="bullet-dot">•</span> <strong>Human-in-the-Loop:</strong> Explicit confirm button before saving to DB.</li>
+      </ul>
+    </div>
+
+    <!-- 03: Task Detail & Edit Sheet -->
+    <div class="screen-card" data-category="overlays">
+      <div class="card-meta">
+        <span class="screen-number">SCREEN 03</span>
+        <span class="screen-tag">Bottom Sheet</span>
+      </div>
+      <h2 class="card-title">Task Detail &amp; Manual Edit Sheet</h2>
+      <p class="card-desc">
+        Modal bottom sheet with rounded corners (28px), workspace pill selector, date &amp; time chips, 4-tier priority picker, interactive subtask checklist, and notes.
+      </p>
+      <div class="mockup-wrapper">
+        <img src="03_task_detail_sheet.svg" alt="Task Detail Sheet">
+      </div>
+      <ul class="spec-list">
+        <li><span class="bullet-dot">•</span> <strong>Workspace Pills:</strong> Quick single-tap workspace assignment.</li>
+        <li><span class="bullet-dot">•</span> <strong>Schedule Row:</strong> Independent date and time picker chips.</li>
+        <li><span class="bullet-dot">•</span> <strong>Subtasks:</strong> Reorderable checklist with strike-through and progress count.</li>
+        <li><span class="bullet-dot">•</span> <strong>Actions:</strong> Delete button (destructive) and Glowing Save CTA.</li>
+      </ul>
+    </div>
+
+    <!-- 04: Dedicated Workspaces Screen -->
+    <div class="screen-card" data-category="domains">
+      <div class="card-meta">
+        <span class="screen-number">SCREEN 04</span>
+        <span class="screen-tag">Navigation Tab 2</span>
+      </div>
+      <h2 class="card-title">Dedicated Workspaces Screen</h2>
+      <p class="card-desc">
+        Full screen dedicated to life domains (Academics, Internship, IIT Prep, Personal Life) with progress bars, task volume badges, and category color accents.
+      </p>
+      <div class="mockup-wrapper">
+        <img src="04_workspaces_screen.svg" alt="Workspaces Screen">
+      </div>
+      <ul class="spec-list">
+        <li><span class="bullet-dot">•</span> <strong>Domain Cards:</strong> Category-specific color accents and icons.</li>
+        <li><span class="bullet-dot">•</span> <strong>Progress Tracking:</strong> Visual bar with percentage completion.</li>
+        <li><span class="bullet-dot">•</span> <strong>Creation:</strong> "+ New" workspace creation modal trigger.</li>
+      </ul>
+    </div>
+
+    <!-- 05: Dedicated Alarms Screen -->
+    <div class="screen-card" data-category="domains">
+      <div class="card-meta">
+        <span class="screen-number">SCREEN 05</span>
+        <span class="screen-tag">Navigation Tab 3</span>
+      </div>
+      <h2 class="card-title">Dedicated Alarms &amp; Timers Screen</h2>
+      <p class="card-desc">
+        Hardware-level exact alarm manager featuring big digital typography, weekday recurrence pills, custom ringtone selector, and exact alarm permission diagnostics.
+      </p>
+      <div class="mockup-wrapper">
+        <img src="05_alarms_screen.svg" alt="Alarms Screen">
+      </div>
+      <ul class="spec-list">
+        <li><span class="bullet-dot">•</span> <strong>Diagnostics:</strong> Real-time Android exact alarm permission badge.</li>
+        <li><span class="bullet-dot">•</span> <strong>Digital Typography:</strong> Bold 36px font with AM/PM accent badge.</li>
+        <li><span class="bullet-dot">•</span> <strong>Day Chips:</strong> Mon-Sun interactive toggle chips for recurring alarms.</li>
+        <li><span class="bullet-dot">•</span> <strong>Sound Picker:</strong> Custom ringtone pill per alarm.</li>
+      </ul>
+    </div>
+
+    <!-- 06: Dedicated Quick Notes Screen -->
+    <div class="screen-card" data-category="domains">
+      <div class="card-meta">
+        <span class="screen-number">SCREEN 06</span>
+        <span class="screen-tag">Navigation Tab 4</span>
+      </div>
+      <h2 class="card-title">Dedicated Quick Notes Screen</h2>
+      <p class="card-desc">
+        Rich notes repository with instant search bar, multi-criteria sort (Last Edited, Date Created, A-Z), pinned cards, workspace tags, and quick-add FAB.
+      </p>
+      <div class="mockup-wrapper">
+        <img src="06_notes_screen.svg" alt="Notes Screen">
+      </div>
+      <ul class="spec-list">
+        <li><span class="bullet-dot">•</span> <strong>Search &amp; Sort:</strong> Real-time filter by keyword and sorting cycle.</li>
+        <li><span class="bullet-dot">•</span> <strong>Pinned Cards:</strong> Highlighted formula and study note cards.</li>
+        <li><span class="bullet-dot">•</span> <strong>Workspace Binding:</strong> Direct color-coded link to parent domain.</li>
+      </ul>
+    </div>
+
+    <!-- 07: Settings & Theme Customization Screen -->
+    <div class="screen-card" data-category="themes">
+      <div class="card-meta">
+        <span class="screen-number">SCREEN 07</span>
+        <span class="screen-tag">Preferences &amp; System</span>
+      </div>
+      <h2 class="card-title">Settings &amp; Theme Customizer</h2>
+      <p class="card-desc">
+        Comprehensive settings hub featuring Dark/Light mode switch, 5 glowing theme accent swatches, Gemini 2.0 Flash config, System Floating Orb toggle, and Wipe App Data.
+      </p>
+      <div class="mockup-wrapper">
+        <img src="07_settings_screen.svg" alt="Settings Screen">
+      </div>
+      <ul class="spec-list">
+        <li><span class="bullet-dot">•</span> <strong>Theme Accents:</strong> Indigo, Cyber Cyan, Electric Purple, Sunset Orange, Rose Gold.</li>
+        <li><span class="bullet-dot">•</span> <strong>AI Engine:</strong> Gemini 2.0 Flash default with Keystore-backed key storage.</li>
+        <li><span class="bullet-dot">•</span> <strong>System Overlay:</strong> Toggle for the global Android floating orb.</li>
+        <li><span class="bullet-dot">•</span> <strong>Data Safety:</strong> Single tap to securely wipe all local database records.</li>
+      </ul>
+    </div>
+
+    <!-- 08: Morning Briefing Screen -->
+    <div class="screen-card" data-category="core">
+      <div class="card-meta">
+        <span class="screen-number">SCREEN 08</span>
+        <span class="screen-tag">Daily Intelligence</span>
+      </div>
+      <h2 class="card-title">AI Morning Briefing Screen</h2>
+      <p class="card-desc">
+        Sunrise gradient hero card with audio summary player, daily focus score, weather, and chronological today schedule timeline.
+      </p>
+      <div class="mockup-wrapper">
+        <img src="08_morning_briefing.svg" alt="Morning Briefing Screen">
+      </div>
+      <ul class="spec-list">
+        <li><span class="bullet-dot">•</span> <strong>Sunrise Hero:</strong> Glowing gradient header with daily high priority count.</li>
+        <li><span class="bullet-dot">•</span> <strong>Audio Digest:</strong> 1-tap TTS audio playback of today's schedule.</li>
+        <li><span class="bullet-dot">•</span> <strong>Timeline:</strong> Time-ordered agenda with domain-colored connector pins.</li>
+      </ul>
+    </div>
+
+    <!-- 09: Light Mode Home Screen -->
+    <div class="screen-card" data-category="themes">
+      <div class="card-meta">
+        <span class="screen-number">SCREEN 09</span>
+        <span class="screen-tag">Theme Variation</span>
+      </div>
+      <h2 class="card-title">Light Theme Mode (Cyber Cyan Accent)</h2>
+      <p class="card-desc">
+        Clean, high-contrast light mode variation with crisp white cards (#FFFFFF), soft slate backgrounds (#F6F8FA), and vibrant Cyber Cyan (#0891B2) accent colors.
+      </p>
+      <div class="mockup-wrapper">
+        <img src="09_light_mode_home.svg" alt="Light Theme Home Screen">
+      </div>
+      <ul class="spec-list">
+        <li><span class="bullet-dot">•</span> <strong>Contrast:</strong> Deep slate text (#0F172A) on pure white cards with soft shadows.</li>
+        <li><span class="bullet-dot">•</span> <strong>Accent Propagation:</strong> Cyan accents on checkboxes, progress bars, and active tabs.</li>
+        <li><span class="bullet-dot">•</span> <strong>Clean Surfaces:</strong> Zero clutter, identical Bento grid structure as dark mode.</li>
+      </ul>
+    </div>
+
+  </main>
+
+  <script>
+    function filterScreens(category) {
+      const cards = document.querySelectorAll('.screen-card');
+      const buttons = document.querySelectorAll('.tab-btn');
+
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      cards.forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

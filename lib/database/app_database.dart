@@ -1,32 +1,50 @@
 import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
+import 'package:path/path.dart' as p;
+
+import 'tables/workspaces_table.dart';
+import 'tables/workspace_sections_table.dart';
+import 'tables/items_table.dart';
+import 'tables/reminders_schedule_table.dart';
+import 'tables/notes_table.dart';
+import 'tables/shared_content_table.dart';
+import 'tables/notification_log_table.dart';
+import 'tables/ai_actions_log_table.dart';
+import 'tables/offline_queue_table.dart';
+import 'tables/daily_log_table.dart';
+import 'tables/sync_queue_table.dart';
 
 import 'daos/item_dao.dart';
+import 'daos/workspace_dao.dart';
 import 'daos/notification_dao.dart';
 import 'daos/offline_queue_dao.dart';
-import 'daos/shared_content_dao.dart';
-import 'daos/workspace_dao.dart';
-import 'tables/ai_actions_logs.dart';
-import 'tables/daily_logs.dart';
-import 'tables/items.dart';
-import 'tables/notes.dart';
-import 'tables/notification_logs.dart';
-import 'tables/offline_queues.dart';
-import 'tables/reminders_schedule.dart';
-import 'tables/shared_contents.dart';
-import 'tables/sync_queues.dart';
-import 'tables/workspaces.dart';
+
+export 'tables/workspaces_table.dart';
+export 'tables/workspace_sections_table.dart';
+export 'tables/items_table.dart';
+export 'tables/reminders_schedule_table.dart';
+export 'tables/notes_table.dart';
+export 'tables/shared_content_table.dart';
+export 'tables/notification_log_table.dart';
+export 'tables/ai_actions_log_table.dart';
+export 'tables/offline_queue_table.dart';
+export 'tables/daily_log_table.dart';
+export 'tables/sync_queue_table.dart';
+
+export 'daos/item_dao.dart';
+export 'daos/workspace_dao.dart';
+export 'daos/notification_dao.dart';
+export 'daos/offline_queue_dao.dart';
 
 part 'app_database.g.dart';
 
-/// Central Drift Database for AURA.
-/// Enforces Schema v4, SQLite WAL mode, foreign keys, and migrations.
-/// Reference: overhaul-docs/03-database-schema.md
+/// AURA v2 Single SQLite Database
+///
+/// Clean Architecture Rule: All database writes MUST go through DAOs or Use Cases.
+/// Never access database instance directly inside widgets.
 @DriftDatabase(
   tables: [
     Workspaces,
@@ -46,11 +64,11 @@ part 'app_database.g.dart';
     WorkspaceDao,
     NotificationDao,
     OfflineQueueDao,
-    SharedContentDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
+  AppDatabase() : super(_openConnection());
+  AppDatabase.forTesting(super.executor);
 
   @override
   int get schemaVersion => 4;
@@ -62,21 +80,35 @@ class AppDatabase extends _$AppDatabase {
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
-            await m.createTable(workspaceSections);
-            await m.createTable(remindersSchedule);
-            await m.createTable(notes);
-            await m.createTable(sharedContents);
-            await m.createTable(notificationLogs);
-            await m.createTable(aiActionsLogs);
-            await m.createTable(offlineQueues);
-            await m.createTable(dailyLogs);
-            await m.createTable(syncQueues);
+            // Idempotently create any tables missing from schema v1.
+            // Failures are logged — a real failure (disk full) must not be
+            // indistinguishable from "table already exists".
+            for (final table in allTables) {
+              try {
+                await m.createTable(table);
+              } catch (e) {
+                debugPrint('Migration v$from→v2: '
+                    'createTable(${table.actualTableName}) skipped/failed: $e');
+              }
+            }
           }
           if (from < 3) {
-            await m.addColumn(items, items.parentId);
+            // Add parentId column for subtask support
+            try {
+              await m.addColumn(items, items.parentId);
+            } catch (e) {
+              debugPrint('Migration v$from→v3: addColumn(parent_id) '
+                  'skipped/failed (may already exist): $e');
+            }
           }
           if (from < 4) {
-            await m.addColumn(items, items.soundUri);
+            // Add soundUri column for per-alarm ringtone persistence
+            try {
+              await m.addColumn(items, items.soundUri);
+            } catch (e) {
+              debugPrint('Migration v$from→v4: addColumn(sound_uri) '
+                  'skipped/failed (may already exist): $e');
+            }
           }
         },
         beforeOpen: (details) async {
@@ -87,16 +119,11 @@ class AppDatabase extends _$AppDatabase {
       );
 }
 
+/// Opens the SQLite database file in the application document directory.
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'aura.sqlite'));
-
-    // Also work around limitations on older Android devices
-    if (Platform.isAndroid) {
-      await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
-    }
-
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dir.path, 'aura.db'));
     return NativeDatabase.createInBackground(file);
   });
 }

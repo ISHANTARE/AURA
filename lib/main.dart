@@ -1,38 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
-import 'core/providers/database_provider.dart';
-import 'core/router/app_router.dart';
+import 'core/security/secret_store.dart';
 import 'core/services/notification_service.dart';
-import 'database/app_database.dart';
-import 'features/settings/settings_screen.dart' show SettingsKeys;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Initialize local notification channels & timezones
-  final notifService = NotificationService();
-  await notifService.initialize();
+  // Load environment variables from .env file (dev convenience only;
+  // production builds carry no .env and use defaults / user settings).
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // If .env is missing, app runs using fallback or defaults
+  }
 
-  // 2. Initialize SharedPreferences & Onboarding Gate
-  final prefs = await SharedPreferences.getInstance();
-  final gateNotifier = OnboardingGateNotifier(prefs);
-  final database = AppDatabase();
+  // Migrate any legacy plaintext API key into encrypted storage.
+  await SecretStore().migrateLegacyKey();
 
-  final savedAccent = prefs.getString(SettingsKeys.themeAccent) ?? 'Indigo';
+  // Initialize local notifications (channels + timezone)
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  await notificationService.requestPermissions();
 
   runApp(
-    ProviderScope(
-      overrides: [
-        databaseProvider.overrideWithValue(database),
-        onboardingGateProvider.overrideWithValue(gateNotifier),
-      ],
-      child: AuraApp(
-        gateNotifier: gateNotifier,
-        initialAccent: savedAccent,
-      ),
+    // ProviderScope is the root of Riverpod state management
+    const ProviderScope(
+      child: AuraApp(),
     ),
   );
 }

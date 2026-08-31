@@ -1,112 +1,188 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'core/constants/colors.dart';
-import 'core/providers/service_providers.dart';
 import 'core/router/app_router.dart';
-import 'features/settings/settings_screen.dart' show themeAccentProvider;
+import 'core/providers/clock_providers.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'platform/overlay_channel.dart';
+import 'features/capture/domain/services/offline_queue_processor.dart';
+import 'features/home/presentation/providers/home_providers.dart';
+import 'features/reminders/data/services/dnd_service.dart';
+import 'features/reminders/data/services/notification_service.dart';
+import 'features/reminders/domain/entities/reminder_models.dart';
+import 'features/reminders/domain/services/reminder_scheduling_service.dart';
 
-/// Central Flutter Application widget managing lifecycle hooks, background sync,
-/// deep-link notification routing, and overlay orb integration.
-/// Reference: overhaul-docs/09-startup-sequence.md Section 3 & 4
+/// Root application widget.
+/// Consumes the router and theme — both Riverpod-aware.
 class AuraApp extends ConsumerStatefulWidget {
-  final OnboardingGateNotifier gateNotifier;
-  final String initialAccent;
-
-  const AuraApp({
-    super.key,
-    required this.gateNotifier,
-    required this.initialAccent,
-  });
+  const AuraApp({super.key});
 
   @override
   ConsumerState<AuraApp> createState() => _AuraAppState();
 }
 
 class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
-  late final _router = buildAppRouter(widget.gateNotifier);
-  final _overlay = OverlayChannel();
+  StreamSubscription<String?>? _notificationSub;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // 1. Listen to Orb Tap events dispatched from native AuraOverlayService
-    _overlay.listenToOrbTaps(() {
-      _router.push(Routes.captureOverlay);
+    // Listen for notification taps for deep linking
+    _notificationSub = NotificationService()
+        .selectNotificationStream
+        .listen(_onNotificationTapPayload);
+
+    // Listen for global floating orb taps from native system overlay
+    OverlayChannel.listenToOrbTaps(() {
+      final router = ref.read(appRouterProvider);
+      router.push('/capture-overlay');
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 2. Eagerly start DND monitor service
+      // Start DND service
       ref.read(dndServiceProvider);
 
-      // 3. Start offline queue processor and drain pending items
-      ref.read(offlineQueueProcessorProvider).drainQueue();
+      // Start the offline capture queue processor (drains when back online)
+      ref.read(offlineQueueProcessorProvider);
 
-      // 4. Auto-start floating orb if permitted
-      _autoStartOrbIfPermitted();
+      // Auto-start system-level floating orb if permission is granted
+      OverlayChannel.autoStartIfPermitted();
 
-      // 5. Initial health & background synchronization chain
+      // Run nudge & overdue evaluation
       _onAppActive();
     });
+  }
+
+  @override
+  void dispose() {
+    _notificationSub?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // Roll "today" windows over if we were suspended across midnight.
+      _notifyDayRefresh();
       _onAppActive();
     }
   }
 
   Future<void> _onAppActive() async {
-    final lifecycleService = ref.read(lifecycleSyncServiceProvider);
-    await lifecycleService.onAppActive();
+    // Each startup job runs isolated: one failing step must never starve the
+    // remaining ones (a thrown exact-alarm exception used to kill them all).
+    await _guarded('background-actions', _processPendingBackgroundActions);
+    await _guarded('briefing-scheduler',
+        () => ref.read(briefingSchedulerProvider).onAppActive());
+    await _guarded(
+        'recurring-reset', () => ref.read(recurringTaskResetProvider).execute());
+    await _guarded(
+        'nudges', () => ref.read(nudgeEngineProvider).evaluateAndNudge());
+    await _guarded('overdue-check',
+        () => ref.read(overdueReminderUseCaseProvider).execute());
+
+    // Heal DB ↔ OS schedule drift (fired marks, recurring advances, reboot
+    // recovery). Cheap when everything is already in sync.
+    await _guarded(
+      'schedule-resync',
+      () => ref.read(reminderSchedulingServiceProvider).resynchronizeAll(),
+    );
   }
 
-  Future<void> _autoStartOrbIfPermitted() async {
-    final permitted = await _overlay.checkOverlayPermission();
-    if (permitted) {
-      await _overlay.startOverlay();
+  Future<void> _guarded(String label, Future<void> Function() step) async {
+    try {
+      await step();
+    } catch (e, st) {
+      debugPrint('_onAppActive[$label] failed: $e\n$st');
+    }
+  }
+
+  void _notifyDayRefresh() {
+    try {
+      ref.read(dayRefreshProvider.notifier).notifyResumed();
+    } catch (e) {
+      debugPrint('day refresh failed: $e');
+    }
+  }
+
+  Future<void> _processPendingBackgroundActions() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final pendingAction = prefs.getString('pending_bg_action');
+      if (pendingAction == null || pendingAction.isEmpty) return;
+
+      await prefs.remove('pending_bg_action');
+      final parts = pendingAction.split(':');
+      if (parts.length < 2) return;
+
+      final action = parts[0];
+      final payload = parts.sublist(1).join(':');
+      final itemId = payload.replaceAll('item:', '');
+
+      final itemDao = ref.read(itemDaoProvider);
+      final snoozeUseCase = ref.read(snoozeReminderUseCaseProvider);
+
+      if (action == 'MARK_DONE') {
+        await itemDao.updateStatus(itemId, 'completed');
+      } else if (action == 'SNOOZE_30M') {
+        final item = await itemDao.getById(itemId);
+        if (item != null) {
+          await snoozeUseCase.execute(
+            reminderId: itemId,
+            taskTitle: item.title,
+            taskId: itemId,
+            preset: SnoozePreset.minutes30,
+          );
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Unified notification tap grammar:
+  ///   route:<location> | item:<itemId> | alarm:<alarmId>
+  /// Legacy bare UUID payloads (pre-codec schedules) are tolerated as items.
+  void _onNotificationTapPayload(String? payload) {
+    if (payload == null || payload.isEmpty) return;
+
+    final router = ref.read(appRouterProvider);
+
+    if (payload.startsWith('route:')) {
+      final route = payload.substring(6);
+      if (route == '/briefing') {
+        router.go(Routes.briefing);
+      } else {
+        router.push(route);
+      }
+    } else if (payload.startsWith('item:')) {
+      router.push(Routes.taskRoute(payload.substring(5)));
+    } else if (payload.startsWith('alarm:')) {
+      // Alarms are Items — open their detail view.
+      router.push(Routes.taskRoute(payload.substring(6)));
+    } else {
+      // Legacy bare-id payload from an old schedule.
+      router.push(Routes.taskRoute(payload));
     }
   }
 
   @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  Color _accentColor(String name) {
-    return switch (name) {
-      'Cyan' => const Color(0xFF22D3EE),
-      'Purple' => const Color(0xFFC084FC),
-      'Orange' => const Color(0xFFFF9966),
-      'Rose' => const Color(0xFFF472B6),
-      'Lime' => const Color(0xFFC8FF00),
-      _ => const Color(0xFF7B6FF0), // Neon Indigo default
-    };
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final activeAccent = ref.watch(themeAccentProvider);
-    final accentColor = _accentColor(activeAccent);
+    final router = ref.watch(appRouterProvider);
+    final accent = ref.watch(themeAccentProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'AURA',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(useMaterial3: true).copyWith(
-        scaffoldBackgroundColor: AuraColors.bgBase,
-        colorScheme: ColorScheme.dark(
-          primary: accentColor,
-          surface: AuraColors.bgCard,
-        ),
-      ),
-      routerConfig: _router,
+      theme: AppTheme.light(accent.color),
+      darkTheme: AppTheme.dark(accent.color),
+      themeMode: themeMode,
+      routerConfig: router,
     );
   }
 }

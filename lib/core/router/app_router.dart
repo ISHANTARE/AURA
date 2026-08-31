@@ -3,153 +3,116 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../app_shell.dart';
-import '../../features/alarms/alarms_screen.dart';
-import '../../features/briefing/briefing_screen.dart';
-import '../../features/capture/presentation/capture_overlay_screen.dart';
-import '../../features/home/home_screen.dart';
-import '../../features/notes/notes_screen.dart';
-import '../../features/onboarding/onboarding_screen.dart';
-import '../../features/settings/settings_screen.dart';
-import '../../features/share/share_receiver_screen.dart';
-import '../../features/tasks/task_detail_screen.dart';
-import '../../features/workspaces/workspace_screens.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/home/presentation/screens/morning_briefing_screen.dart';
+import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/workspaces/presentation/screens/workspace_list_screen.dart';
+import '../../features/workspaces/presentation/screens/workspace_detail_screen.dart';
+import '../../features/tasks/presentation/screens/task_detail_screen.dart';
+import '../../features/tasks/presentation/screens/search_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/alarms/presentation/screens/alarms_screen.dart';
+import '../../features/notes/presentation/screens/notes_screen.dart';
+import '../../features/reminders/presentation/screens/reminders_screen.dart';
+import '../../features/capture/presentation/screens/share_receive_screen.dart';
+import '../../features/capture/presentation/screens/floating_capture_overlay_screen.dart';
 
-// ── Onboarding Gate ───────────────────────────────────────────────────────────
+import '../constants/colors.dart';
+import '../constants/typography.dart';
+import '../widgets/bottom_nav.dart';
 
-/// Manages the onboarding gate state, reading and persisting completion status
-/// to [SharedPreferences].
-///
-/// Extends [ChangeNotifier] so it can be used as [GoRouter.refreshListenable].
-class OnboardingGateNotifier extends ChangeNotifier {
-  static const _key = 'ONBOARDING_COMPLETED';
-  final SharedPreferences _prefs;
+/// Route name constants — use these everywhere instead of string literals.
+abstract final class Routes {
+  static const String home       = '/';
+  static const String workspace  = '/workspace/:id';
+  static const String task       = '/task/:id';
+  static const String calendar   = '/calendar';
+  static const String reminders  = '/reminders';
+  static const String alarms     = '/alarms';
+  static const String notes      = '/notes';
+  static const String search     = '/search';
+  static const String settings   = '/settings';
+  static const String onboarding = '/onboarding';
+  static const String briefing   = '/briefing';
+  static const String share      = '/share';
 
-  bool _isComplete;
+  /// Construct workspace route with a specific ID.
+  static String workspaceRoute(String id) => '/workspace/$id';
+  /// Construct task route with a specific ID.
+  static String taskRoute(String id) => '/task/$id';
+}
 
-  OnboardingGateNotifier(this._prefs)
-      : _isComplete = _prefs.getBool(_key) ?? false;
-
-  /// Whether onboarding has been completed.
-  bool get isComplete => _isComplete;
-
-  /// Marks onboarding as complete and unlocks all gated routes.
-  Future<void> complete() async {
-    await _prefs.setBool(_key, true);
-    _isComplete = true;
-    notifyListeners();
+/// Onboarding gate state. Lives in Riverpod (not a global mutable flag) so
+/// Reset App Data can invalidate it — previously the stale `true` let users
+/// skip onboarding after clearing data, and deep links bypassed the guard
+/// entirely.
+class OnboardingGateNotifier extends StateNotifier<bool> {
+  OnboardingGateNotifier() : super(false) {
+    _load();
   }
 
-  /// Resets onboarding (e.g. on app data reset), immediately locking all
-  /// gated routes without requiring an app restart.
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return; // provider may have been disposed mid-load (tests)
+    state = prefs.getBool('onboarding_complete') ?? false;
+  }
+
+  /// Syncs the gate from a redirect-time disk read (avoids a race where the
+  /// async constructor load lands after a redirect already checked).
+  void hydrate(bool value) {
+    if (!mounted) return;
+    if (value && !state) state = true;
+  }
+
+  Future<void> complete() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_complete', true);
+    if (!mounted) return;
+    state = true;
+  }
+
+  /// Called by Reset App Data: re-locks every route behind onboarding.
   Future<void> reset() async {
-    await _prefs.remove(_key);
-    _isComplete = false;
-    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('onboarding_complete');
+    if (!mounted) return;
+    state = false;
   }
 }
 
-/// Riverpod provider for [OnboardingGateNotifier].
-final onboardingGateProvider = Provider<OnboardingGateNotifier>((ref) {
-  throw UnimplementedError(
-      'onboardingGateProvider must be overridden in ProviderScope.');
+final onboardingGateProvider =
+    StateNotifierProvider<OnboardingGateNotifier, bool>((ref) {
+  return OnboardingGateNotifier();
 });
 
-// ── Route Names ───────────────────────────────────────────────────────────────
+/// Routes reachable before onboarding completes (share target and the
+/// capture overlay must work regardless of setup state).
+const _preOnboardingAllowedLocations = {Routes.onboarding, Routes.share, '/capture-overlay'};
 
-abstract final class Routes {
-  static const home = '/';
-  static const onboarding = '/onboarding';
-  static const captureOverlay = '/capture-overlay';
-  static const share = '/share';
-  static const alarms = '/alarms';
-  static const workspaces = '/workspaces';
-  static const workspaceDetail = '/workspace/:id';
-  static const notes = '/notes';
-  static const settings = '/settings';
-  static const taskDetail = '/task/:id';
-  static const briefing = '/briefing';
-
-  /// Un-gated routes that bypass onboarding.
-  static const Set<String> whitelist = {
-    captureOverlay,
-    share,
-    onboarding,
-  };
-}
-
-// ── Router builder ────────────────────────────────────────────────────────────
-
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
-
-/// Builds the app-wide [GoRouter] with onboarding gate redirect logic and ShellRoute.
-GoRouter buildAppRouter(OnboardingGateNotifier gateNotifier) {
+/// Riverpod provider for the go_router instance.
+final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
     initialLocation: Routes.home,
-    refreshListenable: gateNotifier,
-    redirect: (context, state) {
-      final isComplete = gateNotifier.isComplete;
-      final location = state.uri.toString();
-
-      if (!isComplete) {
-        final isWhitelisted =
-            Routes.whitelist.any((r) => location.startsWith(r));
-        if (isWhitelisted) return null;
-        return Routes.onboarding;
+    debugLogDiagnostics: false,
+    redirect: (context, state) async {
+      // Allow-list short-circuit (share engine / capture overlay / onboarding).
+      if (_preOnboardingAllowedLocations.contains(state.matchedLocation)) {
+        return null;
       }
 
-      if (location == Routes.onboarding) return Routes.home;
+      final onboarded = ref.read(onboardingGateProvider);
+      if (onboarded) return null;
 
-      return null;
+      // Gate not yet hydrated from disk — check directly to avoid flashing.
+      final prefs = await SharedPreferences.getInstance();
+      final done = prefs.getBool('onboarding_complete') ?? false;
+      ref.read(onboardingGateProvider.notifier).hydrate(done);
+      return done ? null : Routes.onboarding;
     },
     routes: [
-      // ── Un-gated standalone routes ───────────────────────────────────────
-      GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
-        path: Routes.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
-        path: Routes.captureOverlay,
-        builder: (context, state) => const FloatingCaptureOverlayScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
-        path: Routes.share,
-        builder: (context, state) => const ShareReceiverScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
-        path: Routes.briefing,
-        builder: (context, state) => const MorningBriefingScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
-        path: Routes.taskDetail,
-        builder: (context, state) => TaskDetailScreen(
-          taskId: state.pathParameters['id'] ?? '',
-        ),
-      ),
-      GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
-        path: Routes.workspaceDetail,
-        builder: (context, state) => WorkspaceDetailScreen(
-          workspaceId: state.pathParameters['id'] ?? '',
-        ),
-      ),
-      GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
-        path: Routes.settings,
-        builder: (context, state) => const SettingsScreen(),
-      ),
-
-      // ── Gated Shell navigation (BottomNav tabs) ──────────────────────────
+      // ── Main shell ────────────────────────────────────────────────────────
       ShellRoute(
-        navigatorKey: _shellNavigatorKey,
-        builder: (context, state, child) => AppShell(child: child),
+        builder: (context, state, child) => _MainShell(child: child),
         routes: [
           GoRoute(
             path: Routes.home,
@@ -164,7 +127,7 @@ GoRouter buildAppRouter(OnboardingGateNotifier gateNotifier) {
             ),
           ),
           GoRoute(
-            path: Routes.workspaces,
+            path: '/workspaces',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: WorkspaceListScreen(),
             ),
@@ -175,8 +138,124 @@ GoRouter buildAppRouter(OnboardingGateNotifier gateNotifier) {
               child: NotesScreen(),
             ),
           ),
+          GoRoute(
+            path: Routes.settings,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: SettingsScreen(),
+            ),
+          ),
         ],
       ),
+
+      // ── Detail screens (full-screen, no shell) ────────────────────────────
+      GoRoute(
+        path: Routes.workspace,
+        builder: (context, state) => WorkspaceDetailScreen(
+          workspaceId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: Routes.task,
+        builder: (context, state) => TaskDetailScreen(
+          taskId: state.pathParameters['id']!,
+        ),
+      ),
+
+      // ── Onboarding ────────────────────────────────────────────────────────
+      GoRoute(
+        path: Routes.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+
+      // ── Deep links & Actions ──────────────────────────────────────────────
+      GoRoute(
+        path: Routes.briefing,
+        builder: (context, state) => const MorningBriefingScreen(),
+      ),
+      GoRoute(
+        path: Routes.search,
+        builder: (context, state) => const SearchScreen(),
+      ),
+      GoRoute(
+        path: Routes.reminders,
+        builder: (context, state) => const RemindersScreen(),
+      ),
+      GoRoute(
+        path: Routes.share,
+        builder: (context, state) => const ShareReceiveScreen(),
+      ),
+      GoRoute(
+        path: '/capture-overlay',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          opaque: false,
+          barrierColor: Colors.black.withValues(alpha: 0.5),
+          barrierDismissible: true,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          child: const FloatingCaptureOverlayScreen(),
+        ),
+      ),
     ],
+    errorBuilder: (context, state) => _ErrorScreen(error: state.error),
   );
+});
+
+// ── Main navigation shell ──────────────────────────────────────────────────
+
+class _MainShell extends ConsumerStatefulWidget {
+  const _MainShell({required this.child});
+  final Widget child;
+
+  @override
+  ConsumerState<_MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<_MainShell> {
+  static const _routes = [
+    Routes.home,
+    Routes.alarms,
+    '/workspaces',
+    Routes.notes,
+    Routes.settings,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    // Derive the active tab purely from the current router location so that
+    // deep links and programmatic pushes always keep the nav bar in sync.
+    final location = GoRouterState.of(context).matchedLocation;
+    final idx = _routes.indexWhere((r) => r == '/' ? location == '/' : location.startsWith(r));
+    final effectiveIndex = idx < 0 ? 0 : idx;
+
+    return Scaffold(
+      backgroundColor: AuraColors.bgBase,
+      body: widget.child,
+      bottomNavigationBar: AuraBottomNav(
+        selectedIndex: effectiveIndex,
+        onDestinationSelected: (index) {
+          context.go(_routes[index]);
+        },
+      ),
+    );
+  }
+}
+
+
+// ── Error screen ──────────────────────────────────────────────────────────
+
+class _ErrorScreen extends StatelessWidget {
+  const _ErrorScreen({required this.error});
+  final Exception? error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AuraColors.bgBase,
+      body: Center(
+        child: Text('Navigation error: $error', style: AuraTypography.body),
+      ),
+    );
+  }
 }

@@ -1,38 +1,14 @@
-import 'package:drift/native.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aura/app.dart';
-import 'package:aura/core/providers/database_provider.dart';
-import 'package:aura/core/router/app_router.dart';
-import 'package:aura/database/app_database.dart';
 
 void main() {
-  testWidgets('AuraApp boots with OnboardingScreen or Home', (
-    WidgetTester tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({'ONBOARDING_COMPLETED': true});
-    final prefs = await SharedPreferences.getInstance();
-    final gateNotifier = OnboardingGateNotifier(prefs);
-    final db = AppDatabase(NativeDatabase.memory());
-
+  testWidgets('AuraApp launches smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          databaseProvider.overrideWithValue(db),
-          onboardingGateProvider.overrideWithValue(gateNotifier),
-        ],
-        child: AuraApp(
-          gateNotifier: gateNotifier,
-          initialAccent: 'Indigo',
-        ),
+      const ProviderScope(
+        child: AuraApp(),
       ),
     );
-
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(AuraApp), findsOneWidget);
-    await db.close();
   });
 }

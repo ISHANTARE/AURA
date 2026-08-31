@@ -1,110 +1,143 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-
 import 'channels.dart';
 
-/// Dart client for communicating with the native Android overlay subsystem (`aura/overlay`).
 class OverlayChannel {
-  final MethodChannel _channel;
+  static const MethodChannel _channel =
+      MethodChannel(AuraChannels.overlayMethod);
 
-  OverlayChannel([MethodChannel? channel])
-      : _channel = channel ?? const MethodChannel(AuraChannels.overlayMethod);
+  /// Check if SYSTEM_ALERT_WINDOW permission is granted
+  static Future<bool> isPermissionGranted() async {
+    try {
+      final bool granted =
+          await _channel.invokeMethod('isOverlayPermissionGranted') ?? false;
+      return granted;
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error checking permission: $e');
+      return false;
+    }
+  }
 
-  /// Registers a callback listener for Orb Tap events from the native layer.
-  void listenToOrbTaps(VoidCallback onOrbTap) {
+  /// Request SYSTEM_ALERT_WINDOW permission (opens Android System Settings page)
+  static Future<void> requestPermission() async {
+    try {
+      await _channel.invokeMethod('requestOverlayPermission');
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error requesting permission: $e');
+    }
+  }
+
+  /// Start system-level floating orb overlay foreground service
+  static Future<bool> startOverlay() async {
+    try {
+      final bool success =
+          await _channel.invokeMethod('startOverlay') ?? false;
+      return success;
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error starting overlay: $e');
+      return false;
+    }
+  }
+
+  /// Stop system-level floating orb overlay service
+  static Future<bool> stopOverlay() async {
+    try {
+      final bool success =
+          await _channel.invokeMethod('stopOverlay') ?? false;
+      return success;
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error stopping overlay: $e');
+      return false;
+    }
+  }
+
+  /// Check if overlay service is actively running
+  static Future<bool> isRunning() async {
+    try {
+      final bool running =
+          await _channel.invokeMethod('isOverlayRunning') ?? false;
+      return running;
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error checking status: $e');
+      return false;
+    }
+  }
+
+  /// Auto-start global orb service if permission was granted
+  static Future<void> autoStartIfPermitted() async {
+    final granted = await isPermissionGranted();
+    if (granted) {
+      final running = await isRunning();
+      if (!running) {
+        await startOverlay();
+      }
+    }
+  }
+
+  /// Set handler for callbacks from native orb tap
+  static void listenToOrbTaps(VoidCallback onOrbTapped) {
     _channel.setMethodCallHandler((call) async {
-      if (call.method == 'onOrbTap') {
-        onOrbTap();
+      if (call.method == 'onOrbTapped') {
+        onOrbTapped();
       }
     });
   }
 
-  /// Starts the floating Canvas orb foreground service.
-  Future<bool> startOverlay() async {
+  /// Open system ringtone picker to select custom alarm audio on device
+  static Future<Map<String, String>?> pickAlarmSound({
+    String? currentUri,
+    String? title,
+  }) async {
+    return pickSound(type: 'alarm', currentUri: currentUri, title: title);
+  }
+
+  /// Open system ringtone picker to select custom notification audio on device
+  static Future<Map<String, String>?> pickNotificationSound({
+    String? currentUri,
+    String? title,
+  }) async {
+    return pickSound(type: 'notification', currentUri: currentUri, title: title);
+  }
+
+  /// Open system ringtone picker with specified sound type ('alarm' | 'notification')
+  static Future<Map<String, String>?> pickSound({
+    String type = 'alarm',
+    String? currentUri,
+    String? title,
+  }) async {
     try {
-      final res = await _channel.invokeMethod<bool>('startOverlay');
-      return res ?? true;
-    } catch (_) {
-      return false;
+      final res = await _channel.invokeMethod<Map>('pickSound', {
+        'type': type,
+        'currentUri': currentUri ?? '',
+        'title': title,
+      });
+      if (res != null) {
+        return Map<String, String>.from(res);
+      }
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error picking sound: $e');
+    }
+    return null;
+  }
+
+  /// Update dynamic accent color of floating orb
+  static Future<void> updateOrbColor(String colorHex) async {
+    try {
+      await _channel.invokeMethod('updateOrbColor', {'colorHex': colorHex});
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error updating orb color: $e');
     }
   }
 
-  /// Stops the floating Canvas orb foreground service and removes the window.
-  Future<bool> stopOverlay() async {
+  /// Clear native orb preferences (position / color / dismissed flag).
+  /// Part of the full Reset App Data teardown.
+  static Future<void> clearNativePrefs() async {
     try {
-      final res = await _channel.invokeMethod<bool>('stopOverlay');
-      return res ?? true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Checks if the application has been granted the `SYSTEM_ALERT_WINDOW` permission.
-  Future<bool> checkOverlayPermission() async {
-    try {
-      final res = await _channel.invokeMethod<bool>('checkOverlayPermission');
-      return res ?? false;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Directs the user to Android system settings to grant overlay permission.
-  Future<void> requestOverlayPermission() async {
-    try {
-      await _channel.invokeMethod<void>('requestOverlayPermission');
-    } catch (_) {}
-  }
-
-  /// Checks whether the overlay foreground service is actively running.
-  Future<bool> isOverlayRunning() async {
-    try {
-      final res = await _channel.invokeMethod<bool>('isOverlayRunning');
-      return res ?? false;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Launches native Ringtone picker for Alarms.
-  Future<Map<String, String>?> pickAlarmSound({String? currentUri}) async {
-    try {
-      final res = await _channel.invokeMapMethod<String, String>(
-        'pickAlarmSound',
-        {'currentUri': currentUri ?? ''},
-      );
-      return res;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Launches native Ringtone picker for Notifications.
-  Future<Map<String, String>?> pickNotificationSound({String? currentUri}) async {
-    try {
-      final res = await _channel.invokeMapMethod<String, String>(
-        'pickNotificationSound',
-        {'currentUri': currentUri ?? ''},
-      );
-      return res;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Clears native SharedPreferences (`aura_orb_prefs`).
-  Future<void> clearNativePrefs() async {
-    try {
-      await _channel.invokeMethod<void>('clearNativePrefs');
-    } catch (_) {}
-  }
-
-  /// Diagnostic ping returning "pong".
-  Future<String> ping() async {
-    try {
-      final res = await _channel.invokeMethod<String>('ping');
-      return res ?? 'unknown';
-    } catch (_) {
-      return 'error';
+      await _channel.invokeMethod('clearNativePrefs');
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error clearing native prefs: $e');
+    } on MissingPluginException catch (e) {
+      debugPrint('[OverlayChannel] clearNativePrefs unavailable: $e');
     }
   }
 }

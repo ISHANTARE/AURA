@@ -1,59 +1,101 @@
 import 'package:drift/drift.dart';
 
 import '../app_database.dart';
-import '../tables/offline_queues.dart';
 
 part 'offline_queue_dao.g.dart';
 
-/// DAO managing offline voice captures and queued actions.
-/// Reference: overhaul-docs/03-database-schema.md Section 3
 @DriftAccessor(tables: [OfflineQueues])
 class OfflineQueueDao extends DatabaseAccessor<AppDatabase>
     with _$OfflineQueueDaoMixin {
   OfflineQueueDao(super.db);
 
-  /// Retrieves all pending offline items ordered by creation time ascending (FIFO).
+  /// Shared retry cap: an item fails permanently after this many attempts.
+  /// Referenced by both this DAO and [OfflineQueueProcessor].
+  static const int maxAttempts = 5;
+
+  /// Enqueue an offline capture transcript.
+  Future<String> enqueueCapture({
+    required String id,
+    required String content,
+    String? contextJson,
+    String type = 'transcript',
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await into(offlineQueues).insert(
+      OfflineQueuesCompanion.insert(
+        id: id,
+        type: Value(type),
+        content: content,
+        contextJson: Value(contextJson),
+        status: const Value('pending'),
+        attempts: const Value(0),
+        createdAt: now,
+      ),
+    );
+    return id;
+  }
+
+  /// Get all pending queued items ordered by creation time.
   Future<List<OfflineQueue>> getPendingItems() {
     return (select(offlineQueues)
-          ..where((t) => t.status.equals('pending'))
-          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+          ..where((q) => q.status.equals('pending'))
+          ..orderBy([(q) => OrderingTerm(expression: q.createdAt)]))
         .get();
   }
 
-  /// Marks an offline queue item as successfully processed.
-  Future<void> markProcessed(String id, int processedAt) {
-    return (update(offlineQueues)..where((t) => t.id.equals(id))).write(
+  /// Watch count of pending items for UI badge.
+  Stream<int> watchPendingCount() {
+    final countExpr = offlineQueues.id.count();
+    final query = selectOnly(offlineQueues)
+      ..addColumns([countExpr])
+      ..where(offlineQueues.status.equals('pending'));
+    return query.map((row) => row.read(countExpr) ?? 0).watchSingle();
+  }
+
+  /// Mark item as processed.
+  Future<void> markProcessed(String id) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(offlineQueues)..where((q) => q.id.equals(id))).write(
       OfflineQueuesCompanion(
         status: const Value('processed'),
-        processedAt: Value(processedAt),
+        processedAt: Value(now),
       ),
     );
   }
 
-  /// Marks an offline queue item as failed.
+  /// Mark item as permanently failed (retry cap exhausted).
   Future<void> markFailed(String id) {
-    return (update(offlineQueues)..where((t) => t.id.equals(id))).write(
-      const OfflineQueuesCompanion(
-        status: Value('failed'),
-      ),
+    return (update(offlineQueues)..where((q) => q.id.equals(id))).write(
+      const OfflineQueuesCompanion(status: Value('failed')),
     );
   }
 
-  /// Increments retry count; marks as failed if attempts >= 5.
+  /// Increment retry attempt count. Flips to 'failed' only when the shared
+  /// retry cap is reached — stays 'pending' (and visible to the processor)
+  /// until then.
   Future<void> incrementAttempt(String id, int currentAttempts) {
-    final nextAttempts = currentAttempts + 1;
-    final isFailed = nextAttempts >= 5;
-
-    return (update(offlineQueues)..where((t) => t.id.equals(id))).write(
+    final newAttempts = currentAttempts + 1;
+    return (update(offlineQueues)..where((q) => q.id.equals(id))).write(
       OfflineQueuesCompanion(
-        attempts: Value(nextAttempts),
-        status: isFailed ? const Value('failed') : const Value('pending'),
+        attempts: Value(newAttempts),
+        status: Value(newAttempts >= maxAttempts ? 'failed' : 'pending'),
       ),
     );
   }
 
-  /// Enqueues a new item to the offline buffer.
-  Future<int> enqueue(OfflineQueuesCompanion entry) {
-    return into(offlineQueues).insert(entry);
+  /// Watch count of failed items for the UI badge.
+  Stream<int> watchFailedCount() {
+    final countExpr = offlineQueues.id.count();
+    final query = selectOnly(offlineQueues)
+      ..addColumns([countExpr])
+      ..where(offlineQueues.status.equals('failed'));
+    return query.map((row) => row.read(countExpr) ?? 0).watchSingle();
+  }
+
+  /// Re-queue every failed item for processing (badge "TAP RETRY" action).
+  Future<int> resetFailedToPending() {
+    return (update(offlineQueues)..where((q) => q.status.equals('failed')))
+        .write(const OfflineQueuesCompanion(status: Value('pending')));
   }
 }
+

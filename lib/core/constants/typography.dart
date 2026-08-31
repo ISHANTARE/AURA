@@ -1,72 +1,175 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// AURA typography scale using Inter for display/UI and JetBrains Mono for monospace.
-/// Reference: overhaul-docs/08-design-system.md verbatim specification
+import 'colors.dart';
+
+/// AURA Typography System — Inter
+/// Migrated from Space Grotesk to Inter for a cleaner, modern productivity feel.
+/// Type scale: Display → Headline → Title → Body → Caption → Label
 abstract final class AuraTypography {
-  static const TextStyle display = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 36,
-    fontWeight: FontWeight.w800,
-    letterSpacing: -0.5,
-  );
+  // ── Font family ───────────────────────────────────────────────────────────
+  static const String fontFamily = 'Inter';
 
-  static const TextStyle displayMedium = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.3,
-  );
+  // ── Base TextStyle factory ────────────────────────────────────────────────
+  static TextStyle _base({
+    required double size,
+    required FontWeight weight,
+    Color color = AuraColors.textPrimary,
+    double? letterSpacing,
+    double? height,
+    TextDecoration? decoration,
+  }) =>
+      GoogleFonts.inter(
+        fontSize: size,
+        fontWeight: weight,
+        color: color,
+        letterSpacing: letterSpacing,
+        height: height,
+        decoration: decoration,
+      );
 
-  static const TextStyle sectionHeader = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.2,
-  );
+  // ── Display / Hero ────────────────────────────────────────────────────────
+  /// Large stats, welcome screens, orb label. 40sp ExtraBold.
+  static TextStyle get display => _base(
+        size: 40,
+        weight: FontWeight.w800,
+        height: 1.1,
+      );
 
-  static const TextStyle cardTitle = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.0,
-  );
+  // ── Headline ──────────────────────────────────────────────────────────────
+  /// Screen titles, onboarding headings. 28sp Bold.
+  static TextStyle get headline => _base(
+        size: 28,
+        weight: FontWeight.w700,
+        height: 1.2,
+      );
 
-  static const TextStyle body = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
-  );
+  // ── Screen / Section Headers ──────────────────────────────────────────────
+  /// App bar titles, section names. 20sp SemiBold.
+  static TextStyle get sectionHeader => _base(
+        size: 20,
+        weight: FontWeight.w600,
+        height: 1.3,
+      );
 
-  static const TextStyle bodySmall = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-  );
+  /// Alias for sectionHeader — used in screen app bars.
+  static TextStyle get screenHeader => sectionHeader;
 
-  static const TextStyle label = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 12,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0.4,
-  );
+  // ── Title ─────────────────────────────────────────────────────────────────
+  /// Card titles, list item primaries. 16sp SemiBold.
+  static TextStyle get cardTitle => _base(
+        size: 16,
+        weight: FontWeight.w600,
+        height: 1.4,
+      );
 
-  static const TextStyle caption = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 11,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0.2,
-  );
+  // ── Body ──────────────────────────────────────────────────────────────────
+  /// Primary body content. 15sp Regular, full white.
+  static TextStyle get bodyPrimary => _base(
+        size: 15,
+        weight: FontWeight.w400,
+        height: 1.5,
+      );
 
-  static const TextStyle mono = TextStyle(
-    fontFamily: 'JetBrainsMono',
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-  );
+  /// Standard body — 14sp Regular, secondary text color.
+  static TextStyle get body => _base(
+        size: 14,
+        weight: FontWeight.w400,
+        color: AuraColors.textSecondary,
+        height: 1.5,
+      );
 
-  static const TextStyle orbLabel = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 18,
-    fontWeight: FontWeight.w900,
-    letterSpacing: 2.0,
-  );
+  /// Body medium — 15sp Regular, full white.
+  static TextStyle get bodyMedium => bodyPrimary;
+
+  /// Body small — 13sp Regular, secondary text color.
+  static TextStyle get bodySmall => _base(
+        size: 13,
+        weight: FontWeight.w400,
+        color: AuraColors.textSecondary,
+        height: 1.5,
+      );
+
+  // ── Caption ───────────────────────────────────────────────────────────────
+  /// Timestamps, meta info, breadcrumbs. 12sp Regular, muted.
+  static TextStyle get caption => _base(
+        size: 12,
+        weight: FontWeight.w400,
+        color: AuraColors.textMuted,
+        height: 1.4,
+      );
+
+  // ── Labels / Tags / Overline ──────────────────────────────────────────────
+  /// Category labels, badges. 11sp Medium, letter-spacing 0.8.
+  static TextStyle get label => _base(
+        size: 11,
+        weight: FontWeight.w500,
+        color: AuraColors.textSecondary,
+        letterSpacing: 0.8,
+      );
+
+  /// Overline — section markers, ALL CAPS hints. 11sp Medium.
+  static TextStyle get overline => _base(
+        size: 11,
+        weight: FontWeight.w500,
+        color: AuraColors.textMuted,
+        letterSpacing: 1.2,
+      );
+
+  /// Badge / chip text. 11sp SemiBold.
+  static TextStyle get badgeText => _base(
+        size: 11,
+        weight: FontWeight.w600,
+        color: AuraColors.textSecondary,
+        letterSpacing: 0.5,
+      );
+
+  // ── Stat / Metric Values ──────────────────────────────────────────────────
+  /// Large stat numbers in dashboard cards. 32sp ExtraBold.
+  static TextStyle get bentoMetricValue => _base(
+        size: 32,
+        weight: FontWeight.w800,
+        height: 1.1,
+      );
+
+  /// Stat metric labels beneath numbers. 11sp Bold, muted.
+  static TextStyle get bentoMetricLabel => _base(
+        size: 11,
+        weight: FontWeight.w700,
+        color: AuraColors.textMuted,
+        letterSpacing: 0.8,
+      );
+
+  // ── Button labels ─────────────────────────────────────────────────────────
+  /// Primary CTA button label. 15sp Bold white.
+  static TextStyle get buttonPrimary => _base(
+        size: 15,
+        weight: FontWeight.w700,
+      );
+
+  /// Alias for buttonPrimary.
+  static TextStyle get buttonText => buttonPrimary;
+
+  /// Secondary CTA. 15sp SemiBold.
+  static TextStyle get buttonSecondary => _base(
+        size: 15,
+        weight: FontWeight.w600,
+        color: AuraColors.textSecondary,
+      );
+
+  // ── Orb label ─────────────────────────────────────────────────────────────
+  /// The "A" on the orb. 22sp ExtraBold white.
+  static TextStyle get orbLabel => _base(
+        size: 22,
+        weight: FontWeight.w800,
+      );
+
+  // ── Legacy alias ──────────────────────────────────────────────────────────
+  /// @deprecated Use [label] instead.
+  static TextStyle get labelLime => _base(
+        size: 11,
+        weight: FontWeight.w500,
+        color: AuraColors.accentPrimary,
+        letterSpacing: 0.8,
+      );
 }

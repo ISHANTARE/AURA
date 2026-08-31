@@ -1,0 +1,239 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 840" width="100%" height="100%">
+  <defs>
+    <!-- Light Mode Background Gradient -->
+    <linearGradient id="lightBgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F6F8FA"/>
+      <stop offset="100%" stop-color="#EFF2F6"/>
+    </linearGradient>
+    
+    <!-- Cyber Cyan Accent Gradient for Light Theme Showcase -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0891B2"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+
+    <linearGradient id="lightOrbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="50%" stop-color="#0891B2"/>
+      <stop offset="100%" stop-color="#0E7490"/>
+    </linearGradient>
+
+    <!-- Subtle Drop Shadow for Cards in Light Theme -->
+    <filter id="lightCardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+
+    <filter id="lightOrbGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="840" rx="36" fill="url(#lightBgGrad)"/>
+  <rect width="400" height="840" rx="36" fill="none" stroke="#CBD5E1" stroke-width="2"/>
+
+  <!-- Status Bar -->
+  <text x="32" y="34" fill="#0F172A" font-family="'Inter', sans-serif" font-size="13" font-weight="600">09:41</text>
+  <g transform="translate(325, 24)">
+    <rect x="0" y="7" width="3" height="5" rx="1" fill="#0F172A"/>
+    <rect x="5" y="5" width="3" height="7" rx="1" fill="#0F172A"/>
+    <rect x="10" y="2" width="3" height="10" rx="1" fill="#0F172A"/>
+    <rect x="15" y="0" width="3" height="12" rx="1" fill="#0F172A"/>
+    <rect x="25" y="1" width="20" height="10" rx="2.5" fill="none" stroke="#0F172A" stroke-width="1.5"/>
+    <rect x="27" y="3" width="14" height="6" rx="1.5" fill="#0891B2"/>
+  </g>
+
+  <!-- App Header -->
+  <g transform="translate(20, 54)">
+    <text x="0" y="22" fill="#0F172A" font-family="'Inter', sans-serif" font-size="20" font-weight="700" letter-spacing="-0.4">Good evening, Ishan</text>
+    
+    <text x="0" y="42" fill="#64748B" font-family="'Inter', sans-serif" font-size="12" font-weight="500">Saturday, August 29</text>
+    
+    <!-- Sync Pill -->
+    <g transform="translate(130, 31)">
+      <rect width="68" height="16" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+      <circle cx="9" cy="8" r="3" fill="#10B981"/>
+      <text x="16" y="11.5" fill="#64748B" font-family="'Inter', sans-serif" font-size="9" font-weight="700" letter-spacing="0.5">ONLINE</text>
+    </g>
+
+    <!-- Header Action Buttons -->
+    <g transform="translate(280, 8)">
+      <rect width="36" height="36" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+      <circle cx="16" cy="16" r="6" fill="none" stroke="#64748B" stroke-width="1.8"/>
+      <line x1="20.5" y1="20.5" x2="25" y2="25" stroke="#64748B" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(324, 8)">
+      <rect width="36" height="36" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+      <circle cx="18" cy="18" r="4" fill="none" stroke="#64748B" stroke-width="1.8"/>
+      <path d="M18 9v2 M18 25v2 M9 18h2 M25 18h2" stroke="#64748B" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- ── 2-PART SPLIT QUICK STATS (LIGHT MODE) ── -->
+  <g transform="translate(20, 116)">
+    <!-- Part 1: Today's Tasks -->
+    <g transform="translate(0, 0)">
+      <rect width="215" height="86" rx="16" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1" filter="url(#lightCardShadow)"/>
+      
+      <g transform="translate(14, 14)">
+        <circle cx="7" cy="7" r="7" fill="#0891B2" fill-opacity="0.15"/>
+        <polyline points="4,7 6.5,9.5 10,4.5" fill="none" stroke="#0891B2" stroke-width="1.5" stroke-linecap="round"/>
+        <text x="20" y="10.5" fill="#64748B" font-family="'Inter', sans-serif" font-size="10" font-weight="700" letter-spacing="0.6">TODAY'S TASKS</text>
+      </g>
+
+      <text x="14" y="52" fill="#0F172A" font-family="'Inter', sans-serif" font-size="20" font-weight="700">4 <tspan font-size="13" font-weight="500" fill="#64748B">Pending</tspan> · 8 <tspan font-size="13" font-weight="500" fill="#10B981">Done</tspan></text>
+      
+      <g transform="translate(14, 64)">
+        <rect width="187" height="6" rx="3" fill="#E2E8F0"/>
+        <rect width="124" height="6" rx="3" fill="url(#cyanGrad)"/>
+      </g>
+    </g>
+
+    <!-- Part 2: Overdue Alert Card -->
+    <g transform="translate(225, 0)">
+      <rect width="135" height="86" rx="16" fill="#FFFFFF" stroke="#EF4444" stroke-opacity="0.4" stroke-width="1" filter="url(#lightCardShadow)"/>
+      
+      <g transform="translate(12, 14)">
+        <circle cx="7" cy="7" r="7" fill="#EF4444" fill-opacity="0.15"/>
+        <text x="4.5" y="10.5" fill="#EF4444" font-family="'Inter', sans-serif" font-size="10" font-weight="800">!</text>
+        <text x="20" y="10.5" fill="#EF4444" font-family="'Inter', sans-serif" font-size="10" font-weight="700" letter-spacing="0.6">OVERDUE</text>
+      </g>
+
+      <text x="12" y="52" fill="#EF4444" font-family="'Inter', sans-serif" font-size="22" font-weight="800">2 <tspan font-size="12" font-weight="500" fill="#64748B">Tasks</tspan></text>
+      <text x="12" y="70" fill="#64748B" font-family="'Inter', sans-serif" font-size="10" font-weight="600">Tap to review →</text>
+    </g>
+  </g>
+
+  <!-- ── BENTO ROW 1: URGENT + ORB (LIGHT MODE) ── -->
+  <g transform="translate(20, 214)">
+    <!-- Urgent Cell -->
+    <g transform="translate(0, 0)">
+      <rect width="215" height="152" rx="18" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1" filter="url(#lightCardShadow)"/>
+      
+      <g transform="translate(14, 14)">
+        <circle cx="4" cy="4" r="3" fill="#EF4444"/>
+        <text x="12" y="7" fill="#0F172A" font-family="'Inter', sans-serif" font-size="11" font-weight="700" letter-spacing="0.6">URGENT DEADLINES</text>
+      </g>
+
+      <!-- Urgent Item 1 -->
+      <g transform="translate(14, 38)">
+        <rect width="187" height="46" rx="10" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8"/>
+        <circle cx="12" cy="23" r="4" fill="#EF4444"/>
+        <text x="24" y="19" fill="#0F172A" font-family="'Inter', sans-serif" font-size="11.5" font-weight="600">OS Lab Assignment</text>
+        <text x="24" y="34" fill="#64748B" font-family="'Inter', sans-serif" font-size="10" font-weight="500">Today · 06:00 PM</text>
+        <rect x="140" y="14" width="38" height="18" rx="6" fill="#EF4444" fill-opacity="0.12"/>
+        <text x="146" y="26.5" fill="#EF4444" font-family="'Inter', sans-serif" font-size="8.5" font-weight="700">1h left</text>
+      </g>
+
+      <!-- Urgent Item 2 -->
+      <g transform="translate(14, 92)">
+        <rect width="187" height="46" rx="10" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8"/>
+        <circle cx="12" cy="23" r="4" fill="#F97316"/>
+        <text x="24" y="19" fill="#0F172A" font-family="'Inter', sans-serif" font-size="11.5" font-weight="600">Review PR #42</text>
+        <text x="24" y="34" fill="#64748B" font-family="'Inter', sans-serif" font-size="10" font-weight="500">Today · 08:30 PM</text>
+      </g>
+    </g>
+
+    <!-- Orb Cell -->
+    <g transform="translate(225, 0)">
+      <rect width="135" height="152" rx="18" fill="#FFFFFF" stroke="#0891B2" stroke-opacity="0.3" stroke-width="1" filter="url(#lightCardShadow)"/>
+      
+      <circle cx="67.5" cy="64" r="38" fill="#0891B2" fill-opacity="0.08"/>
+      <circle cx="67.5" cy="64" r="28" fill="#0891B2" fill-opacity="0.14"/>
+      <circle cx="67.5" cy="64" r="24" fill="url(#lightOrbGrad)" filter="url(#lightOrbGlow)"/>
+      
+      <g transform="translate(60, 56.5)">
+        <rect x="4" y="2" width="7" height="10" rx="3.5" fill="#FFFFFF"/>
+        <path d="M1.5 6.5C1.5 10 13.5 10 13.5 6.5" fill="none" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="7.5" y1="12" x2="7.5" y2="15" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"/>
+      </g>
+
+      <text x="67.5" y="122" fill="#0F172A" font-family="'Inter', sans-serif" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="0.4">TAP TO SPEAK</text>
+      <text x="67.5" y="136" fill="#0891B2" font-family="'Inter', sans-serif" font-size="9" font-weight="600" text-anchor="middle">AI Capture</text>
+    </g>
+  </g>
+
+  <!-- ── BENTO ROW 2: TODAY'S FOCUS (LIGHT MODE) ── -->
+  <g transform="translate(20, 378)">
+    <rect width="360" height="340" rx="20" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1" filter="url(#lightCardShadow)"/>
+    
+    <g transform="translate(16, 16)">
+      <g transform="translate(0, 2)">
+        <rect width="14" height="14" rx="4" fill="#0891B2" fill-opacity="0.15"/>
+        <circle cx="7" cy="7" r="3" fill="#0891B2"/>
+      </g>
+      <text x="22" y="13" fill="#0F172A" font-family="'Inter', sans-serif" font-size="13" font-weight="700" letter-spacing="0.5">TODAY'S FOCUS</text>
+      <text x="328" y="13" fill="#0891B2" font-family="'Inter', sans-serif" font-size="11" font-weight="600" text-anchor="end">View All</text>
+    </g>
+
+    <!-- Task 1 -->
+    <g transform="translate(16, 46)">
+      <rect width="328" height="60" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8"/>
+      <rect x="14" y="20" width="20" height="20" rx="6" fill="none" stroke="#0891B2" stroke-width="1.8"/>
+      <text x="44" y="27" fill="#0F172A" font-family="'Inter', sans-serif" font-size="12.5" font-weight="600">Implement Drift Database DAOs</text>
+      <text x="44" y="44" fill="#64748B" font-family="'Inter', sans-serif" font-size="10.5" font-weight="500">10:00 AM · Academics</text>
+      <rect x="264" y="20" width="50" height="20" rx="6" fill="#EF4444" fill-opacity="0.12"/>
+      <text x="289" y="33.5" fill="#EF4444" font-family="'Inter', sans-serif" font-size="9" font-weight="700" text-anchor="middle">HIGH</text>
+    </g>
+
+    <!-- Task 2 -->
+    <g transform="translate(16, 114)">
+      <rect width="328" height="60" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8"/>
+      <rect x="14" y="20" width="20" height="20" rx="6" fill="none" stroke="#0891B2" stroke-width="1.8"/>
+      <text x="44" y="27" fill="#0F172A" font-family="'Inter', sans-serif" font-size="12.5" font-weight="600">Compiler Design Lecture Review</text>
+      <text x="44" y="44" fill="#64748B" font-family="'Inter', sans-serif" font-size="10.5" font-weight="500">02:30 PM · Academics</text>
+      <rect x="264" y="20" width="50" height="20" rx="6" fill="#F97316" fill-opacity="0.12"/>
+      <text x="289" y="33.5" fill="#F97316" font-family="'Inter', sans-serif" font-size="9" font-weight="700" text-anchor="middle">MED</text>
+    </g>
+
+    <!-- Task 3 -->
+    <g transform="translate(16, 182)">
+      <rect width="328" height="60" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8"/>
+      <rect x="14" y="20" width="20" height="20" rx="6" fill="none" stroke="#0891B2" stroke-width="1.8"/>
+      <text x="44" y="27" fill="#0F172A" font-family="'Inter', sans-serif" font-size="12.5" font-weight="600">Sync with Internship Mentor</text>
+      <text x="44" y="44" fill="#64748B" font-family="'Inter', sans-serif" font-size="10.5" font-weight="500">04:00 PM · Internship</text>
+      <rect x="264" y="20" width="50" height="20" rx="6" fill="#0891B2" fill-opacity="0.12"/>
+      <text x="289" y="33.5" fill="#0891B2" font-family="'Inter', sans-serif" font-size="9" font-weight="700" text-anchor="middle">WORK</text>
+    </g>
+
+    <!-- Task 4 (Completed) -->
+    <g transform="translate(16, 250)">
+      <rect width="328" height="60" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="0.8" opacity="0.6"/>
+      <rect x="14" y="20" width="20" height="20" rx="6" fill="#10B981"/>
+      <polyline points="18,30 22,34 29,26" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+      <text x="44" y="27" fill="#94A3B8" font-family="'Inter', sans-serif" font-size="12.5" font-weight="500" text-decoration="line-through">Morning Quick Voice Check-in</text>
+      <text x="44" y="44" fill="#94A3B8" font-family="'Inter', sans-serif" font-size="10.5" font-weight="500">08:00 AM · Completed</text>
+      <rect x="264" y="20" width="50" height="20" rx="6" fill="#10B981" fill-opacity="0.12"/>
+      <text x="289" y="33.5" fill="#10B981" font-family="'Inter', sans-serif" font-size="9" font-weight="700" text-anchor="middle">DONE</text>
+    </g>
+  </g>
+
+  <!-- ── BOTTOM NAVIGATION BAR (LIGHT MODE) ── -->
+  <g transform="translate(0, 756)">
+    <rect width="400" height="84" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    
+    <g transform="translate(50, 16)">
+      <circle cx="16" cy="16" r="18" fill="#0891B2" fill-opacity="0.15"/>
+      <path d="M10 18l6-5 6 5v6a1 1 0 01-1 1h-3v-4h-4v4h-3a1 1 0 01-1-1v-6z" fill="#0891B2"/>
+      <text x="16" y="46" fill="#0891B2" font-family="'Inter', sans-serif" font-size="9" font-weight="700" text-anchor="middle">Home</text>
+    </g>
+
+    <g transform="translate(136, 16)">
+      <rect x="7" y="8" width="18" height="16" rx="3" fill="none" stroke="#64748B" stroke-width="1.8"/>
+      <line x1="7" y1="13" x2="25" y2="13" stroke="#64748B" stroke-width="1.8"/>
+      <text x="16" y="46" fill="#64748B" font-family="'Inter', sans-serif" font-size="9" font-weight="500" text-anchor="middle">Workspaces</text>
+    </g>
+
+    <g transform="translate(222, 16)">
+      <circle cx="16" cy="15" r="8" fill="none" stroke="#64748B" stroke-width="1.8"/>
+      <polyline points="16,11 16,15 19,17" fill="none" stroke="#64748B" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="16" y="46" fill="#64748B" font-family="'Inter', sans-serif" font-size="9" font-weight="500" text-anchor="middle">Alarms</text>
+    </g>
+
+    <g transform="translate(308, 16)">
+      <rect x="9" y="7" width="14" height="18" rx="2" fill="none" stroke="#64748B" stroke-width="1.8"/>
+      <text x="16" y="46" fill="#64748B" font-family="'Inter', sans-serif" font-size="9" font-weight="500" text-anchor="middle">Notes</text>
+    </g>
+  </g>
+</svg>

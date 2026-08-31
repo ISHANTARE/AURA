@@ -1,0 +1,214 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../database/app_database.dart';
+
+import 'clock_providers.dart';
+
+import '../../features/home/domain/services/briefing_scheduler.dart';
+import '../../features/reminders/domain/usecases/overdue_reminder_usecase.dart';
+import '../../features/reminders/domain/usecases/snooze_reminder_usecase.dart';
+import '../../features/tasks/domain/usecases/recurring_task_reset_usecase.dart';
+
+export '../../database/app_database.dart';
+export '../../database/daos/item_dao.dart';
+export '../../database/daos/workspace_dao.dart';
+export '../../database/daos/notification_dao.dart';
+export '../../database/daos/offline_queue_dao.dart';
+
+export 'connectivity_provider.dart';
+
+// ── Core Database Provider ────────────────────────────────────────────────────
+
+/// Canonical singleton for AppDatabase. All DAOs derive from this.
+final databaseProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase();
+  ref.onDispose(db.close);
+  return db;
+});
+
+// ── DAO Providers ─────────────────────────────────────────────────────────────
+
+/// ItemDao provider for all item queries (Alarms & Reminders)
+final itemDaoProvider = Provider<ItemDao>((ref) {
+  return ItemDao(ref.watch(databaseProvider));
+});
+
+/// WorkspaceDao provider for workspace CRUD & counts
+final workspaceDaoProvider = Provider<WorkspaceDao>((ref) {
+  return WorkspaceDao(ref.watch(databaseProvider));
+});
+
+/// NotificationDao provider
+final notificationDaoProvider = Provider<NotificationDao>((ref) {
+  return NotificationDao(ref.watch(databaseProvider));
+});
+
+/// OfflineQueueDao provider
+final offlineQueueDaoProvider = Provider<OfflineQueueDao>((ref) {
+  return OfflineQueueDao(ref.watch(databaseProvider));
+});
+
+// ── Reactive Stream Providers ─────────────────────────────────────────────────
+
+/// Stream provider for all active items
+final allActiveItemsProvider = StreamProvider<List<Item>>((ref) {
+  return ref.watch(itemDaoProvider).watchAllActive();
+});
+
+/// Stream provider for urgent high-priority items
+final urgentItemsProvider = StreamProvider<List<Item>>((ref) {
+  return ref.watch(itemDaoProvider).watchUrgent();
+});
+
+/// Stream provider for today's focus items.
+/// Re-subscribes when the calendar day rolls over (drift watches don't
+/// observe wall-clock changes on their own).
+final todayFocusItemsProvider = StreamProvider<List<Item>>((ref) {
+  final now = ref.watch(dayRefreshProvider);
+  return ref.watch(itemDaoProvider).watchTodayFocus(now: now);
+});
+
+/// Stream provider for alarms, sorted chronologically by time of day (e.g. 6 AM → 7:30 AM → 2 PM)
+final alarmsListProvider = StreamProvider<List<Item>>((ref) {
+  return ref.watch(itemDaoProvider).watchByCategory('alarm').map((alarms) {
+    final sorted = List<Item>.from(alarms);
+    sorted.sort((a, b) {
+      final aDt = a.fireAt != null ? DateTime.fromMillisecondsSinceEpoch(a.fireAt!) : null;
+      final bDt = b.fireAt != null ? DateTime.fromMillisecondsSinceEpoch(b.fireAt!) : null;
+      final aMinuteOfDay = aDt != null ? aDt.hour * 60 + aDt.minute : 9999;
+      final bMinuteOfDay = bDt != null ? bDt.hour * 60 + bDt.minute : 9999;
+      if (aMinuteOfDay != bMinuteOfDay) {
+        return aMinuteOfDay.compareTo(bMinuteOfDay);
+      }
+      return (a.fireAt ?? 0).compareTo(b.fireAt ?? 0);
+    });
+    return sorted;
+  });
+});
+
+/// Stream provider for active workspaces list
+final workspacesListProvider = StreamProvider<List<Workspace>>((ref) {
+  return ref.watch(workspaceDaoProvider).watchAll();
+});
+
+/// Stream provider for notes (items with kind == 'note' or category == 'note')
+final notesListProvider = StreamProvider<List<Item>>((ref) {
+  return ref.watch(itemDaoProvider).watchAllActive().map((allItems) {
+    return allItems
+        .where((i) =>
+            i.category != 'alarm' &&
+            (i.kind == 'note' || i.category == 'note'))
+        .toList();
+  });
+});
+
+// ── User Preferences Providers ────────────────────────────────────────────────
+
+class UserNameNotifier extends StateNotifier<String> {
+  UserNameNotifier() : super('there') {
+    _loadName();
+  }
+
+  Future<void> _loadName() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getString('USER_NAME') ?? 'there';
+  }
+
+  Future<void> setName(String newName) async {
+    state = newName;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('USER_NAME', newName);
+  }
+
+  /// Used by Reset App Data: back to the anonymous default immediately.
+  Future<void> reset() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('USER_NAME');
+    state = 'there';
+  }
+}
+
+/// StateNotifierProvider for the user's display name.
+/// Updates reactively when user changes name in Settings or Onboarding.
+final userNameProvider =
+    StateNotifierProvider<UserNameNotifier, String>((ref) {
+  return UserNameNotifier();
+});
+
+// ── Quick Stats Provider ──────────────────────────────────────────────────────
+
+/// Model for home screen item statistics summary.
+class QuickStats {
+  final int pending;
+  final int completed;
+  final int overdue;
+
+  const QuickStats({
+    required this.pending,
+    required this.completed,
+    required this.overdue,
+  });
+}
+
+/// Stream provider computing pending / completed / overdue item counts
+/// reactively, with a midnight rollover via [dayRefreshProvider].
+final quickStatsProvider = StreamProvider<QuickStats>((ref) {
+  ref.watch(dayRefreshProvider);
+  final itemDao = ref.watch(itemDaoProvider);
+  return itemDao.watchAllActive().map((allItems) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    int pending = 0;
+    int completed = 0;
+    int overdue = 0;
+
+    for (final item in allItems) {
+      if (item.status == 'completed') {
+        completed++;
+      } else if (item.status == 'pending') {
+        final deadline = item.deadline ?? item.fireAt;
+        if (deadline != null && deadline < now) {
+          overdue++;
+        } else {
+          pending++;
+        }
+      }
+    }
+
+    return QuickStats(pending: pending, completed: completed, overdue: overdue);
+  });
+});
+
+// ── Reminder Usecase Providers ────────────────────────────────────────────────
+// NOTE: snoozeReminderUseCaseProvider lives in
+// features/reminders/presentation/providers/reminder_providers.dart (single
+// canonical definition). scheduleReminderUseCaseProvider was removed with its
+// dead use case — scheduling now flows through ReminderSchedulingService.
+
+/// Provider for SnoozeReminderUseCase (kept for background-action callers
+/// that import only core providers).
+final snoozeReminderUseCaseProvider = Provider<SnoozeReminderUseCase>((ref) {
+  final db = ref.watch(databaseProvider);
+  return SnoozeReminderUseCase(db: db);
+});
+
+/// Provider for OverdueReminderUseCase
+final overdueReminderUseCaseProvider = Provider<OverdueReminderUseCase>((ref) {
+  final db = ref.watch(databaseProvider);
+  return OverdueReminderUseCase(db: db);
+});
+
+// ── Briefing Scheduler Provider ───────────────────────────────────────────────
+
+/// Singleton provider for the daily morning briefing scheduler.
+final briefingSchedulerProvider = Provider<BriefingSchedulerService>((ref) {
+  return BriefingSchedulerService(db: ref.watch(databaseProvider));
+});
+
+// ── Recurring Task Reset Provider ─────────────────────────────────────────
+
+/// Provider for the recurring task daily reset.
+final recurringTaskResetProvider = Provider<RecurringTaskResetUseCase>((ref) {
+  final db = ref.watch(databaseProvider);
+  return RecurringTaskResetUseCase(db: db);
+});

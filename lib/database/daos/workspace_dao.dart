@@ -1,123 +1,147 @@
 import 'package:drift/drift.dart';
 
 import '../app_database.dart';
-import '../tables/items.dart';
-import '../tables/workspaces.dart';
 
 part 'workspace_dao.g.dart';
 
-/// DAO managing Workspaces and Workspace Sections.
-/// Reference: overhaul-docs/03-database-schema.md Section 3
 @DriftAccessor(tables: [Workspaces, WorkspaceSections, Items])
-class WorkspaceDao extends DatabaseAccessor<AppDatabase>
-    with _$WorkspaceDaoMixin {
+class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixin {
   WorkspaceDao(super.db);
 
-  /// Streams active, non-archived, non-deleted workspaces.
-  Stream<List<Workspace>> watchAll() {
-    return (select(workspaces)
-          ..where((t) => t.deletedAt.isNull() & t.isArchived.equals(false))
-          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
-        .watch();
+  /// Watch all active (non-archived, non-deleted) workspaces.
+  Stream<List<Workspace>> watchAll() =>
+      (select(workspaces)
+            ..where((w) => w.isArchived.equals(false))
+            ..where((w) => w.deletedAt.isNull())
+            ..orderBy([(w) => OrderingTerm(expression: w.sortOrder)]))
+          .watch();
+
+  /// Watch all archived (non-deleted) workspaces.
+  Stream<List<Workspace>> watchArchived() =>
+      (select(workspaces)
+            ..where((w) => w.isArchived.equals(true))
+            ..where((w) => w.deletedAt.isNull())
+            ..orderBy([(w) => OrderingTerm(expression: w.sortOrder)]))
+          .watch();
+
+  /// Get count of active items (tasks/events/reminders) for a workspace
+  Stream<int> watchItemCount(String workspaceId) {
+    return (select(items)
+          ..where((t) => t.workspaceId.equals(workspaceId))
+          ..where((t) => t.status.isNotIn(const ['completed', 'cancelled']))
+          ..where((t) => t.deletedAt.isNull()))
+        .watch()
+        .map((list) => list.length);
   }
 
-  /// Streams archived, non-deleted workspaces.
-  Stream<List<Workspace>> watchArchived() {
-    return (select(workspaces)
-          ..where((t) => t.deletedAt.isNull() & t.isArchived.equals(true))
-          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
-        .watch();
+  /// Get count of overdue items for a workspace
+  Stream<int> watchOverdueCount(String workspaceId) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (select(items)
+          ..where((t) => t.workspaceId.equals(workspaceId))
+          ..where((t) => t.status.isNotIn(const ['completed', 'cancelled']))
+          ..where((t) => t.deadline.isSmallerThanValue(now) | t.fireAt.isSmallerThanValue(now))
+          ..where((t) => t.deletedAt.isNull()))
+        .watch()
+        .map((list) => list.length);
   }
 
-  /// Streams sections within a workspace.
-  Stream<List<WorkspaceSection>> watchSections(String workspaceId) {
+  /// Get count of sections for a workspace
+  Stream<int> watchSectionCount(String workspaceId) {
     return (select(workspaceSections)
-          ..where((t) =>
-              t.deletedAt.isNull() & t.workspaceId.equals(workspaceId))
-          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
-        .watch();
+          ..where((s) => s.workspaceId.equals(workspaceId))
+          ..where((s) => s.isArchived.equals(false))
+          ..where((s) => s.deletedAt.isNull()))
+        .watch()
+        .map((list) => list.length);
   }
 
-  /// Retrieves a workspace by UUID.
-  Future<Workspace?> getWorkspaceById(String id) {
-    return (select(workspaces)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
-  }
+  /// Watch sections for a workspace.
+  Stream<List<WorkspaceSection>> watchSections(String workspaceId) =>
+      (select(workspaceSections)
+            ..where((s) => s.workspaceId.equals(workspaceId))
+            ..where((s) => s.isArchived.equals(false))
+            ..where((s) => s.deletedAt.isNull())
+            ..orderBy([(s) => OrderingTerm(expression: s.sortOrder)]))
+          .watch();
 
-  /// Inserts a new workspace.
-  Future<int> insertWorkspace(WorkspacesCompanion ws) {
-    return into(workspaces).insert(ws);
-  }
+  /// Get all workspaces (non-reactive, for AI workspace routing).
+  Future<List<Workspace>> getAll() =>
+      (select(workspaces)
+            ..where((w) => w.isArchived.equals(false))
+            ..where((w) => w.deletedAt.isNull()))
+          .get();
 
-  /// Updates an existing workspace.
-  Future<bool> updateWorkspace(WorkspacesCompanion ws) {
-    return update(workspaces).replace(ws);
-  }
+  /// Get a single workspace by ID.
+  Future<Workspace?> getById(String id) =>
+      (select(workspaces)..where((w) => w.id.equals(id))).getSingleOrNull();
 
-  /// Soft deletes a workspace and cascades soft-delete to its sections and items.
-  Future<void> softDeleteWorkspace(String id, int nowMs) async {
-    await transaction(() async {
-      await (update(workspaces)..where((t) => t.id.equals(id))).write(
-        WorkspacesCompanion(
-          deletedAt: Value(nowMs),
-          updatedAt: Value(nowMs),
-        ),
-      );
-      await (update(workspaceSections)
-            ..where((t) => t.workspaceId.equals(id)))
-          .write(
-        WorkspaceSectionsCompanion(
-          deletedAt: Value(nowMs),
-          updatedAt: Value(nowMs),
-        ),
-      );
-      await (update(items)..where((t) => t.workspaceId.equals(id))).write(
-        ItemsCompanion(
-          deletedAt: Value(nowMs),
-          updatedAt: Value(nowMs),
-        ),
-      );
-    });
-  }
+  /// Insert a new workspace.
+  Future<void> insertWorkspace(WorkspacesCompanion workspace) =>
+      into(workspaces).insert(workspace);
 
-  /// Archives or unarchives a workspace.
-  Future<void> archiveWorkspace(String id, bool isArchived, int nowMs) async {
-    await (update(workspaces)..where((t) => t.id.equals(id))).write(
+  /// Update a workspace.
+  Future<bool> updateWorkspace(WorkspacesCompanion workspace) =>
+      update(workspaces).replace(workspace);
+
+  /// Archive a workspace.
+  Future<void> archive(String id) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(workspaces)..where((w) => w.id.equals(id))).write(
       WorkspacesCompanion(
-        isArchived: Value(isArchived),
-        updatedAt: Value(nowMs),
+        isArchived: const Value(true),
+        updatedAt: Value(now),
       ),
     );
   }
 
-  /// Inserts a workspace section.
-  Future<int> insertSection(WorkspaceSectionsCompanion section) {
-    return into(workspaceSections).insert(section);
+  /// Unarchive a workspace.
+  Future<void> unarchive(String id) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(workspaces)..where((w) => w.id.equals(id))).write(
+      WorkspacesCompanion(
+        isArchived: const Value(false),
+        updatedAt: Value(now),
+      ),
+    );
   }
 
-  /// Updates a workspace section.
-  Future<bool> updateSection(WorkspaceSectionsCompanion section) {
-    return update(workspaceSections).replace(section);
-  }
-
-  /// Soft deletes a section and sets section_id null or cascades to items.
-  Future<void> softDeleteSection(String sectionId, int nowMs) async {
+  /// Soft delete a workspace and cascade soft-delete to all child items.
+  Future<void> softDelete(String id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
     await transaction(() async {
-      await (update(workspaceSections)
-            ..where((t) => t.id.equals(sectionId)))
-          .write(
-        WorkspaceSectionsCompanion(
-          deletedAt: Value(nowMs),
-          updatedAt: Value(nowMs),
+      await (update(workspaces)..where((w) => w.id.equals(id))).write(
+        WorkspacesCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(now),
         ),
       );
-      await (update(items)..where((t) => t.sectionId.equals(sectionId)))
-          .write(
+      await (update(items)..where((t) => t.workspaceId.equals(id) & t.deletedAt.isNull())).write(
         ItemsCompanion(
-          deletedAt: Value(nowMs),
-          updatedAt: Value(nowMs),
+          deletedAt: Value(now),
+          updatedAt: Value(now),
         ),
       );
     });
   }
+
+  /// Insert a section.
+  Future<void> insertSection(WorkspaceSectionsCompanion section) =>
+      into(workspaceSections).insert(section);
+
+  /// Update a section.
+  Future<bool> updateSection(WorkspaceSectionsCompanion section) =>
+      update(workspaceSections).replace(section);
+
+  /// Archive a section.
+  Future<void> archiveSection(String id) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(workspaceSections)..where((s) => s.id.equals(id))).write(
+      WorkspaceSectionsCompanion(
+        isArchived: const Value(true),
+        updatedAt: Value(now),
+      ),
+    );
+  }
 }
+
