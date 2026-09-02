@@ -10,13 +10,15 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/greeting.dart';
+import '../../../capture/presentation/widgets/voice_capture_overlay.dart';
 import '../providers/home_providers.dart';
 import '../widgets/aura_date_navigator.dart';
 import '../widgets/day_agenda_view.dart';
+import '../widgets/home_bento_cells.dart';
 import '../widgets/quick_stats_row.dart';
 import '../widgets/sync_status_badge.dart';
 
-/// Home Screen — AURA Daily Cockpit with Split Stats, Date Navigator & Day Agenda.
+/// Home Screen — AURA Daily Cockpit with Day-Specific Agenda & Real-Time Stats.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -25,21 +27,28 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _staggerCtrl;
-  late final Animation<double> _fadeAnim;
+  final List<Animation<double>> _cellAnims = [];
 
   @override
   void initState() {
     super.initState();
     _staggerCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 600),
     );
-    _fadeAnim = CurvedAnimation(
-      parent: _staggerCtrl,
-      curve: Curves.easeOut,
-    );
+
+    for (int i = 0; i < 4; i++) {
+      final start = (i * 0.12).clamp(0.0, 1.0);
+      final end = (start + 0.50).clamp(0.0, 1.0);
+      _cellAnims.add(
+        CurvedAnimation(
+          parent: _staggerCtrl,
+          curve: Interval(start, end, curve: Curves.easeOut),
+        ),
+      );
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _staggerCtrl.forward();
@@ -58,51 +67,103 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final dateStr = DateFormat('EEEE, MMMM d').format(now);
     final mediaQuery = MediaQuery.of(context);
 
+    // Dynamic user name from StateNotifierProvider
     final userName = ref.watch(userNameProvider);
     final greeting = timeAwareGreeting(now.hour, userName: userName);
 
+    final urgentAsync = ref.watch(urgentItemsProvider);
+
+    final List<Map<String, dynamic>> urgentItems = urgentAsync.when(
+      data: (items) => items.map((t) => <String, dynamic>{
+        'title': t.title,
+        'deadline': t.deadline != null
+            ? DateFormat('EEE · h:mm a').format(DateTime.fromMillisecondsSinceEpoch(t.deadline!))
+            : (t.fireAt != null
+                ? DateFormat('EEE · h:mm a').format(DateTime.fromMillisecondsSinceEpoch(t.fireAt!))
+                : 'No deadline'),
+        'isOverdue': (t.deadline ?? t.fireAt ?? 0) < now.millisecondsSinceEpoch,
+      }).toList(),
+      loading: () => <Map<String, dynamic>>[],
+      error: (_, __) => <Map<String, dynamic>>[],
+    );
+
+    final bg = AuraColors.bgOf(context);
+
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: bg,
       body: SafeArea(
         child: Column(
           children: [
             // ── Header ──────────────────────────────────────────────────
             _buildHeader(greeting, dateStr),
 
-            // ── Daily Cockpit Content ───────────────────────────────────
+            // ── Cockpit Content ─────────────────────────────────────────
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AuraSpacing.md),
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  child: FadeTransition(
-                    opacity: _fadeAnim,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: AuraSpacing.xs),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: AuraSpacing.xs),
 
-                        // Top Row: Split Stats (Today's Pending/Done + Overdue Accumulator)
-                        const QuickStatsRow(),
+                      // 1. Top Quick Stats Row (Always Today's data)
+                      _StaggerCell(
+                        animation: _cellAnims[0],
+                        child: const QuickStatsRow(),
+                      ),
 
-                        const SizedBox(height: 12),
+                      const SizedBox(height: AuraSpacing.sm),
 
-                        // Middle: 3-Part Date Switcher & Mini-Week Activity Bar
-                        const AuraDateNavigator(),
-
-                        const SizedBox(height: 14),
-
-                        // Bottom: Swipeable Day Agenda (Timed & Anytime)
-                        const DayAgendaView(),
-
-                        SizedBox(
-                          height: AuraSpacing.orbSize +
-                              AuraSpacing.bottomNavHeight +
-                              AuraSpacing.lg +
-                              mediaQuery.padding.bottom,
+                      // 2. Row 1: URGENT (58%) + ORB (42%)
+                      _StaggerCell(
+                        animation: _cellAnims[1],
+                        child: SizedBox(
+                          height: 148,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 58,
+                                child: UrgentCell(
+                                  items: urgentItems,
+                                  onTap: () => context.push(Routes.search),
+                                ),
+                              ),
+                              const SizedBox(width: AuraSpacing.sm),
+                              Expanded(
+                                flex: 42,
+                                child: OrbCell(
+                                  onTap: () => VoiceCaptureOverlay.show(context),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+
+                      const SizedBox(height: AuraSpacing.sm),
+
+                      // 3. Day Navigation Control (< -> Date -> >) + [Pending | Done] Box
+                      _StaggerCell(
+                        animation: _cellAnims[2],
+                        child: const AuraDateNavigator(),
+                      ),
+
+                      const SizedBox(height: AuraSpacing.sm),
+
+                      // 4. Day-Specific Agenda / Task List
+                      _StaggerCell(
+                        animation: _cellAnims[3],
+                        child: const DayAgendaView(),
+                      ),
+
+                      SizedBox(
+                        height: AuraSpacing.orbSize +
+                            AuraSpacing.bottomNavHeight +
+                            AuraSpacing.md +
+                            mediaQuery.padding.bottom,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -123,11 +184,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(greeting, style: AuraTypography.sectionHeader),
+                Text(
+                  greeting,
+                  style: AuraTypography.sectionHeader.copyWith(
+                    color: AuraColors.textPrimaryOf(context),
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text(dateStr, style: AuraTypography.overline),
+                    Text(
+                      dateStr,
+                      style: AuraTypography.overline.copyWith(
+                        color: AuraColors.textMutedOf(context),
+                      ),
+                    ),
                     const SizedBox(width: AuraSpacing.sm),
                     const SyncStatusBadge(),
                   ],
@@ -150,6 +221,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 }
 
+// ── Animation & UI Helpers ────────────────────────────────────────────────────
+
+class _StaggerCell extends StatelessWidget {
+  const _StaggerCell({required this.animation, required this.child});
+  final Animation<double> animation;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) => Opacity(
+        opacity: animation.value,
+        child: Transform.translate(
+          offset: Offset(0, 10 * (1 - animation.value)),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 class _IconButton extends StatelessWidget {
   const _IconButton({required this.icon, required this.onTap});
   final IconData icon;
@@ -157,6 +250,10 @@ class _IconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -166,11 +263,11 @@ class _IconButton extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AuraColors.bgCard,
+          color: cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AuraColors.border, width: 1),
+          border: Border.all(color: borderColor, width: 1),
         ),
-        child: Icon(icon, size: 20, color: AuraColors.textPrimary),
+        child: Icon(icon, size: 20, color: textPrimary),
       ),
     );
   }

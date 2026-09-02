@@ -4,6 +4,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngineCache
+import io.flutter.plugin.common.MethodChannel
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -41,34 +43,66 @@ class AuraShareActivity : FlutterActivity() {
                     val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: ""
                     val subject = intent.getStringExtra(Intent.EXTRA_SUBJECT) ?: ""
                     payload.put("type", "text")
+                    payload.put("content", text)
                     payload.put("text", text)
                     payload.put("subject", subject)
+                    payload.put("mimeType", type)
                 } else {
                     val streamUri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
                     val localPath = streamUri?.let { copyUriToCache(it) }
-                    payload.put("type", if (type.startsWith("image/")) "image" else "file")
+                    val itemType = when {
+                        type.startsWith("image/") -> "image"
+                        type.startsWith("video/") -> "video"
+                        type.startsWith("audio/") -> "audio"
+                        type == "application/pdf" -> "pdf"
+                        else -> "file"
+                    }
+                    payload.put("type", itemType)
                     payload.put("mimeType", type)
                     payload.put("uri", streamUri?.toString() ?: "")
+                    payload.put("filePath", localPath ?: "")
                     payload.put("localPath", localPath ?: "")
+                    val extraText = intent.getStringExtra(Intent.EXTRA_TEXT)
+                    if (!extraText.isNullOrEmpty()) {
+                        payload.put("content", extraText)
+                    }
                 }
             } else if (action == Intent.ACTION_SEND_MULTIPLE) {
                 val streamUris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
                 val filesArray = JSONArray()
-                streamUris?.forEach { uri ->
+                var firstPath = ""
+                streamUris?.forEachIndexed { index, uri ->
                     val path = copyUriToCache(uri)
+                    if (index == 0) firstPath = path
                     filesArray.put(JSONObject().apply {
                         put("uri", uri.toString())
+                        put("filePath", path)
                         put("localPath", path)
                     })
                 }
-                payload.put("type", "multiple_files")
+                val itemType = when {
+                    type.startsWith("image/") -> "image"
+                    type.startsWith("video/") -> "video"
+                    type.startsWith("audio/") -> "audio"
+                    type == "application/pdf" -> "pdf"
+                    else -> "multiple_files"
+                }
+                payload.put("type", itemType)
                 payload.put("mimeType", type)
+                payload.put("filePath", firstPath)
+                payload.put("localPath", firstPath)
                 payload.put("files", filesArray)
             }
 
             // Save payload JSON to cache file
             val payloadFile = File(cacheDir, "aura_share_payload.json")
             payloadFile.writeText(payload.toString())
+
+            // Notify Flutter share engine if cached
+            FlutterEngineCache.getInstance().get(MainActivity.SHARE_ENGINE_ID)?.let { engine ->
+                MethodChannel(engine.dartExecutor.binaryMessenger, "aura/share")
+                    .invokeMethod("onShareReceived", null)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

@@ -1,6 +1,7 @@
 package com.aura.aura
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -18,6 +19,13 @@ class OrbMenuActivity : Activity() {
         super.onCreate(savedInstanceState)
 
         val density = resources.displayMetrics.density
+
+        val colorHex = intent.getStringExtra("colorHex") ?: getSavedAccentColor()
+        val parsedAccentColor = try {
+            Color.parseColor(colorHex)
+        } catch (e: Exception) {
+            Color.parseColor("#7B6FF0")
+        }
 
         val root = FrameLayout(this).apply {
             setBackgroundColor(Color.parseColor("#99000000"))
@@ -38,7 +46,7 @@ class OrbMenuActivity : Activity() {
         val title = TextView(this).apply {
             text = "AURA Quick Actions"
             textSize = 16f
-            setTextColor(Color.parseColor("#C8FF00"))
+            setTextColor(parsedAccentColor)
             setTypeface(null, android.graphics.Typeface.BOLD)
             val mb = (16 * density).toInt()
             setPadding(0, 0, 0, mb)
@@ -93,5 +101,22 @@ class OrbMenuActivity : Activity() {
 
         root.addView(card, cardParams)
         setContentView(root)
+    }
+
+    private fun getSavedAccentColor(): String {
+        return try {
+            val flutterPrefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val accentName = flutterPrefs.getString("flutter.THEME_ACCENT", "Indigo") ?: "Indigo"
+            when (accentName.lowercase()) {
+                "cyan" -> "#22D3EE"
+                "purple" -> "#C084FC"
+                "orange" -> "#FF9966"
+                "rose" -> "#F472B6"
+                "lime" -> "#C8FF00"
+                else -> "#7B6FF0"
+            }
+        } catch (e: Exception) {
+            "#7B6FF0"
+        }
     }
 }

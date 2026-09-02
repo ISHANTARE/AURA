@@ -33,14 +33,19 @@ final nudgeEngineProvider = Provider<NudgeEngine>((ref) {
   return NudgeEngine(itemDao: itemDao);
 });
 
-/// Today's Focus Stats (Pending vs Completed strictly for Today)
+/// Today's Cockpit Stats (Pending & Completed for Today + accumulated Overdue)
 class TodayStats {
   final int pending;
   final int completed;
-  const TodayStats({required this.pending, required this.completed});
+  final int overdue;
+  const TodayStats({
+    required this.pending,
+    required this.completed,
+    this.overdue = 0,
+  });
 }
 
-/// Stream provider for Today's pending and completed counts
+/// Stream provider for Today's pending and completed counts + accumulated overdue
 final todayStatsProvider = StreamProvider<TodayStats>((ref) {
   ref.watch(dayRefreshProvider);
   final allActiveAsync = ref.watch(allActiveItemsProvider);
@@ -52,6 +57,7 @@ final todayStatsProvider = StreamProvider<TodayStats>((ref) {
 
       int pending = 0;
       int completed = 0;
+      int overdue = 0;
 
       for (final item in items) {
         final targetTime = item.deadline ?? item.fireAt ?? item.startTime;
@@ -66,11 +72,23 @@ final todayStatsProvider = StreamProvider<TodayStats>((ref) {
             pending++;
           }
         }
+
+        // Accumulated historical overdue
+        if (item.status == 'pending') {
+          final due = item.deadline ?? item.fireAt ?? item.startTime;
+          if (due != null && due < startOfToday) {
+            overdue++;
+          }
+        }
       }
-      return Stream.value(TodayStats(pending: pending, completed: completed));
+      return Stream.value(TodayStats(
+        pending: pending,
+        completed: completed,
+        overdue: overdue,
+      ));
     },
-    loading: () => Stream.value(const TodayStats(pending: 0, completed: 0)),
-    error: (_, __) => Stream.value(const TodayStats(pending: 0, completed: 0)),
+    loading: () => Stream.value(const TodayStats(pending: 0, completed: 0, overdue: 0)),
+    error: (_, __) => Stream.value(const TodayStats(pending: 0, completed: 0, overdue: 0)),
   );
 });
 

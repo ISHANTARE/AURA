@@ -54,11 +54,19 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen>
     final itemDao = ref.watch(itemDaoProvider);
     final primaryColor = Theme.of(context).colorScheme.primary;
 
+    final bg = AuraColors.bgOf(context);
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+    final isDark = AuraColors.isDarkMode(context);
+
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: bg,
       appBar: AppBar(
-        title: Text('ALARMS', style: AuraTypography.screenHeader),
-        backgroundColor: AuraColors.bgBase,
+        title: Text('ALARMS', style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
+        backgroundColor: bg,
         elevation: 0,
       ),
       body: Column(
@@ -104,6 +112,7 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen>
                             'Android Doze may delay alarms. Enable exact alarms for millisecond precision.',
                             style: AuraTypography.caption.copyWith(
                               fontSize: 11,
+                              color: textSecondary,
                             ),
                           ),
                         ],
@@ -180,15 +189,14 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen>
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AuraColors.bgCard,
+                          color: cardBg,
                           borderRadius: BorderRadius.circular(16),
-                          border:
-                              Border.all(color: AuraColors.border, width: 1),
-                          boxShadow: const [
+                          border: Border.all(color: borderColor, width: 1),
+                          boxShadow: [
                             BoxShadow(
-                              color: AuraColors.shadow,
+                              color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
                               blurRadius: 12,
-                              offset: Offset(0, 4),
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
@@ -219,13 +227,13 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen>
                                       style: AuraTypography.display.copyWith(
                                         fontSize: 26,
                                         fontWeight: FontWeight.w700,
-                                        color: AuraColors.textPrimary,
+                                        color: textPrimary,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       '${alarm.title} · $dateStr',
-                                      style: AuraTypography.caption,
+                                      style: AuraTypography.caption.copyWith(color: textSecondary),
                                     ),
                                   ],
                                 ),
@@ -239,8 +247,8 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen>
                               ),
                               // Delete button
                               IconButton(
-                                icon: const Icon(LucideIcons.trash2,
-                                    color: AuraColors.textMuted, size: 20),
+                                icon: Icon(LucideIcons.trash2,
+                                    color: textMuted, size: 20),
                                 onPressed: () async {
                                   HapticFeedback.mediumImpact();
                                   // Cancel every notification variant first, then

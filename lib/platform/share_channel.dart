@@ -1,10 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'channels.dart';
 
 class SharedPayload {
-  final String type; // 'text', 'image', 'pdf'
+  final String type; // 'text', 'image', 'video', 'audio', 'pdf', 'file'
   final String? content;
   final String? filePath;
   final String mimeType;
@@ -18,10 +19,10 @@ class SharedPayload {
 
   factory SharedPayload.fromMap(Map<dynamic, dynamic> map) {
     return SharedPayload(
-      type: map['type'] as String? ?? 'text',
-      content: map['content'] as String?,
-      filePath: map['filePath'] as String?,
-      mimeType: map['mimeType'] as String? ?? 'text/plain',
+      type: (map['type'] as String?) ?? 'text',
+      content: (map['content'] ?? map['text']) as String?,
+      filePath: (map['filePath'] ?? map['localPath'] ?? map['path'] ?? map['uri']) as String?,
+      mimeType: (map['mimeType'] as String?) ?? 'text/plain',
     );
   }
 }
@@ -55,10 +56,16 @@ class ShareChannel {
   /// Fetch the pending share payload (single-consume on the native side).
   Future<SharedPayload?> getInitialSharePayload() async {
     try {
-      final Map<dynamic, dynamic>? res =
-          await _channel.invokeMethod<Map<dynamic, dynamic>>('getInitialSharePayload');
-      if (res != null) {
-        return SharedPayload.fromMap(res);
+      final dynamic raw =
+          await _channel.invokeMethod<dynamic>('getInitialSharePayload');
+      if (raw == null) return null;
+      if (raw is Map) {
+        return SharedPayload.fromMap(raw);
+      } else if (raw is String && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) {
+          return SharedPayload.fromMap(decoded);
+        }
       }
     } on PlatformException catch (_) {
       return null;

@@ -152,20 +152,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final activeAccent = ref.watch(themeAccentProvider);
     final themeMode = ref.watch(themeModeProvider);
 
+    final bg = AuraColors.bgOf(context);
+    final cardBg = AuraColors.cardOf(context);
+    final elevatedBg = AuraColors.elevatedOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AuraColors.bgBase,
-        appBar: AppBar(backgroundColor: AuraColors.bgBase, title: Text('SETTINGS', style: AuraTypography.screenHeader)),
+        backgroundColor: bg,
+        appBar: AppBar(
+          backgroundColor: bg,
+          title: Text('SETTINGS', style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
+        ),
         body: Center(child: CircularProgressIndicator(color: activeAccent.color)),
       );
     }
 
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: AuraColors.bgBase,
+        backgroundColor: bg,
         elevation: 0,
-        title: Text('SETTINGS', style: AuraTypography.screenHeader),
+        title: Text('SETTINGS', style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -179,9 +190,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AuraColors.border, width: 2),
+                border: Border.all(color: borderColor, width: 2),
               ),
               child: Row(
                 children: [
@@ -200,11 +211,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('DISPLAY NAME', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                        Text('DISPLAY NAME', style: AuraTypography.bentoMetricLabel.copyWith(color: textSecondary)),
                         const SizedBox(height: 4),
                         TextField(
                           controller: _userNameController,
-                          style: AuraTypography.cardTitle,
+                          style: AuraTypography.cardTitle.copyWith(color: textPrimary),
                           onChanged: (val) {
                             setState(() {});
                             final trimmed = val.trim();
@@ -212,12 +223,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ref.read(userNameProvider.notifier).setName(trimmed);
                             }
                           },
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             isDense: true,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             filled: true,
-                            fillColor: AuraColors.bgElevated,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none),
+                            fillColor: elevatedBg,
+                            border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none),
                           ),
                         ),
                       ],
@@ -240,9 +251,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AuraColors.bgCard,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AuraColors.border, width: 1.5),
+                      border: Border.all(color: borderColor, width: 1.5),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -258,7 +269,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           style: AuraTypography.caption.copyWith(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AuraColors.textPrimary,
+                            color: textPrimary,
                           ),
                         ),
                       ],
@@ -272,8 +283,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
-                border: Border.all(color: AuraColors.border, width: 2),
+                color: cardBg,
+                border: Border.all(color: borderColor, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -293,7 +304,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             color: accent.color,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isSelected ? AuraColors.border : Colors.transparent,
+                              color: isSelected ? borderColor : Colors.transparent,
                               width: isSelected ? 3 : 1,
                             ),
                           ),
@@ -302,7 +313,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               : null,
                         ),
                         const SizedBox(height: 6),
-                        Text(accent.label.split(' ').first, style: AuraTypography.badgeText),
+                        Text(accent.label.split(' ').first, style: AuraTypography.badgeText.copyWith(color: textPrimary)),
                       ],
                     ),
                   );
@@ -322,8 +333,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AuraColors.bgCard,
-                    border: Border.all(color: AuraColors.border, width: 2),
+                    color: cardBg,
+                    border: Border.all(color: borderColor, width: 2),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -332,20 +343,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('System Floating Orb', style: AuraTypography.cardTitle),
+                          Text('System Floating Orb', style: AuraTypography.cardTitle.copyWith(color: textPrimary)),
                           const SizedBox(height: 4),
                           Text(
                             isRunning ? 'Active on screen' : 'Inactive / Dismissed',
                             style: AuraTypography.bodySmall.copyWith(
-                              color: isRunning ? activeAccent.color : AuraColors.textMuted,
+                              color: isRunning ? activeAccent.color : textMuted,
                             ),
                           ),
                         ],
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isRunning ? AuraColors.bgElevated : activeAccent.color,
-                          foregroundColor: isRunning ? AuraColors.textPrimary : Colors.white,
+                          backgroundColor: isRunning ? elevatedBg : activeAccent.color,
+                          foregroundColor: isRunning ? textPrimary : Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: () async {
@@ -356,7 +367,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             if (!granted) {
                               await OverlayChannel.requestPermission();
                             } else {
-                              await OverlayChannel.startOverlay();
+                              final hex = '#${activeAccent.color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+                              await OverlayChannel.startOverlay(colorHex: hex);
                             }
                           }
                           setState(() {});
@@ -377,8 +389,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
-                border: Border.all(color: AuraColors.border, width: 2),
+                color: cardBg,
+                border: Border.all(color: borderColor, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -387,14 +399,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   // Default Alarm Ringtone Picker Card
                   Text('DEFAULT ALARM RINGTONE',
                       style: AuraTypography.bentoMetricLabel
-                          .copyWith(color: AuraColors.textSecondary)),
+                          .copyWith(color: textSecondary)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AuraColors.bgElevated,
+                      color: elevatedBg,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AuraColors.border, width: 1),
+                      border: Border.all(color: borderColor, width: 1),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -410,14 +422,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   const SizedBox(width: 6),
                                   Text('Alarm Audio',
                                       style: AuraTypography.caption
-                                          .copyWith(color: AuraColors.textMuted)),
+                                          .copyWith(color: textMuted)),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 _selectedAlarmSoundTitle,
                                 style: AuraTypography.bodyPrimary
-                                    .copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+                                    .copyWith(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -465,14 +477,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   // Default Notification Sound Picker Card
                   Text('DEFAULT NOTIFICATION SOUND',
                       style: AuraTypography.bentoMetricLabel
-                          .copyWith(color: AuraColors.textSecondary)),
+                          .copyWith(color: textSecondary)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AuraColors.bgElevated,
+                      color: elevatedBg,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AuraColors.border, width: 1),
+                      border: Border.all(color: borderColor, width: 1),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -488,14 +500,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   const SizedBox(width: 6),
                                   Text('Notification Audio',
                                       style: AuraTypography.caption
-                                          .copyWith(color: AuraColors.textMuted)),
+                                          .copyWith(color: textMuted)),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 _selectedNotificationSoundTitle,
                                 style: AuraTypography.bodyPrimary
-                                    .copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+                                    .copyWith(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -550,23 +562,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
-                border: Border.all(color: AuraColors.border, width: 2),
+                color: cardBg,
+                border: Border.all(color: borderColor, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Default Task Reminder', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  Text('Default Task Reminder', style: AuraTypography.bentoMetricLabel.copyWith(color: textSecondary)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     value: _selectedReminderDefault,
-                    dropdownColor: AuraColors.bgElevated,
-                    style: AuraTypography.bodyPrimary,
-                    decoration: const InputDecoration(
+                    dropdownColor: elevatedBg,
+                    style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
+                    decoration: InputDecoration(
                       filled: true,
-                      fillColor: AuraColors.bgElevated,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                      fillColor: elevatedBg,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
                     ),
                     items: const [
                       DropdownMenuItem(value: '1 day & 6 hours before', child: Text('1 day & 6 hours before deadline')),
@@ -590,23 +603,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
-                border: Border.all(color: AuraColors.border, width: 2),
+                color: cardBg,
+                border: Border.all(color: borderColor, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Briefing hour', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  Text('Briefing hour', style: AuraTypography.bentoMetricLabel.copyWith(color: textSecondary)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<int>(
                     value: _selectedBriefingHour,
-                    dropdownColor: AuraColors.bgElevated,
-                    style: AuraTypography.bodyPrimary,
-                    decoration: const InputDecoration(
+                    dropdownColor: elevatedBg,
+                    style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
+                    decoration: InputDecoration(
                       filled: true,
-                      fillColor: AuraColors.bgElevated,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                      fillColor: elevatedBg,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
                     ),
                     items: const [
                       DropdownMenuItem(value: 5, child: Text('5:00 AM')),
@@ -628,7 +642,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'A summary notification with your top focus item.',
-                    style: AuraTypography.label.copyWith(color: AuraColors.textMuted, fontSize: 11),
+                    style: AuraTypography.label.copyWith(color: textMuted, fontSize: 11),
                   ),
                 ],
               ),
@@ -642,23 +656,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
-                border: Border.all(color: AuraColors.border, width: 2),
+                color: cardBg,
+                border: Border.all(color: borderColor, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Speech recognition language', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  Text('Speech recognition language', style: AuraTypography.bentoMetricLabel.copyWith(color: textSecondary)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     value: _selectedVoiceLocale,
-                    dropdownColor: AuraColors.bgElevated,
-                    style: AuraTypography.bodyPrimary,
-                    decoration: const InputDecoration(
+                    dropdownColor: elevatedBg,
+                    style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
+                    decoration: InputDecoration(
                       filled: true,
-                      fillColor: AuraColors.bgElevated,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                      fillColor: elevatedBg,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
                     ),
                     items: _voiceLocales
                         .map((locale) => DropdownMenuItem(
@@ -677,7 +692,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 8),
                   Text(
                     '“Device default” follows your phone’s language.',
-                    style: AuraTypography.label.copyWith(color: AuraColors.textMuted, fontSize: 11),
+                    style: AuraTypography.label.copyWith(color: textMuted, fontSize: 11),
                   ),
                 ],
               ),
@@ -691,24 +706,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
-                border: Border.all(color: AuraColors.border, width: 2),
+                color: cardBg,
+                border: Border.all(color: borderColor, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Provider Preset (Auto-fill)',
-                      style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                      style: AuraTypography.bentoMetricLabel.copyWith(color: textSecondary)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     value: _selectedProviderPreset,
-                    dropdownColor: AuraColors.bgElevated,
-                    style: AuraTypography.bodyPrimary,
-                    decoration: const InputDecoration(
+                    dropdownColor: elevatedBg,
+                    style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
+                    decoration: InputDecoration(
                       filled: true,
-                      fillColor: AuraColors.bgElevated,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                      fillColor: elevatedBg,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
                     ),
                     items: const [
                       DropdownMenuItem(
@@ -761,35 +777,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  Text('Base URL', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  Text('Base URL', style: AuraTypography.bentoMetricLabel.copyWith(color: textSecondary)),
                   const SizedBox(height: 6),
                   TextField(
                     controller: _baseUrlController,
-                    style: AuraTypography.bodyPrimary,
-                    decoration: const InputDecoration(
+                    style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
+                    decoration: InputDecoration(
                       filled: true,
-                      fillColor: AuraColors.bgElevated,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                      fillColor: elevatedBg,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
                       hintText: 'e.g. https://integrate.api.nvidia.com/v1',
+                      hintStyle: TextStyle(color: textMuted),
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  Text('Model Target (Editable)', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  Text('Model Target (Editable)', style: AuraTypography.bentoMetricLabel.copyWith(color: textSecondary)),
                   const SizedBox(height: 6),
                   TextField(
                     controller: _modelController,
-                    style: AuraTypography.bodyPrimary,
-                    decoration: const InputDecoration(
+                    style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
+                    decoration: InputDecoration(
                       filled: true,
-                      fillColor: AuraColors.bgElevated,
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                      fillColor: elevatedBg,
+                      border: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
                       hintText: 'e.g. meta/llama-3.3-70b-instruct or nvidia/nemotron-4-340b-instruct',
+                      hintStyle: TextStyle(color: textMuted),
                     ),
                   ),
                   const SizedBox(height: 8),
 
-                  Text('Quick Model Suggestions:', style: AuraTypography.caption.copyWith(color: AuraColors.textSecondary)),
+                  Text('Quick Model Suggestions:', style: AuraTypography.caption.copyWith(color: textSecondary)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
@@ -798,15 +818,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       final isSelected = _modelController.text.trim() == m;
                       return ChoiceChip(
                         label: Text(m, style: AuraTypography.bodySmall.copyWith(
-                          color: isSelected ? Colors.white : AuraColors.textPrimary,
+                          color: isSelected ? Colors.white : textPrimary,
                           fontSize: 11,
                         )),
                         selected: isSelected,
                         selectedColor: activeAccent.color,
-                        backgroundColor: AuraColors.bgElevated,
+                        backgroundColor: elevatedBg,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
-                          side: BorderSide(color: isSelected ? activeAccent.color : AuraColors.border),
+                          side: BorderSide(color: isSelected ? activeAccent.color : borderColor),
                         ),
                         onSelected: (_) {
                           setState(() => _modelController.text = m);
@@ -816,21 +836,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  Text('API Key', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  Text('API Key', style: AuraTypography.bentoMetricLabel.copyWith(color: textSecondary)),
                   const SizedBox(height: 6),
                   TextField(
                     controller: _apiKeyController,
                     obscureText: _obscureKey,
-                    style: AuraTypography.bodyPrimary,
+                    style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AuraColors.bgElevated,
+                      fillColor: elevatedBg,
                       hintText: 'Paste API Key (nvapi-..., gsk_..., AIza...)',
-                      border: const OutlineInputBorder(borderSide: BorderSide(color: AuraColors.border)),
+                      hintStyle: TextStyle(color: textMuted),
+                      border: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureKey ? LucideIcons.eyeOff : LucideIcons.eye,
-                          color: AuraColors.textSecondary,
+                          color: textSecondary,
                         ),
                         onPressed: () => setState(() => _obscureKey = !_obscureKey),
                       ),
@@ -891,7 +913,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const SizedBox(height: 6),
                         Text(
                           'Google Gemini 2.0 Flash is 100% free with no credit card required. Generate your key in 10 seconds at Google AI Studio.',
-                          style: AuraTypography.caption.copyWith(fontSize: 11),
+                          style: AuraTypography.caption.copyWith(fontSize: 11, color: textSecondary),
                         ),
                       ],
                     ),
@@ -936,8 +958,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   data: (archived) => Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AuraColors.bgCard,
-                      border: Border.all(color: AuraColors.border, width: 2),
+                      color: cardBg,
+                      border: Border.all(color: borderColor, width: 2),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -946,15 +968,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Archived Workspaces', style: AuraTypography.cardTitle),
+                            Text('Archived Workspaces', style: AuraTypography.cardTitle.copyWith(color: textPrimary)),
                             Text('${archived.length}', style: AuraTypography.badgeText.copyWith(color: activeAccent.color)),
                           ],
                         ),
                         if (archived.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           ...archived.map((ws) => ListTile(
-                                leading: const Icon(LucideIcons.archive, color: AuraColors.textSecondary),
-                                title: Text(ws.name, style: AuraTypography.bodyPrimary),
+                                leading: Icon(LucideIcons.archive, color: textSecondary),
+                                title: Text(ws.name, style: AuraTypography.bodyPrimary.copyWith(color: textPrimary)),
                                 trailing: TextButton(
                                   onPressed: () {
                                     r.read(workspaceDaoProvider).unarchive(ws.id);
@@ -979,16 +1001,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             Container(
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
-                border: Border.all(color: AuraColors.border, width: 2),
+                color: cardBg,
+                border: Border.all(color: borderColor, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 children: [
                   ListTile(
                     leading: const Icon(LucideIcons.download, color: AuraColors.accentBlue),
-                    title: Text('Export App Data', style: AuraTypography.cardTitle),
-                    subtitle: Text('Export local SQLite database to JSON file', style: AuraTypography.bodySmall),
+                    title: Text('Export App Data', style: AuraTypography.cardTitle.copyWith(color: textPrimary)),
+                    subtitle: Text('Export local SQLite database to JSON file', style: AuraTypography.bodySmall.copyWith(color: textSecondary)),
                     onTap: () async {
                       try {
                         // Fetch data from both DAOs
@@ -1039,18 +1061,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       }
                     },
                   ),
-                  const Divider(color: AuraColors.borderMuted, height: 1),
+                  Divider(color: borderColor, height: 1),
                   ListTile(
                     leading: const Icon(LucideIcons.trash, color: AuraColors.accentRed),
                     title: Text('Reset App Data', style: AuraTypography.cardTitle.copyWith(color: AuraColors.accentRed)),
-                    subtitle: Text('Clears local SQLite database and onboarding state', style: AuraTypography.bodySmall),
+                    subtitle: Text('Clears local SQLite database and onboarding state', style: AuraTypography.bodySmall.copyWith(color: textSecondary)),
                     onTap: () async {
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          backgroundColor: AuraColors.bgElevated,
-                          title: const Text('Reset All App Data?', style: TextStyle(color: AuraColors.textPrimary)),
-                          content: const Text('This will clear your local database and reset AURA to fresh install state.'),
+                          backgroundColor: elevatedBg,
+                          title: Text('Reset All App Data?', style: TextStyle(color: textPrimary)),
+                          content: Text('This will clear your local database and reset AURA to fresh install state.', style: TextStyle(color: textSecondary)),
                           actions: [
                             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
                             ElevatedButton(
@@ -1080,8 +1102,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         await db.customStatement('DELETE FROM workspace_sections');
                         await db.customStatement('DELETE FROM workspaces');
 
-                        // 2. Clear native orb prefs (position/color/dismissed
-                        // survived a full reset before).
+                        // 2. Clear native orb prefs
                         try {
                           await OverlayChannel.clearNativePrefs();
                         } catch (e) {
@@ -1095,11 +1116,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           await const FlutterSecureStorage()
                               .deleteAll();
                         } catch (_) {
-                          // Secure storage unavailable — nothing to scrub.
+                          // Secure storage unavailable
                         }
 
-                        // 4. Invalidate live providers so no stale state
-                        // (accent, name, gate) survives into onboarding.
+                        // 4. Invalidate live providers
                         await ref
                             .read(themeAccentProvider.notifier)
                             .resetToDefault();

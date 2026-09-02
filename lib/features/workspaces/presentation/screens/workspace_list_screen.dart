@@ -19,11 +19,18 @@ class WorkspaceListScreen extends ConsumerWidget {
     final workspacesAsync = ref.watch(workspacesListProvider);
     final primaryColor = Theme.of(context).colorScheme.primary;
 
+    final bg = AuraColors.bgOf(context);
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final isDark = AuraColors.isDarkMode(context);
+
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: bg,
       appBar: AppBar(
-        title: Text('WORKSPACES', style: AuraTypography.screenHeader),
-        backgroundColor: AuraColors.bgBase,
+        title: Text('WORKSPACES', style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
+        backgroundColor: bg,
         elevation: 0,
       ),
       body: workspacesAsync.when(
@@ -52,15 +59,15 @@ class WorkspaceListScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AuraColors.bgCard,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AuraColors.border, width: 1),
-                    boxShadow: const [
+                    border: Border.all(color: borderColor, width: 1),
+                    boxShadow: [
                       BoxShadow(
-                        color: AuraColors.shadow,
+                        color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
                         blurRadius: 12,
                         spreadRadius: 0,
-                        offset: Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
@@ -92,14 +99,14 @@ class WorkspaceListScreen extends ConsumerWidget {
                             const SizedBox(height: AuraSpacing.sm),
                             Text(
                               ws.name,
-                              style: AuraTypography.cardTitle,
+                              style: AuraTypography.cardTitle.copyWith(color: textPrimary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '$count ${count == 1 ? 'item' : 'items'}',
-                              style: AuraTypography.caption,
+                              style: AuraTypography.caption.copyWith(color: textSecondary),
                             ),
                           ],
                         ),
@@ -125,4 +132,3 @@ class WorkspaceListScreen extends ConsumerWidget {
     );
   }
 }
-

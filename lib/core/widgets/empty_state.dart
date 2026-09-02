@@ -5,7 +5,7 @@ import '../constants/colors.dart';
 import '../constants/spacing.dart';
 import '../constants/typography.dart';
 
-/// Reusable Neubrutalist Empty State Component for AURA
+/// Reusable Theme-Aware Empty State Component for AURA
 class AuraEmptyState extends StatelessWidget {
   const AuraEmptyState({
     super.key,
@@ -24,6 +24,13 @@ class AuraEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final isDark = AuraColors.isDarkMode(context);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AuraSpacing.xl),
@@ -35,13 +42,14 @@ class AuraEmptyState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
-                border: Border.all(color: AuraColors.border, width: AuraSpacing.borderWidth),
-                boxShadow: const [
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: borderColor, width: 1.5),
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(AuraSpacing.shadowOffset, AuraSpacing.shadowOffset),
-                    blurRadius: 0,
+                    color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
+                    offset: const Offset(0, 4),
+                    blurRadius: 16,
                   ),
                 ],
               ),
@@ -49,20 +57,20 @@ class AuraEmptyState extends StatelessWidget {
                 child: Icon(
                   icon,
                   size: 32,
-                  color: AuraColors.accentLime,
+                  color: primaryColor,
                 ),
               ),
             ),
             const SizedBox(height: AuraSpacing.lg),
             Text(
               title,
-              style: AuraTypography.sectionHeader,
+              style: AuraTypography.sectionHeader.copyWith(color: textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AuraSpacing.sm),
             Text(
               subtitle,
-              style: AuraTypography.body,
+              style: AuraTypography.body.copyWith(color: textSecondary),
               textAlign: TextAlign.center,
             ),
             if (actionLabel != null && onAction != null) ...[

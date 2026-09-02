@@ -90,16 +90,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final results = _filteredResults;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
+    final bg = AuraColors.bgOf(context);
+    final cardBg = AuraColors.cardOf(context);
+    final elevatedBg = AuraColors.elevatedOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+    final isDark = AuraColors.isDarkMode(context);
+
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: AuraColors.bgBase,
+        backgroundColor: bg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: AuraColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('SEARCH', style: AuraTypography.screenHeader),
+        title: Text('SEARCH', style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(AuraSpacing.md),
@@ -110,14 +119,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             TextField(
               controller: _searchController,
               autofocus: true,
-              style: AuraTypography.bodyPrimary,
+              style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 hintText: 'Search items, tasks, notes...',
+                hintStyle: TextStyle(color: textMuted),
+                filled: true,
+                fillColor: elevatedBg,
                 prefixIcon: Icon(LucideIcons.search, color: primaryColor),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: borderColor),
+                ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(LucideIcons.x, color: AuraColors.textSecondary),
+                        icon: Icon(LucideIcons.x, color: textSecondary),
                         onPressed: () {
                           _searchController.clear();
                           _onSearchChanged('');
@@ -185,7 +205,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             _searchController.text.isEmpty
                                 ? 'No items found in this category.'
                                 : 'No matching items found.',
-                            style: AuraTypography.body,
+                            style: AuraTypography.body.copyWith(color: textSecondary),
                           ),
                         )
                       : ListView.separated(
@@ -198,14 +218,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(AuraSpacing.md),
                                 decoration: BoxDecoration(
-                                  color: AuraColors.bgCard,
+                                  color: cardBg,
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: AuraColors.border, width: 1),
-                                  boxShadow: const [
+                                  border: Border.all(color: borderColor, width: 1),
+                                  boxShadow: [
                                     BoxShadow(
-                                      color: AuraColors.shadow,
+                                      color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
                                       blurRadius: 10,
-                                      offset: Offset(0, 3),
+                                      offset: const Offset(0, 3),
                                     ),
                                   ],
                                 ),
@@ -215,7 +235,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(item.title, style: AuraTypography.cardTitle),
+                                          Text(item.title, style: AuraTypography.cardTitle.copyWith(color: textPrimary)),
                                           const SizedBox(height: 4),
                                           Text(
                                             '${item.category.toUpperCase()} · ${item.kind.toUpperCase()}',
@@ -228,7 +248,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                             const SizedBox(height: 4),
                                             Text(
                                               item.notes!,
-                                              style: AuraTypography.bodySmall,
+                                              style: AuraTypography.bodySmall.copyWith(color: textSecondary),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -236,8 +256,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                         ],
                                       ),
                                     ),
-                                    const Icon(LucideIcons.chevronRight,
-                                        color: AuraColors.textSecondary, size: 18),
+                                    Icon(LucideIcons.chevronRight,
+                                        color: textSecondary, size: 18),
                                   ],
                                 ),
                               ),
@@ -266,23 +286,27 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? primary : AuraColors.bgCard,
+          color: isSelected ? primary : cardBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? primary : AuraColors.border,
+            color: isSelected ? primary : borderColor,
             width: 1,
           ),
         ),
         child: Text(
           label,
           style: AuraTypography.label.copyWith(
-            color: isSelected ? Colors.white : AuraColors.textSecondary,
+            color: isSelected ? Colors.white : textSecondary,
             fontWeight: FontWeight.bold,
             fontSize: 10,
           ),

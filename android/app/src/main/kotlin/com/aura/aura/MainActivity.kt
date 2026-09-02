@@ -76,8 +76,12 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "startOverlay" -> {
+                        val colorHex = call.argument<String>("colorHex")
                         val intent = Intent(this, AuraOverlayService::class.java).apply {
                             action = "START_ORB"
+                            if (!colorHex.isNullOrEmpty()) {
+                                putExtra("colorHex", colorHex)
+                            }
                         }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             startForegroundService(intent)
@@ -93,10 +97,21 @@ class MainActivity : FlutterActivity() {
                         startService(intent)
                         result.success(true)
                     }
+                    "updateOverlayColor" -> {
+                        val colorHex = call.argument<String>("colorHex")
+                        val intent = Intent(this, AuraOverlayService::class.java).apply {
+                            action = "UPDATE_COLOR"
+                            if (!colorHex.isNullOrEmpty()) {
+                                putExtra("colorHex", colorHex)
+                            }
+                        }
+                        startService(intent)
+                        result.success(true)
+                    }
                     "isOverlayRunning" -> {
                         result.success(AuraOverlayService.isRunning)
                     }
-                    "checkOverlayPermission" -> {
+                    "checkOverlayPermission", "isOverlayPermissionGranted" -> {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             result.success(Settings.canDrawOverlays(this))
                         } else {
@@ -112,6 +127,26 @@ class MainActivity : FlutterActivity() {
                             startActivity(intent)
                         }
                         result.success(null)
+                    }
+                    "pickSound" -> {
+                        pendingRingtoneResult = result
+                        val type = call.argument<String>("type") ?: "alarm"
+                        val currentUriStr = call.argument<String>("currentUri")
+                        val currentUri = if (!currentUriStr.isNullOrEmpty()) Uri.parse(currentUriStr) else null
+                        val isNotification = type == "notification"
+                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                            putExtra(
+                                RingtoneManager.EXTRA_RINGTONE_TYPE,
+                                if (isNotification) RingtoneManager.TYPE_NOTIFICATION else RingtoneManager.TYPE_ALARM
+                            )
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, currentUri)
+                        }
+                        startActivityForResult(
+                            intent,
+                            if (isNotification) REQUEST_NOTIFICATION_RINGTONE else REQUEST_ALARM_RINGTONE
+                        )
                     }
                     "pickAlarmSound" -> {
                         pendingRingtoneResult = result
@@ -156,9 +191,26 @@ class MainActivity : FlutterActivity() {
                     "getInitialSharePayload" -> {
                         val cacheFile = File(cacheDir, "aura_share_payload.json")
                         if (cacheFile.exists()) {
-                            val content = cacheFile.readText()
-                            cacheFile.delete()
-                            result.success(content)
+                            try {
+                                val content = cacheFile.readText()
+                                cacheFile.delete()
+                                val jsonObj = org.json.JSONObject(content)
+                                val map = HashMap<String, Any?>()
+                                val keys = jsonObj.keys()
+                                while (keys.hasNext()) {
+                                    val key = keys.next()
+                                    map[key] = jsonObj.opt(key)
+                                }
+                                if (map.containsKey("text") && !map.containsKey("content")) {
+                                    map["content"] = map["text"]
+                                }
+                                if (map.containsKey("localPath") && !map.containsKey("filePath")) {
+                                    map["filePath"] = map["localPath"]
+                                }
+                                result.success(map)
+                            } catch (e: Exception) {
+                                result.error("SHARE_ERROR", e.message, null)
+                            }
                         } else {
                             result.success(null)
                         }

@@ -26,19 +26,23 @@ class WorkspaceDetailScreen extends ConsumerWidget {
     final sharedItemsAsync = ref.watch(workspaceSharedItemsProvider(workspaceId));
     final primaryColor = Theme.of(context).colorScheme.primary;
 
+    final bg = AuraColors.bgOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+
     return workspaceAsync.when(
-      loading: () => const Scaffold(
-        backgroundColor: AuraColors.bgBase,
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        backgroundColor: bg,
+        body: const Center(child: CircularProgressIndicator()),
       ),
       error: (err, _) => Scaffold(
-        backgroundColor: AuraColors.bgBase,
+        backgroundColor: bg,
         body: Center(child: Text('Error: $err', style: AuraTypography.body)),
       ),
       data: (workspace) {
         if (workspace == null) {
           return Scaffold(
-            backgroundColor: AuraColors.bgBase,
+            backgroundColor: bg,
             body: Center(child: Text('Workspace not found', style: AuraTypography.body)),
           );
         }
@@ -53,19 +57,19 @@ class WorkspaceDetailScreen extends ConsumerWidget {
             return DefaultTabController(
               length: 3,
               child: Scaffold(
-                backgroundColor: AuraColors.bgBase,
+                backgroundColor: bg,
                 appBar: AppBar(
-                  backgroundColor: AuraColors.bgBase,
+                  backgroundColor: bg,
                   elevation: 0,
                   leading: IconButton(
-                    icon: const Icon(LucideIcons.arrowLeft, color: AuraColors.textPrimary),
+                    icon: Icon(LucideIcons.arrowLeft, color: textPrimary),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
-                  title: Text(workspace.name, style: AuraTypography.screenHeader),
+                  title: Text(workspace.name, style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
                   bottom: TabBar(
                     indicatorColor: primaryColor,
                     labelColor: primaryColor,
-                    unselectedLabelColor: AuraColors.textMuted,
+                    unselectedLabelColor: textMuted,
                     labelStyle: AuraTypography.label.copyWith(fontSize: 11, fontWeight: FontWeight.bold),
                     tabs: [
                       Tab(text: 'PENDING (${pendingItems.length})'),
@@ -110,12 +114,12 @@ class WorkspaceDetailScreen extends ConsumerWidget {
               ),
             );
           },
-          loading: () => const Scaffold(
-            backgroundColor: AuraColors.bgBase,
-            body: Center(child: CircularProgressIndicator()),
+          loading: () => Scaffold(
+            backgroundColor: bg,
+            body: const Center(child: CircularProgressIndicator()),
           ),
           error: (err, _) => Scaffold(
-            backgroundColor: AuraColors.bgBase,
+            backgroundColor: bg,
             body: Center(child: Text('Error: $err', style: AuraTypography.body)),
           ),
         );
@@ -143,6 +147,13 @@ class _WorkspaceItemList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final isDark = AuraColors.isDarkMode(context);
+
     if (items.isEmpty) {
       return AuraEmptyState(
         icon: isCompletedList ? LucideIcons.checkCircle2 : LucideIcons.folder,
@@ -163,14 +174,14 @@ class _WorkspaceItemList extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(AuraSpacing.md),
             decoration: BoxDecoration(
-              color: AuraColors.bgCard,
+              color: cardBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AuraColors.border, width: 1),
-              boxShadow: const [
+              border: Border.all(color: borderColor, width: 1),
+              boxShadow: [
                 BoxShadow(
-                  color: AuraColors.shadow,
+                  color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
                   blurRadius: 8,
-                  offset: Offset(0, 2),
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -188,7 +199,7 @@ class _WorkspaceItemList extends StatelessWidget {
                       Text(
                         item.title,
                         style: AuraTypography.cardTitle.copyWith(
-                          color: isCompletedList ? AuraColors.textMuted : AuraColors.textPrimary,
+                          color: isCompletedList ? textMuted : textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -215,7 +226,7 @@ class _WorkspaceItemList extends StatelessWidget {
                             style: AuraTypography.overline.copyWith(
                               color: item.priority == 'high'
                                   ? AuraColors.accentRed
-                                  : AuraColors.textMuted,
+                                  : textMuted,
                             ),
                           ),
                         ],
@@ -223,7 +234,7 @@ class _WorkspaceItemList extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(LucideIcons.chevronRight, color: AuraColors.textSecondary, size: 20),
+                Icon(LucideIcons.chevronRight, color: textSecondary, size: 20),
               ],
             ),
           ),
@@ -247,6 +258,12 @@ class _WorkspaceSharedList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sharedAsync = ref.watch(workspaceSharedItemsProvider(workspaceId));
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+    final isDark = AuraColors.isDarkMode(context);
 
     return sharedAsync.when(
       data: (items) {
@@ -271,14 +288,14 @@ class _WorkspaceSharedList extends ConsumerWidget {
             return Container(
               padding: const EdgeInsets.all(AuraSpacing.md),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AuraColors.border, width: 1),
-                boxShadow: const [
+                border: Border.all(color: borderColor, width: 1),
+                boxShadow: [
                   BoxShadow(
-                    color: AuraColors.shadow,
+                    color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
                     blurRadius: 8,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -303,7 +320,7 @@ class _WorkspaceSharedList extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           item.title,
-                          style: AuraTypography.cardTitle,
+                          style: AuraTypography.cardTitle.copyWith(color: textPrimary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -314,7 +331,7 @@ class _WorkspaceSharedList extends ConsumerWidget {
                     const SizedBox(height: 8),
                     Text(
                       item.notes!,
-                      style: AuraTypography.bodySmall.copyWith(color: AuraColors.textSecondary),
+                      style: AuraTypography.bodySmall.copyWith(color: textSecondary),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -351,7 +368,7 @@ class _WorkspaceSharedList extends ConsumerWidget {
                         },
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.trash2, size: 18, color: AuraColors.textMuted),
+                        icon: Icon(LucideIcons.trash2, size: 18, color: textMuted),
                         onPressed: () async {
                           final itemDao = ref.read(itemDaoProvider);
                           await itemDao.softDelete(item.id);
@@ -370,4 +387,3 @@ class _WorkspaceSharedList extends ConsumerWidget {
     );
   }
 }
-

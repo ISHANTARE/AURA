@@ -13,7 +13,7 @@ import '../../../reminders/domain/services/reminder_scheduling_service.dart';
 import '../providers/home_providers.dart';
 
 /// The Day Agenda task list supporting horizontal drag gestures and
-/// separating Timed / Scheduled items from Anytime checklist tasks.
+/// separating Timed / Scheduled items from Anytime checklist tasks for the selected date.
 class DayAgendaView extends ConsumerWidget {
   const DayAgendaView({super.key});
 
@@ -21,7 +21,7 @@ class DayAgendaView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedDate = ref.watch(selectedDateProvider);
     final agendaAsync = ref.watch(dayAgendaProvider);
-    const accentColor = AuraColors.accentPrimary;
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return GestureDetector(
       onHorizontalDragEnd: (details) {
@@ -53,7 +53,7 @@ class DayAgendaView extends ConsumerWidget {
           if (agenda.isEmpty) {
             return _EmptyDayState(
               selectedDate: selectedDate,
-              accentColor: accentColor,
+              accentColor: primaryColor,
             );
           }
 
@@ -66,7 +66,7 @@ class DayAgendaView extends ConsumerWidget {
                   title: 'SCHEDULED & TIMED',
                   icon: LucideIcons.clock,
                   count: agenda.timedItems.length,
-                  accentColor: accentColor,
+                  accentColor: primaryColor,
                 ),
                 const SizedBox(height: 8),
                 ...agenda.timedItems.map((item) => _AgendaItemTile(item: item)),
@@ -79,7 +79,7 @@ class DayAgendaView extends ConsumerWidget {
                   title: 'ANYTIME',
                   icon: LucideIcons.checkSquare,
                   count: agenda.anytimeItems.length,
-                  accentColor: accentColor,
+                  accentColor: primaryColor,
                 ),
                 const SizedBox(height: 8),
                 ...agenda.anytimeItems.map((item) => _AgendaItemTile(item: item)),
@@ -107,6 +107,9 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final elevatedBg = AuraColors.elevatedOf(context);
+
     return Row(
       children: [
         Icon(icon, size: 14, color: accentColor),
@@ -114,7 +117,7 @@ class _SectionHeader extends StatelessWidget {
         Text(
           title,
           style: AuraTypography.label.copyWith(
-            color: AuraColors.textSecondary,
+            color: textSecondary,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
@@ -124,7 +127,7 @@ class _SectionHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
           decoration: BoxDecoration(
-            color: AuraColors.bgElevated,
+            color: elevatedBg,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
@@ -132,7 +135,7 @@ class _SectionHeader extends StatelessWidget {
             style: AuraTypography.caption.copyWith(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: AuraColors.textMuted,
+              color: textSecondary,
             ),
           ),
         ),
@@ -154,6 +157,14 @@ class _AgendaItemTile extends ConsumerWidget {
     final isAlarm = item.category == 'alarm' || item.kind == 'alarm';
     final isEvent = item.kind == 'event';
 
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+    final elevatedBg = AuraColors.elevatedOf(context);
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     String? timeLabel;
     if (targetDt != null) {
       if (isEvent && item.endTime != null) {
@@ -168,10 +179,10 @@ class _AgendaItemTile extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AuraColors.bgCard,
+        color: cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDone ? AuraColors.borderMuted : AuraColors.border,
+          color: isDone ? borderColor.withValues(alpha: 0.5) : borderColor,
           width: 1.5,
         ),
       ),
@@ -218,12 +229,12 @@ class _AgendaItemTile extends ConsumerWidget {
                     color: isDone ? AuraColors.accentGreen : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: isDone ? AuraColors.accentGreen : AuraColors.border,
+                      color: isDone ? AuraColors.accentGreen : borderColor,
                       width: 1.5,
                     ),
                   ),
                   child: isDone
-                      ? const Icon(LucideIcons.check, size: 15, color: Colors.black)
+                      ? const Icon(LucideIcons.check, size: 15, color: Colors.white)
                       : null,
                 ),
               ),
@@ -240,7 +251,7 @@ class _AgendaItemTile extends ConsumerWidget {
                     style: AuraTypography.cardTitle.copyWith(
                       fontSize: 14,
                       decoration: isDone ? TextDecoration.lineThrough : null,
-                      color: isDone ? AuraColors.textMuted : AuraColors.textPrimary,
+                      color: isDone ? textMuted : textPrimary,
                     ),
                   ),
                   if (item.notes?.isNotEmpty == true) ...[
@@ -249,7 +260,7 @@ class _AgendaItemTile extends ConsumerWidget {
                       item.notes!,
                       style: AuraTypography.bodySmall.copyWith(
                         fontSize: 11,
-                        color: AuraColors.textSecondary,
+                        color: textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -269,7 +280,7 @@ class _AgendaItemTile extends ConsumerWidget {
                       ? AuraColors.accentRed.withValues(alpha: 0.15)
                       : (isEvent
                           ? AuraColors.accentBlue.withValues(alpha: 0.15)
-                          : AuraColors.bgElevated),
+                          : elevatedBg),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -279,7 +290,7 @@ class _AgendaItemTile extends ConsumerWidget {
                     fontWeight: FontWeight.w600,
                     color: isAlarm
                         ? AuraColors.accentRed
-                        : (isEvent ? AuraColors.accentBlue : AuraColors.accentLime),
+                        : (isEvent ? AuraColors.accentBlue : primaryColor),
                   ),
                 ),
               ),
@@ -302,18 +313,22 @@ class _EmptyDayState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       decoration: BoxDecoration(
-        color: AuraColors.bgCard,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AuraColors.border, width: 1.5),
+        border: Border.all(color: borderColor, width: 1.5),
       ),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(LucideIcons.calendarCheck, size: 40, color: AuraColors.textDisabled),
+            Icon(LucideIcons.calendarCheck, size: 40, color: textMuted),
             const SizedBox(height: 12),
             Text(
               'No items scheduled',
@@ -323,7 +338,7 @@ class _EmptyDayState extends StatelessWidget {
             Text(
               'Tap the floating orb to speak a task or reminder.',
               textAlign: TextAlign.center,
-              style: AuraTypography.bodySmall.copyWith(color: AuraColors.textMuted),
+              style: AuraTypography.bodySmall.copyWith(color: textMuted),
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(

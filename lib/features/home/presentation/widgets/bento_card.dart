@@ -13,16 +13,16 @@ class BentoCard extends StatefulWidget {
     this.onTap,
     this.padding = const EdgeInsets.all(AuraSpacing.md),
     this.borderRadius = 16.0,
-    this.backgroundColor = AuraColors.bgCard,
-    this.borderColor = AuraColors.border,
+    this.backgroundColor,
+    this.borderColor,
   });
 
   final Widget child;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry padding;
   final double borderRadius;
-  final Color backgroundColor;
-  final Color borderColor;
+  final Color? backgroundColor;
+  final Color? borderColor;
 
   @override
   State<BentoCard> createState() => _BentoCardState();
@@ -47,6 +47,12 @@ class _BentoCardState extends State<BentoCard> {
 
   @override
   Widget build(BuildContext context) {
+    final bg = widget.backgroundColor ?? AuraColors.cardOf(context);
+    final border = widget.borderColor ?? AuraColors.borderOf(context);
+    final shadowColor = AuraColors.isDarkMode(context)
+        ? AuraColors.shadow
+        : AuraColors.lightShadow;
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -59,15 +65,15 @@ class _BentoCardState extends State<BentoCard> {
             : Matrix4.identity(),
         transformAlignment: Alignment.center,
         decoration: BoxDecoration(
-          color: widget.backgroundColor,
+          color: bg,
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          border: Border.all(color: widget.borderColor, width: 1),
-          boxShadow: const [
+          border: Border.all(color: border, width: 1),
+          boxShadow: [
             BoxShadow(
-              color: AuraColors.shadow,
+              color: shadowColor,
               blurRadius: 16,
               spreadRadius: 0,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),

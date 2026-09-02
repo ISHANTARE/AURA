@@ -47,7 +47,7 @@ class UrgentCell extends StatelessWidget {
           const SizedBox(height: AuraSpacing.sm),
 
           // ── Divider ─────────────────────────────────────────────────
-          Container(height: 1, color: AuraColors.borderMuted),
+          Container(height: 1, color: AuraColors.borderOf(context)),
           const SizedBox(height: AuraSpacing.sm),
 
           // ── Content ─────────────────────────────────────────────────

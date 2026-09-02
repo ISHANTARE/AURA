@@ -28,13 +28,29 @@ class OverlayChannel {
   }
 
   /// Start system-level floating orb overlay foreground service
-  static Future<bool> startOverlay() async {
+  static Future<bool> startOverlay({String? colorHex}) async {
     try {
-      final bool success =
-          await _channel.invokeMethod('startOverlay') ?? false;
+      final bool success = await _channel.invokeMethod('startOverlay', {
+            if (colorHex != null) 'colorHex': colorHex,
+          }) ??
+          false;
       return success;
     } on PlatformException catch (e) {
       debugPrint('[OverlayChannel] Error starting overlay: $e');
+      return false;
+    }
+  }
+
+  /// Update the color of the active floating orb overlay
+  static Future<bool> updateColor(String colorHex) async {
+    try {
+      final bool success = await _channel.invokeMethod('updateOverlayColor', {
+            'colorHex': colorHex,
+          }) ??
+          false;
+      return success;
+    } on PlatformException catch (e) {
+      debugPrint('[OverlayChannel] Error updating overlay color: $e');
       return false;
     }
   }

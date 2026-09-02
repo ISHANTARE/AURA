@@ -47,32 +47,33 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
   @override
   Widget build(BuildContext context) {
     final itemDao = ref.watch(itemDaoProvider);
+    final bg = AuraColors.bgOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
 
     return StreamBuilder<Item?>(
       stream: itemDao.watchById(widget.taskId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: AuraColors.bgBase,
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            backgroundColor: bg,
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
         final item = snapshot.data;
         if (item == null) {
           return Scaffold(
-            backgroundColor: AuraColors.bgBase,
+            backgroundColor: bg,
             appBar: AppBar(
-              backgroundColor: AuraColors.bgBase,
+              backgroundColor: bg,
               leading: IconButton(
-                icon: const Icon(LucideIcons.arrowLeft,
-                    color: AuraColors.textPrimary),
+                icon: Icon(LucideIcons.arrowLeft, color: textPrimary),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
             body: Center(
               child: Text('Item not found or deleted.',
-                  style: AuraTypography.body),
+                  style: AuraTypography.body.copyWith(color: textPrimary)),
             ),
           );
         }
@@ -92,21 +93,19 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
         final isCompleted = item.status == 'completed';
 
         return Scaffold(
-          backgroundColor: AuraColors.bgBase,
+          backgroundColor: bg,
           appBar: AppBar(
-            backgroundColor: AuraColors.bgBase,
+            backgroundColor: bg,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(LucideIcons.arrowLeft,
-                  color: AuraColors.textPrimary),
+              icon: Icon(LucideIcons.arrowLeft, color: textPrimary),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(item.kind.toUpperCase(),
-                style: AuraTypography.screenHeader),
+                style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
             actions: [
               IconButton(
-                icon: const Icon(LucideIcons.moreVertical,
-                    color: AuraColors.textPrimary),
+                icon: Icon(LucideIcons.moreVertical, color: textPrimary),
                 onPressed: () => TaskOptionsSheet.show(
                   context,
                   taskId: item.id,
@@ -218,6 +217,14 @@ class _DetailsTab extends StatelessWidget {
             .format(DateTime.fromMillisecondsSinceEpoch(deadline))
         : 'No deadline set (Tap to add)';
 
+    final cardBg = AuraColors.cardOf(context);
+    final elevatedBg = AuraColors.elevatedOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+    final isDark = AuraColors.isDarkMode(context);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AuraSpacing.md),
       child: Column(
@@ -228,14 +235,14 @@ class _DetailsTab extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(AuraSpacing.md),
             decoration: BoxDecoration(
-              color: AuraColors.bgCard,
+              color: cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AuraColors.border, width: 1),
-              boxShadow: const [
+              border: Border.all(color: borderColor, width: 1),
+              boxShadow: [
                 BoxShadow(
-                  color: AuraColors.shadow,
+                  color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
                   blurRadius: 16,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -250,13 +257,13 @@ class _DetailsTab extends StatelessWidget {
                             child: TextField(
                               controller: titleController,
                               autofocus: true,
-                              style: AuraTypography.cardTitle,
+                              style: AuraTypography.cardTitle.copyWith(color: textPrimary),
                               onSubmitted: onSaveTitle,
                             ),
                           ),
                           IconButton(
                             icon: const Icon(LucideIcons.check,
-                                color: AuraColors.accentLime),
+                                color: AuraColors.accentGreen),
                             onPressed: () => onSaveTitle(titleController.text),
                           ),
                         ],
@@ -274,13 +281,13 @@ class _DetailsTab extends StatelessWidget {
                                       ? TextDecoration.lineThrough
                                       : null,
                                   color: isCompleted
-                                      ? AuraColors.textDisabled
-                                      : AuraColors.textPrimary,
+                                      ? textMuted
+                                      : textPrimary,
                                 ),
                               ),
                             ),
-                            const Icon(LucideIcons.edit2,
-                                size: 16, color: AuraColors.textSecondary),
+                            Icon(LucideIcons.edit2,
+                                size: 16, color: textSecondary),
                           ],
                         ),
                       ),
@@ -312,7 +319,7 @@ class _DetailsTab extends StatelessWidget {
                 ),
 
                 const SizedBox(height: AuraSpacing.md),
-                const Divider(color: AuraColors.borderMuted, height: 1),
+                Divider(color: borderColor, height: 1),
                 const SizedBox(height: AuraSpacing.md),
 
                 // Deadline tile (Tap to pick date/time)
@@ -327,10 +334,10 @@ class _DetailsTab extends StatelessWidget {
                               size: 16, color: Theme.of(context).colorScheme.primary),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(deadlineStr, style: AuraTypography.body),
+                            child: Text(deadlineStr, style: AuraTypography.body.copyWith(color: textPrimary)),
                           ),
-                          const Icon(LucideIcons.chevronRight,
-                              size: 16, color: AuraColors.textSecondary),
+                          Icon(LucideIcons.chevronRight,
+                              size: 16, color: textSecondary),
                         ],
                       ),
                     ),
@@ -353,8 +360,8 @@ class _DetailsTab extends StatelessWidget {
                     height: 52,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isCompleted ? AuraColors.bgElevated : primary,
-                        foregroundColor: isCompleted ? AuraColors.textPrimary : Colors.white,
+                        backgroundColor: isCompleted ? elevatedBg : primary,
+                        foregroundColor: isCompleted ? textPrimary : Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -375,8 +382,8 @@ class _DetailsTab extends StatelessWidget {
                     height: 48,
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AuraColors.textPrimary,
-                        side: const BorderSide(color: AuraColors.border, width: 1),
+                        foregroundColor: textPrimary,
+                        side: BorderSide(color: borderColor, width: 1),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -442,7 +449,7 @@ class _DetailsTab extends StatelessWidget {
       case 'medium':
         return AuraColors.accentOrange;
       default:
-        return AuraColors.textSecondary;
+        return AuraColors.accentLime;
     }
   }
 }
@@ -466,6 +473,10 @@ class _NotesTabState extends State<_NotesTab> {
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
 
     return Padding(
       padding: const EdgeInsets.all(AuraSpacing.md),
@@ -475,23 +486,34 @@ class _NotesTabState extends State<_NotesTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('NOTES & DETAILS', style: AuraTypography.label.copyWith(color: AuraColors.textSecondary)),
+              Text('NOTES & DETAILS', style: AuraTypography.label.copyWith(color: textSecondary)),
               if (_isSaving)
                 Text('Saving...', style: AuraTypography.caption.copyWith(color: primaryColor)),
             ],
           ),
           const SizedBox(height: AuraSpacing.xs),
           Expanded(
-            child: TextField(
-              controller: widget.notesController,
-              maxLines: null,
-              expands: true,
-              style: AuraTypography.bodyPrimary,
-              decoration: const InputDecoration(
-                hintText: 'Type notes, ideas, or key details here...',
-                contentPadding: EdgeInsets.all(AuraSpacing.md),
+            child: Container(
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: borderColor, width: 1),
               ),
-              onChanged: widget.onSaveNotes,
+              padding: const EdgeInsets.all(AuraSpacing.md),
+              child: TextField(
+                controller: widget.notesController,
+                maxLines: null,
+                expands: true,
+                style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
+                decoration: const InputDecoration(
+                  hintText: 'Type notes, ideas, or key details here...',
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onChanged: widget.onSaveNotes,
+              ),
             ),
           ),
           const SizedBox(height: AuraSpacing.md),
@@ -510,7 +532,6 @@ class _NotesTabState extends State<_NotesTab> {
                 setState(() => _isSaving = true);
                 HapticFeedback.mediumImpact();
                 widget.onSaveNotes(widget.notesController.text);
-                // Capture messenger before the async gap.
                 final messenger = ScaffoldMessenger.of(context);
                 await Future.delayed(const Duration(milliseconds: 300));
                 if (mounted) {
@@ -531,8 +552,6 @@ class _NotesTabState extends State<_NotesTab> {
     );
   }
 }
-
-
 
 class _Tag extends StatelessWidget {
   const _Tag({required this.label, this.color});
@@ -600,19 +619,25 @@ class _NoteDetailViewState extends ConsumerState<_NoteDetailView> {
       DateTime.fromMillisecondsSinceEpoch(widget.item.createdAt),
     );
 
+    final bg = AuraColors.bgOf(context);
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: AuraColors.bgBase,
+        backgroundColor: bg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: AuraColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('NOTE', style: AuraTypography.screenHeader),
+        title: Text('NOTE', style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.moreVertical, color: AuraColors.textPrimary),
+            icon: Icon(LucideIcons.moreVertical, color: textPrimary),
             onPressed: () => TaskOptionsSheet.show(
               context,
               taskId: widget.item.id,
@@ -632,7 +657,7 @@ class _NoteDetailViewState extends ConsumerState<_NoteDetailView> {
                 children: [
                   Icon(LucideIcons.fileText, size: 14, color: primaryColor),
                   const SizedBox(width: 6),
-                  Text(dtStr, style: AuraTypography.overline),
+                  Text(dtStr, style: AuraTypography.overline.copyWith(color: textMuted)),
                 ],
               ),
               const SizedBox(height: AuraSpacing.md),
@@ -640,7 +665,7 @@ class _NoteDetailViewState extends ConsumerState<_NoteDetailView> {
               // Title input
               TextField(
                 controller: _titleController,
-                style: AuraTypography.display.copyWith(fontSize: 22),
+                style: AuraTypography.display.copyWith(fontSize: 22, color: textPrimary),
                 decoration: const InputDecoration(
                   hintText: 'Note Title',
                   border: InputBorder.none,
@@ -650,7 +675,7 @@ class _NoteDetailViewState extends ConsumerState<_NoteDetailView> {
                 ),
               ),
               const SizedBox(height: AuraSpacing.sm),
-              const Divider(color: AuraColors.border, height: 1),
+              Divider(color: borderColor, height: 1),
               const SizedBox(height: AuraSpacing.md),
 
               // Notes content editor / viewer
@@ -658,15 +683,15 @@ class _NoteDetailViewState extends ConsumerState<_NoteDetailView> {
                 constraints: const BoxConstraints(minHeight: 250),
                 padding: const EdgeInsets.all(AuraSpacing.md),
                 decoration: BoxDecoration(
-                  color: AuraColors.bgCard,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AuraColors.border, width: 1),
+                  border: Border.all(color: borderColor, width: 1),
                 ),
                 child: TextField(
                   controller: _contentController,
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
-                  style: AuraTypography.bodyPrimary.copyWith(height: 1.5, fontSize: 15),
+                  style: AuraTypography.bodyPrimary.copyWith(height: 1.5, fontSize: 15, color: textPrimary),
                   decoration: const InputDecoration(
                     hintText: 'Type or speak your note content...',
                     border: InputBorder.none,

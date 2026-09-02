@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'colors.dart';
@@ -14,7 +14,7 @@ abstract final class AuraTypography {
   static TextStyle _base({
     required double size,
     required FontWeight weight,
-    Color color = AuraColors.textPrimary,
+    Color? color,
     double? letterSpacing,
     double? height,
     TextDecoration? decoration,
@@ -64,38 +64,35 @@ abstract final class AuraTypography {
       );
 
   // ── Body ──────────────────────────────────────────────────────────────────
-  /// Primary body content. 15sp Regular, full white.
+  /// Primary body content. 15sp Regular.
   static TextStyle get bodyPrimary => _base(
         size: 15,
         weight: FontWeight.w400,
         height: 1.5,
       );
 
-  /// Standard body — 14sp Regular, secondary text color.
+  /// Standard body — 14sp Regular.
   static TextStyle get body => _base(
         size: 14,
         weight: FontWeight.w400,
-        color: AuraColors.textSecondary,
         height: 1.5,
       );
 
-  /// Body medium — 15sp Regular, full white.
+  /// Body medium — 15sp Regular.
   static TextStyle get bodyMedium => bodyPrimary;
 
-  /// Body small — 13sp Regular, secondary text color.
+  /// Body small — 13sp Regular.
   static TextStyle get bodySmall => _base(
         size: 13,
         weight: FontWeight.w400,
-        color: AuraColors.textSecondary,
         height: 1.5,
       );
 
   // ── Caption ───────────────────────────────────────────────────────────────
-  /// Timestamps, meta info, breadcrumbs. 12sp Regular, muted.
+  /// Timestamps, meta info, breadcrumbs. 12sp Regular.
   static TextStyle get caption => _base(
         size: 12,
         weight: FontWeight.w400,
-        color: AuraColors.textMuted,
         height: 1.4,
       );
 
@@ -104,7 +101,6 @@ abstract final class AuraTypography {
   static TextStyle get label => _base(
         size: 11,
         weight: FontWeight.w500,
-        color: AuraColors.textSecondary,
         letterSpacing: 0.8,
       );
 
@@ -112,7 +108,6 @@ abstract final class AuraTypography {
   static TextStyle get overline => _base(
         size: 11,
         weight: FontWeight.w500,
-        color: AuraColors.textMuted,
         letterSpacing: 1.2,
       );
 
@@ -120,7 +115,6 @@ abstract final class AuraTypography {
   static TextStyle get badgeText => _base(
         size: 11,
         weight: FontWeight.w600,
-        color: AuraColors.textSecondary,
         letterSpacing: 0.5,
       );
 
@@ -132,11 +126,10 @@ abstract final class AuraTypography {
         height: 1.1,
       );
 
-  /// Stat metric labels beneath numbers. 11sp Bold, muted.
+  /// Stat metric labels beneath numbers. 11sp Bold.
   static TextStyle get bentoMetricLabel => _base(
         size: 11,
         weight: FontWeight.w700,
-        color: AuraColors.textMuted,
         letterSpacing: 0.8,
       );
 

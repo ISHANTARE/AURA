@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/constants/colors.dart';
@@ -15,12 +16,20 @@ class RemindersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeItemsAsync = ref.watch(allActiveItemsProvider);
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    final bg = AuraColors.bgOf(context);
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final isDark = AuraColors.isDarkMode(context);
 
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: bg,
       appBar: AppBar(
-        title: Text('REMINDERS', style: AuraTypography.screenHeader),
-        backgroundColor: AuraColors.bgBase,
+        title: Text('REMINDERS', style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
+        backgroundColor: bg,
         elevation: 0,
       ),
       body: activeItemsAsync.when(
@@ -41,34 +50,51 @@ class RemindersScreen extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: AuraSpacing.sm),
             itemBuilder: (context, index) {
               final rem = reminders[index];
+              final fireAtDt = rem.fireAt != null
+                  ? DateTime.fromMillisecondsSinceEpoch(rem.fireAt!)
+                  : null;
+              final timeStr = fireAtDt != null
+                  ? DateFormat('EEE, MMM d · h:mm a').format(fireAtDt)
+                  : 'Pending Reminder';
+
               return Container(
                 padding: const EdgeInsets.all(AuraSpacing.md),
                 decoration: BoxDecoration(
-                  color: AuraColors.bgCard,
-                  border: Border.all(color: AuraColors.border, width: AuraSpacing.borderWidth),
-                  boxShadow: const [
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: borderColor, width: 1),
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
-                      offset: Offset(4, 4),
-                      blurRadius: 0,
+                      color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.bell, color: AuraColors.accentLime, size: 24),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(LucideIcons.bell, color: primaryColor, size: 20),
+                    ),
                     const SizedBox(width: AuraSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(rem.title, style: AuraTypography.cardTitle),
+                          Text(
+                            rem.title,
+                            style: AuraTypography.cardTitle.copyWith(color: textPrimary),
+                          ),
                           const SizedBox(height: 2),
                           Text(
-                            rem.fireAt != null
-                                ? DateTime.fromMillisecondsSinceEpoch(rem.fireAt!).toString()
-                                : 'Pending Reminder',
-                            style: AuraTypography.bodySmall,
+                            timeStr,
+                            style: AuraTypography.bodySmall.copyWith(color: textSecondary),
                           ),
                         ],
                       ),

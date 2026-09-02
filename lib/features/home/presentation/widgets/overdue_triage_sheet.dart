@@ -26,19 +26,23 @@ class OverdueTriageSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final overdueAsync = ref.watch(overdueItemsProvider);
-    const accentColor = AuraColors.accentPrimary;
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.82,
       ),
-      decoration: const BoxDecoration(
-        color: AuraColors.bgCard,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: AuraColors.border, width: 2),
-          left: BorderSide(color: AuraColors.border, width: 2),
-          right: BorderSide(color: AuraColors.border, width: 2),
+          top: BorderSide(color: borderColor, width: 2),
+          left: BorderSide(color: borderColor, width: 2),
+          right: BorderSide(color: borderColor, width: 2),
         ),
       ),
       child: Column(
@@ -51,7 +55,7 @@ class OverdueTriageSheet extends ConsumerWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AuraColors.textDisabled,
+                color: borderColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -76,19 +80,19 @@ class OverdueTriageSheet extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Text(
                       'OVERDUE TASKS',
-                      style: AuraTypography.screenHeader.copyWith(fontSize: 16),
+                      style: AuraTypography.screenHeader.copyWith(fontSize: 16, color: textPrimary),
                     ),
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.x, size: 20, color: AuraColors.textSecondary),
+                  icon: Icon(LucideIcons.x, size: 20, color: textSecondary),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
           ),
 
-          const Divider(color: AuraColors.border, height: 1),
+          Divider(color: borderColor, height: 1),
 
           // Content
           Flexible(
@@ -114,11 +118,11 @@ class OverdueTriageSheet extends ConsumerWidget {
                       children: [
                         const Icon(LucideIcons.checkCircle2, color: AuraColors.accentGreen, size: 48),
                         const SizedBox(height: 12),
-                        Text('All caught up!', style: AuraTypography.cardTitle),
+                        Text('All caught up!', style: AuraTypography.cardTitle.copyWith(color: textPrimary)),
                         const SizedBox(height: 4),
                         Text(
                           'No overdue tasks remaining.',
-                          style: AuraTypography.bodySmall.copyWith(color: AuraColors.textMuted),
+                          style: AuraTypography.bodySmall.copyWith(color: AuraColors.textMutedOf(context)),
                         ),
                       ],
                     ),
@@ -134,7 +138,7 @@ class OverdueTriageSheet extends ConsumerWidget {
                     final item = items[index];
                     return _OverdueItemCard(
                       item: item,
-                      accentColor: accentColor,
+                      accentColor: primaryColor,
                     );
                   },
                 );
@@ -165,12 +169,17 @@ class _OverdueItemCard extends ConsumerWidget {
         ? 'Due ${DateFormat('MMM d · h:mm a').format(deadlineDt)}'
         : 'Past due';
 
+    final elevatedBg = AuraColors.elevatedOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AuraColors.bgElevated,
+        color: elevatedBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AuraColors.border, width: 1),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +190,7 @@ class _OverdueItemCard extends ConsumerWidget {
               Expanded(
                 child: Text(
                   item.title,
-                  style: AuraTypography.cardTitle.copyWith(fontSize: 15),
+                  style: AuraTypography.cardTitle.copyWith(fontSize: 15, color: textPrimary),
                 ),
               ),
               Container(
@@ -204,7 +213,7 @@ class _OverdueItemCard extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               item.notes!,
-              style: AuraTypography.bodySmall.copyWith(color: AuraColors.textSecondary, fontSize: 12),
+              style: AuraTypography.bodySmall.copyWith(color: textSecondary, fontSize: 12),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -246,7 +255,7 @@ class _OverdueItemCard extends ConsumerWidget {
                     ItemsCompanion(
                       id: Value(item.id),
                       deadline: Value(newTime),
-                      updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+                      updatedAt: Value(now.millisecondsSinceEpoch),
                     ),
                   );
                   final updated = await ref.read(itemDaoProvider).getById(item.id);
@@ -295,7 +304,10 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = accentColor ?? AuraColors.textPrimary;
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final bg = AuraColors.bgOf(context);
+    final color = accentColor ?? textPrimary;
 
     return InkWell(
       onTap: onTap,
@@ -303,10 +315,10 @@ class _ActionButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isPrimary ? color.withValues(alpha: 0.2) : AuraColors.bgBase,
+          color: isPrimary ? color.withValues(alpha: 0.2) : bg,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isPrimary ? color : AuraColors.border,
+            color: isPrimary ? color : borderColor,
             width: 1,
           ),
         ),

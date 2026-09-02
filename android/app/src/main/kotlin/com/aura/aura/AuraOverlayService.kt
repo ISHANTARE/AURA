@@ -13,6 +13,7 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.RadialGradient
 import android.graphics.Shader
+import android.graphics.Typeface
 import android.os.Build
 import android.os.IBinder
 import android.util.DisplayMetrics
@@ -40,14 +41,33 @@ class AuraOverlayService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var orbView: OrbCanvasView
     private lateinit var params: WindowManager.LayoutParams
+    private var currentColorHex: String = "#7B6FF0"
 
     override fun onCreate() {
         super.onCreate()
         isRunning = true
+        currentColorHex = getSavedAccentColor()
         createNotificationChannel()
         startForeground(NOTIF_ID, buildNotification())
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         setupOrb()
+    }
+
+    private fun getSavedAccentColor(): String {
+        return try {
+            val flutterPrefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val accentName = flutterPrefs.getString("flutter.THEME_ACCENT", "Indigo") ?: "Indigo"
+            when (accentName.lowercase()) {
+                "cyan" -> "#22D3EE"
+                "purple" -> "#C084FC"
+                "orange" -> "#FF9966"
+                "rose" -> "#F472B6"
+                "lime" -> "#C8FF00"
+                else -> "#7B6FF0" // Neon Indigo (Default)
+            }
+        } catch (e: Exception) {
+            "#7B6FF0"
+        }
     }
 
     private fun setupOrb() {
@@ -59,6 +79,7 @@ class AuraOverlayService : Service() {
         val savedY = prefs.getInt("orb_y", (200 * density).toInt())
 
         orbView = OrbCanvasView(this)
+        orbView.updateColor(currentColorHex)
 
         val windowType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -167,6 +188,7 @@ class AuraOverlayService : Service() {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             putExtra("orb_x", x)
             putExtra("orb_y", y)
+            putExtra("colorHex", currentColorHex)
         }
         startActivity(intent)
     }
@@ -177,6 +199,20 @@ class AuraOverlayService : Service() {
                 stopSelf()
                 isRunning = false
             }
+            "UPDATE_COLOR" -> {
+                val hex = intent.getStringExtra("colorHex") ?: getSavedAccentColor()
+                currentColorHex = hex
+                if (::orbView.isInitialized) {
+                    orbView.updateColor(hex)
+                }
+            }
+            else -> {
+                val hex = intent?.getStringExtra("colorHex") ?: getSavedAccentColor()
+                currentColorHex = hex
+                if (::orbView.isInitialized) {
+                    orbView.updateColor(hex)
+                }
+            }
         }
         return START_STICKY
     }
@@ -186,7 +222,11 @@ class AuraOverlayService : Service() {
         isRunning = false
         if (::orbView.isInitialized) {
             orbView.stopPulse()
-            windowManager.removeView(orbView)
+            try {
+                windowManager.removeView(orbView)
+            } catch (e: Exception) {
+                // Ignore view not attached
+            }
         }
         getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
             .putBoolean("orb_enabled", false)
@@ -218,11 +258,13 @@ class AuraOverlayService : Service() {
             .build()
     }
 
-    // ── Custom Canvas View with Pulse Animation ─────────────────────────────
+    // ── Custom Canvas View with Pulse Animation & Theme Color Matching ──────────
 
     inner class OrbCanvasView(context: Context) : View(context) {
         private var pulseScale = 1.0f
         private var animator: ValueAnimator? = null
+        private var parsedColor: Int = Color.parseColor("#7B6FF0")
+        private var parsedColorHex: String = "#7B6FF0"
 
         private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
@@ -230,18 +272,36 @@ class AuraOverlayService : Service() {
 
         private val corePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
-            color = Color.parseColor("#C8FF00") // Electric Volt
+            color = parsedColor
         }
 
         private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
-            strokeWidth = 2f * resources.displayMetrics.density
-            color = Color.parseColor("#80FFFFFF")
+            strokeWidth = 1.5f * resources.displayMetrics.density
+            color = Color.parseColor("#60FFFFFF")
+        }
+
+        private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textAlign = Paint.Align.CENTER
+            textSize = 20f * resources.displayMetrics.density
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+
+        fun updateColor(hex: String) {
+            try {
+                parsedColorHex = if (hex.startsWith("#")) hex else "#$hex"
+                parsedColor = Color.parseColor(parsedColorHex)
+                corePaint.color = parsedColor
+                invalidate()
+            } catch (e: Exception) {
+                // Ignore parse errors
+            }
         }
 
         fun startPulse() {
             animator = ValueAnimator.ofFloat(1.0f, 1.08f, 1.0f).apply {
-                duration = 1500
+                duration = 2000
                 repeatCount = ValueAnimator.INFINITE
                 addUpdateListener {
                     pulseScale = it.animatedValue as Float
@@ -260,23 +320,32 @@ class AuraOverlayService : Service() {
             super.onDraw(canvas)
             val cx = width / 2f
             val cy = height / 2f
-            val baseRadius = (width / 2f) * 0.75f
+            val baseRadius = (width / 2f) * 0.72f
             val currentRadius = baseRadius * pulseScale
 
-            // Draw radial glow
-            glowPaint.shader = RadialGradient(
-                cx, cy, currentRadius * 1.3f,
-                intArrayOf(Color.parseColor("#66C8FF00"), Color.TRANSPARENT),
-                floatArrayOf(0.4f, 1.0f),
-                Shader.TileMode.CLAMP
-            )
-            canvas.drawCircle(cx, cy, currentRadius * 1.3f, glowPaint)
+            // Draw radial glow matching theme color
+            val glowColorHex = "#66" + parsedColorHex.removePrefix("#")
+            try {
+                glowPaint.shader = RadialGradient(
+                    cx, cy, currentRadius * 1.35f,
+                    intArrayOf(Color.parseColor(glowColorHex), Color.TRANSPARENT),
+                    floatArrayOf(0.4f, 1.0f),
+                    Shader.TileMode.CLAMP
+                )
+                canvas.drawCircle(cx, cy, currentRadius * 1.35f, glowPaint)
+            } catch (e: Exception) {
+                // Fallback if hex formatting had issues
+            }
 
             // Draw Core Orb
             canvas.drawCircle(cx, cy, currentRadius, corePaint)
 
             // Draw Subtle Inner Ring
-            canvas.drawCircle(cx, cy, currentRadius * 0.85f, ringPaint)
+            canvas.drawCircle(cx, cy, currentRadius * 0.88f, ringPaint)
+
+            // Draw AURA 'A' Label in the center
+            val textY = cy - ((textPaint.descent() + textPaint.ascent()) / 2f)
+            canvas.drawText("A", cx, textY, textPaint)
         }
     }
 }

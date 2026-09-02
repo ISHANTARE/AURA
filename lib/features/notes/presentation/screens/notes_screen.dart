@@ -27,11 +27,19 @@ class NotesScreen extends ConsumerWidget {
     final itemDao = ref.watch(itemDaoProvider);
     final primaryColor = Theme.of(context).colorScheme.primary;
 
+    final bg = AuraColors.bgOf(context);
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final textMuted = AuraColors.textMutedOf(context);
+    final isDark = AuraColors.isDarkMode(context);
+
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: bg,
       appBar: AppBar(
-        title: Text('NOTES', style: AuraTypography.screenHeader),
-        backgroundColor: AuraColors.bgBase,
+        title: Text('NOTES', style: AuraTypography.screenHeader.copyWith(color: textPrimary)),
+        backgroundColor: bg,
         elevation: 0,
         actions: [
           PopupMenuButton<NoteSortOrder>(
@@ -39,9 +47,9 @@ class NotesScreen extends ConsumerWidget {
             icon: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AuraColors.border, width: 1),
+                border: Border.all(color: borderColor, width: 1),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -51,17 +59,17 @@ class NotesScreen extends ConsumerWidget {
                   Text(
                     currentSort.label,
                     style: AuraTypography.caption.copyWith(
-                      color: AuraColors.textPrimary,
+                      color: textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-            color: AuraColors.bgCard,
+            color: cardBg,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: AuraColors.border, width: 1),
+              side: BorderSide(color: borderColor, width: 1),
             ),
             onSelected: (order) {
               ref.read(noteSortOrderProvider.notifier).setSortOrder(order);
@@ -79,13 +87,13 @@ class NotesScreen extends ConsumerWidget {
                               ? LucideIcons.calendar
                               : LucideIcons.arrowDownAZ),
                       size: 16,
-                      color: isSelected ? primaryColor : AuraColors.textSecondary,
+                      color: isSelected ? primaryColor : textSecondary,
                     ),
                     const SizedBox(width: 10),
                     Text(
                       order.label,
                       style: AuraTypography.body.copyWith(
-                        color: isSelected ? primaryColor : AuraColors.textPrimary,
+                        color: isSelected ? primaryColor : textPrimary,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -123,14 +131,14 @@ class NotesScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.all(AuraSpacing.md),
                   decoration: BoxDecoration(
-                    color: AuraColors.bgCard,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AuraColors.border, width: 1),
-                    boxShadow: const [
+                    border: Border.all(color: borderColor, width: 1),
+                    boxShadow: [
                       BoxShadow(
-                        color: AuraColors.shadow,
+                        color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
                         blurRadius: 10,
-                        offset: Offset(0, 3),
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -153,7 +161,7 @@ class NotesScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               note.title,
-                              style: AuraTypography.cardTitle,
+                              style: AuraTypography.cardTitle.copyWith(color: textPrimary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -161,8 +169,8 @@ class NotesScreen extends ConsumerWidget {
                           IconButton(
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
-                            icon: const Icon(LucideIcons.trash2,
-                                color: AuraColors.textMuted, size: 18),
+                            icon: Icon(LucideIcons.trash2,
+                                color: textMuted, size: 18),
                             onPressed: () async {
                               HapticFeedback.mediumImpact();
                               await itemDao.softDelete(note.id);
@@ -184,7 +192,7 @@ class NotesScreen extends ConsumerWidget {
                         Text(
                           note.notes!,
                           style: AuraTypography.body.copyWith(
-                            color: AuraColors.textSecondary,
+                            color: textSecondary,
                           ),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
@@ -194,7 +202,7 @@ class NotesScreen extends ConsumerWidget {
                       Text(
                         dateStr,
                         style: AuraTypography.overline.copyWith(
-                          color: AuraColors.textMuted,
+                          color: textMuted,
                         ),
                       ),
                     ],
@@ -223,10 +231,15 @@ class NotesScreen extends ConsumerWidget {
     final titleCtrl = TextEditingController();
     final bodyCtrl = TextEditingController();
     final primaryColor = Theme.of(context).colorScheme.primary;
+    final elevatedBg = AuraColors.elevatedOf(context);
+    final cardBg = AuraColors.cardOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AuraColors.bgElevated,
+      backgroundColor: elevatedBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -250,39 +263,49 @@ class NotesScreen extends ConsumerWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: AuraSpacing.md),
                   decoration: BoxDecoration(
-                    color: AuraColors.borderMuted,
+                    color: borderColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              Text('NEW NOTE', style: AuraTypography.cardTitle),
+              Text('NEW NOTE', style: AuraTypography.cardTitle.copyWith(color: textPrimary)),
               const SizedBox(height: AuraSpacing.md),
               TextField(
                 controller: titleCtrl,
                 autofocus: true,
-                style: AuraTypography.bodyPrimary,
+                style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Note title...',
+                  hintStyle: TextStyle(color: textSecondary),
                   filled: true,
-                  fillColor: AuraColors.bgCard,
+                  fillColor: cardBg,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AuraColors.border),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                 ),
               ),
               const SizedBox(height: AuraSpacing.sm),
               TextField(
                 controller: bodyCtrl,
-                style: AuraTypography.body,
+                style: AuraTypography.body.copyWith(color: textPrimary),
                 maxLines: 4,
                 decoration: InputDecoration(
                   hintText: 'Write something...',
+                  hintStyle: TextStyle(color: textSecondary),
                   filled: true,
-                  fillColor: AuraColors.bgCard,
+                  fillColor: cardBg,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AuraColors.border),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                 ),
               ),

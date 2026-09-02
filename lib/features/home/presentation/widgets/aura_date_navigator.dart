@@ -7,7 +7,13 @@ import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../providers/home_providers.dart';
 
-/// 3-part Date Navigator with Compact Mini-Week Dot Strip and Day Status Filter.
+/// 3-part Day Navigation Control with Day-Specific [Pending | Done] summary badge.
+///
+/// Contains exactly three navigation elements:
+///   [Previous Day] -> [Date Selector] -> [Next Day]
+///
+/// Below the switcher sits the day-specific metrics badge: [X Pending | Y Done]
+/// with interactive tap-to-filter toggles for the active day's agenda.
 class AuraDateNavigator extends ConsumerWidget {
   const AuraDateNavigator({super.key});
 
@@ -16,8 +22,14 @@ class AuraDateNavigator extends ConsumerWidget {
     final selectedDate = ref.watch(selectedDateProvider);
     final activeFilter = ref.watch(selectedDayFilterProvider);
     final agendaAsync = ref.watch(dayAgendaProvider);
-    final weekActivityAsync = ref.watch(weekActivityMapProvider(selectedDate));
-    const accentColor = AuraColors.accentPrimary;
+
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final cardBg = AuraColors.cardOf(context);
+    final elevatedBg = AuraColors.elevatedOf(context);
+    final borderColor = AuraColors.borderOf(context);
+    final textPrimary = AuraColors.textPrimaryOf(context);
+    final textSecondary = AuraColors.textSecondaryOf(context);
+    final isDark = AuraColors.isDarkMode(context);
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -48,38 +60,40 @@ class AuraDateNavigator extends ConsumerWidget {
           totalCompleted: 0,
         );
 
-    final weekActivity = weekActivityAsync.value ?? <String, int>{};
-
-    // Calculate Monday of the selected week
-    final weekday = selectedDate.weekday; // 1 = Mon, 7 = Sun
-    final monday = selectedDate.subtract(Duration(days: weekday - 1));
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AuraColors.bgCard,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AuraColors.border, width: 2),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? AuraColors.shadow : AuraColors.lightShadow,
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          // ── Top: 3-Part Date Switcher ───────────────────────────────────────
+          // ── 1. Top: Exactly 3 Logical Navigation Elements ─────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Prev Day Button
+              // 1. Previous Day Button
               IconButton(
                 icon: const Icon(LucideIcons.chevronLeft, size: 20),
-                color: AuraColors.textPrimary,
+                color: textPrimary,
+                tooltip: 'Previous Day',
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                 onPressed: () {
                   ref.read(selectedDateProvider.notifier).state =
                       selectedDate.subtract(const Duration(days: 1));
                 },
               ),
 
-              // Date Label Button (Tapping opens Calendar Picker)
+              // 2. Date Selector (Tap to pick any date)
               InkWell(
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -87,16 +101,24 @@ class AuraDateNavigator extends ConsumerWidget {
                     initialDate: selectedDate,
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2035),
-                    builder: (context, child) {
+                    builder: (pickerCtx, child) {
                       return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.dark(
-                            primary: AuraColors.accentPrimary,
-                            surface: AuraColors.bgCard,
-                            onSurface: AuraColors.textPrimary,
-                          ),
-                          dialogTheme: const DialogThemeData(
-                            backgroundColor: AuraColors.bgElevated,
+                        data: Theme.of(pickerCtx).copyWith(
+                          colorScheme: isDark
+                              ? ColorScheme.dark(
+                                  primary: primaryColor,
+                                  surface: AuraColors.bgElevated,
+                                  onSurface: AuraColors.textPrimary,
+                                )
+                              : ColorScheme.light(
+                                  primary: primaryColor,
+                                  surface: AuraColors.lightBgCard,
+                                  onSurface: AuraColors.lightTextPrimary,
+                                ),
+                          dialogTheme: DialogThemeData(
+                            backgroundColor: isDark
+                                ? AuraColors.bgElevated
+                                : AuraColors.lightBgCard,
                           ),
                         ),
                         child: child!,
@@ -110,33 +132,34 @@ class AuraDateNavigator extends ConsumerWidget {
                 },
                 borderRadius: BorderRadius.circular(10),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(LucideIcons.calendar, size: 14, color: AuraColors.accentPrimary),
-                      const SizedBox(width: 6),
+                      Icon(LucideIcons.calendar, size: 15, color: primaryColor),
+                      const SizedBox(width: 8),
                       Text(
                         dateLabel,
                         style: AuraTypography.cardTitle.copyWith(
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: isToday ? AuraColors.accentPrimary : AuraColors.textPrimary,
+                          color: isToday ? primaryColor : textPrimary,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(LucideIcons.chevronDown, size: 13, color: AuraColors.textSecondary),
+                      const SizedBox(width: 6),
+                      Icon(LucideIcons.chevronDown, size: 14, color: textSecondary),
                     ],
                   ),
                 ),
               ),
 
-              // Next Day Button
+              // 3. Next Day Button
               IconButton(
                 icon: const Icon(LucideIcons.chevronRight, size: 20),
-                color: AuraColors.textPrimary,
+                color: textPrimary,
+                tooltip: 'Next Day',
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                 onPressed: () {
                   ref.read(selectedDateProvider.notifier).state =
                       selectedDate.add(const Duration(days: 1));
@@ -145,200 +168,150 @@ class AuraDateNavigator extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          Divider(color: borderColor, height: 1),
+          const SizedBox(height: 10),
 
-          // ── Middle: Compact Mini-Week Strip ────────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(7, (index) {
-              final dayDate = monday.add(Duration(days: index));
-              final isSelectedDay = dayDate.year == selectedDate.year &&
-                  dayDate.month == selectedDate.month &&
-                  dayDate.day == selectedDate.day;
-              final isCurrentToday = dayDate.year == today.year &&
-                  dayDate.month == today.month &&
-                  dayDate.day == today.day;
-
-              final key =
-                  '${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}';
-              final taskCount = weekActivity[key] ?? 0;
-
-              const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    ref.read(selectedDateProvider.notifier).state =
-                        DateTime(dayDate.year, dayDate.month, dayDate.day);
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isSelectedDay
-                          ? accentColor.withValues(alpha: 0.15)
-                          : (isCurrentToday
-                              ? AuraColors.bgElevated
-                              : Colors.transparent),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelectedDay
-                            ? accentColor
-                            : (isCurrentToday ? AuraColors.border : Colors.transparent),
-                        width: isSelectedDay ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          dayNames[index],
-                          style: AuraTypography.caption.copyWith(
-                            fontSize: 10,
-                            color: isSelectedDay
-                                ? accentColor
-                                : AuraColors.textSecondary,
-                            fontWeight: isSelectedDay ? FontWeight.bold : FontWeight.normal,
+          // ── 2. Day-Specific Badge / Box [X Pending | Y Done] ─────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: elevatedBg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: borderColor, width: 1),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Day metrics [Pending | Done] with tap-to-filter
+                Row(
+                  children: [
+                    // Pending Pill
+                    GestureDetector(
+                      onTap: () {
+                        ref.read(selectedDayFilterProvider.notifier).state =
+                            activeFilter == DayFilter.pendingOnly
+                                ? DayFilter.all
+                                : DayFilter.pendingOnly;
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: activeFilter == DayFilter.pendingOnly
+                              ? primaryColor.withValues(alpha: 0.18)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: activeFilter == DayFilter.pendingOnly
+                                ? primaryColor
+                                : Colors.transparent,
+                            width: 1,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${dayDate.day}',
-                          style: AuraTypography.badgeText.copyWith(
-                            fontSize: 13,
-                            color: isSelectedDay
-                                ? AuraColors.textPrimary
-                                : AuraColors.textMuted,
-                            fontWeight:
-                                isSelectedDay ? FontWeight.bold : FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        // Activity Dots Indicator
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (taskCount > 0)
-                              Container(
-                                width: 4,
-                                height: 4,
-                                margin: const EdgeInsets.symmetric(horizontal: 1),
-                                decoration: BoxDecoration(
-                                  color: isSelectedDay
-                                      ? accentColor
-                                      : AuraColors.accentPrimary,
-                                  shape: BoxShape.circle,
-                                ),
-                              )
-                            else
-                              const SizedBox(height: 4),
+                            Icon(LucideIcons.clock, size: 12, color: primaryColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${agenda.totalPending} Pending',
+                              style: AuraTypography.label.copyWith(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: primaryColor,
+                              ),
+                            ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-
-          const SizedBox(height: 10),
-          const Divider(color: AuraColors.border, height: 1),
-          const SizedBox(height: 8),
-
-          // ── Bottom: Day Status Text with Tap-To-Filter Toggle ───────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Pending / Done Text Switcher
-              Row(
-                children: [
-                  // Pending Pill
-                  GestureDetector(
-                    onTap: () {
-                      ref.read(selectedDayFilterProvider.notifier).state =
-                          activeFilter == DayFilter.pendingOnly
-                              ? DayFilter.all
-                              : DayFilter.pendingOnly;
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: activeFilter == DayFilter.pendingOnly
-                            ? accentColor.withValues(alpha: 0.2)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: activeFilter == DayFilter.pendingOnly
-                              ? accentColor
-                              : Colors.transparent,
-                          width: 1,
-                        ),
                       ),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: Text(
-                        '${agenda.totalPending} Pending',
-                        style: AuraTypography.label.copyWith(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: accentColor,
+                        '|',
+                        style: TextStyle(
+                          color: textSecondary.withValues(alpha: 0.4),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Text('·', style: TextStyle(color: AuraColors.textDisabled)),
-                  const SizedBox(width: 4),
-                  // Completed Pill
-                  GestureDetector(
-                    onTap: () {
-                      ref.read(selectedDayFilterProvider.notifier).state =
-                          activeFilter == DayFilter.completedOnly
-                              ? DayFilter.all
-                              : DayFilter.completedOnly;
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: activeFilter == DayFilter.completedOnly
-                            ? AuraColors.accentGreen.withValues(alpha: 0.2)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
+
+                    // Completed Pill
+                    GestureDetector(
+                      onTap: () {
+                        ref.read(selectedDayFilterProvider.notifier).state =
+                            activeFilter == DayFilter.completedOnly
+                                ? DayFilter.all
+                                : DayFilter.completedOnly;
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
                           color: activeFilter == DayFilter.completedOnly
-                              ? AuraColors.accentGreen
+                              ? AuraColors.accentGreen.withValues(alpha: 0.18)
                               : Colors.transparent,
-                          width: 1,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: activeFilter == DayFilter.completedOnly
+                                ? AuraColors.accentGreen
+                                : Colors.transparent,
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        '${agenda.totalCompleted} Completed',
-                        style: AuraTypography.label.copyWith(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AuraColors.accentGreen,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(LucideIcons.checkCircle, size: 12, color: AuraColors.accentGreen),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${agenda.totalCompleted} Done',
+                              style: AuraTypography.label.copyWith(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AuraColors.accentGreen,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-
-              // Filter State Reset / Indicator
-              if (activeFilter != DayFilter.all)
-                GestureDetector(
-                  onTap: () {
-                    ref.read(selectedDayFilterProvider.notifier).state = DayFilter.all;
-                  },
-                  child: Text(
-                    'Show All',
-                    style: AuraTypography.caption.copyWith(
-                      color: accentColor,
-                      fontWeight: FontWeight.w600,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
+                  ],
                 ),
-            ],
+
+                // Reset filter button if active
+                if (activeFilter != DayFilter.all)
+                  GestureDetector(
+                    onTap: () {
+                      ref.read(selectedDayFilterProvider.notifier).state = DayFilter.all;
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Text(
+                        'Show All',
+                        style: AuraTypography.caption.copyWith(
+                          color: primaryColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    'DAY SUMMARY',
+                    style: AuraTypography.caption.copyWith(
+                      color: textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

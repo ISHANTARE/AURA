@@ -19,14 +19,17 @@ class AuraBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themePrimary = Theme.of(context).colorScheme.primary;
+    final cardBg = AuraColors.cardOf(context);
+    final borderCol = AuraColors.borderOf(context);
+    final mutedText = AuraColors.textMutedOf(context);
 
     return Container(
       height: AuraSpacing.bottomNavHeight + MediaQuery.paddingOf(context).bottom,
       padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
-      decoration: const BoxDecoration(
-        color: AuraColors.bgCard,
+      decoration: BoxDecoration(
+        color: cardBg,
         border: Border(
-          top: BorderSide(color: AuraColors.border, width: 1),
+          top: BorderSide(color: borderCol, width: 1),
         ),
       ),
       child: Row(
@@ -37,6 +40,7 @@ class AuraBottomNav extends StatelessWidget {
             label: 'Home',
             isSelected: selectedIndex == 0,
             activeColor: themePrimary,
+            inactiveColor: mutedText,
             onTap: () => onDestinationSelected(0),
           ),
           _NavItem(
@@ -44,6 +48,7 @@ class AuraBottomNav extends StatelessWidget {
             label: 'Alarms',
             isSelected: selectedIndex == 1,
             activeColor: themePrimary,
+            inactiveColor: mutedText,
             onTap: () => onDestinationSelected(1),
           ),
           _NavItem(
@@ -51,6 +56,7 @@ class AuraBottomNav extends StatelessWidget {
             label: 'Spaces',
             isSelected: selectedIndex == 2,
             activeColor: themePrimary,
+            inactiveColor: mutedText,
             onTap: () => onDestinationSelected(2),
           ),
           _NavItem(
@@ -58,6 +64,7 @@ class AuraBottomNav extends StatelessWidget {
             label: 'Notes',
             isSelected: selectedIndex == 3,
             activeColor: themePrimary,
+            inactiveColor: mutedText,
             onTap: () => onDestinationSelected(3),
           ),
           _NavItem(
@@ -65,6 +72,7 @@ class AuraBottomNav extends StatelessWidget {
             label: 'Settings',
             isSelected: selectedIndex == 4,
             activeColor: themePrimary,
+            inactiveColor: mutedText,
             onTap: () => onDestinationSelected(4),
           ),
         ],
@@ -79,6 +87,7 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.activeColor,
+    required this.inactiveColor,
     required this.onTap,
   });
 
@@ -86,6 +95,7 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isSelected;
   final Color activeColor;
+  final Color inactiveColor;
   final VoidCallback onTap;
 
   @override
@@ -107,7 +117,7 @@ class _NavItem extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isSelected ? activeColor : AuraColors.textMuted,
+                color: isSelected ? activeColor : inactiveColor,
                 size: 20,
               ),
               if (isSelected) ...[

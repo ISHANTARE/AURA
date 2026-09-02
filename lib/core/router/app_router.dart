@@ -20,6 +20,9 @@ import '../../features/capture/presentation/screens/floating_capture_overlay_scr
 import '../constants/colors.dart';
 import '../constants/typography.dart';
 import '../widgets/bottom_nav.dart';
+import '../../features/home/presentation/widgets/floating_orb.dart';
+import '../../features/capture/presentation/widgets/voice_capture_overlay.dart';
+import '../../platform/overlay_channel.dart';
 
 /// Route name constants — use these everywhere instead of string literals.
 abstract final class Routes {
@@ -212,7 +215,7 @@ class _MainShell extends ConsumerStatefulWidget {
   ConsumerState<_MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends ConsumerState<_MainShell> {
+class _MainShellState extends ConsumerState<_MainShell> with WidgetsBindingObserver {
   static const _routes = [
     Routes.home,
     Routes.alarms,
@@ -220,6 +223,35 @@ class _MainShellState extends ConsumerState<_MainShell> {
     Routes.notes,
     Routes.settings,
   ];
+
+  bool _isOverlayRunning = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkOverlayStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkOverlayStatus();
+    }
+  }
+
+  Future<void> _checkOverlayStatus() async {
+    final running = await OverlayChannel.isRunning();
+    if (mounted && running != _isOverlayRunning) {
+      setState(() => _isOverlayRunning = running);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -231,7 +263,15 @@ class _MainShellState extends ConsumerState<_MainShell> {
 
     return Scaffold(
       backgroundColor: AuraColors.bgBase,
-      body: widget.child,
+      body: Stack(
+        children: [
+          widget.child,
+          if (!_isOverlayRunning)
+            FloatingOrb(
+              onTap: () => VoiceCaptureOverlay.show(context),
+            ),
+        ],
+      ),
       bottomNavigationBar: AuraBottomNav(
         selectedIndex: effectiveIndex,
         onDestinationSelected: (index) {
