@@ -97,7 +97,7 @@ class MainActivity : FlutterActivity() {
                         startService(intent)
                         result.success(true)
                     }
-                    "updateOverlayColor" -> {
+                    "updateOverlayColor", "updateOrbColor" -> {
                         val colorHex = call.argument<String>("colorHex")
                         val intent = Intent(this, AuraOverlayService::class.java).apply {
                             action = "UPDATE_COLOR"

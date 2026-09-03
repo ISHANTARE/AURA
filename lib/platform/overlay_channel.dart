@@ -140,8 +140,8 @@ class OverlayChannel {
   static Future<void> updateOrbColor(String colorHex) async {
     try {
       await _channel.invokeMethod('updateOrbColor', {'colorHex': colorHex});
-    } on PlatformException catch (e) {
-      debugPrint('[OverlayChannel] Error updating orb color: $e');
+    } catch (e) {
+      debugPrint('[OverlayChannel] updateOrbColor skipped: $e');
     }
   }
 
