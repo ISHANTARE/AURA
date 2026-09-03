@@ -17,6 +17,48 @@ class AuraShareActivity : FlutterActivity() {
 
     override fun shouldDestroyEngineWithHost(): Boolean = false
 
+    override fun configureFlutterEngine(flutterEngine: io.flutter.embedding.engine.FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        AuraChannelRegistrar.registerWith(this, flutterEngine)
+        registerShareChannel(flutterEngine)
+    }
+
+    private fun registerShareChannel(engine: io.flutter.embedding.engine.FlutterEngine) {
+        MethodChannel(engine.dartExecutor.binaryMessenger, "aura/share")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getInitialSharePayload" -> {
+                        val cacheFile = File(cacheDir, "aura_share_payload.json")
+                        if (cacheFile.exists()) {
+                            try {
+                                val content = cacheFile.readText()
+                                cacheFile.delete()
+                                val jsonObj = JSONObject(content)
+                                val map = HashMap<String, Any?>()
+                                val keys = jsonObj.keys()
+                                while (keys.hasNext()) {
+                                    val key = keys.next()
+                                    map[key] = jsonObj.opt(key)
+                                }
+                                if (map.containsKey("text") && !map.containsKey("content")) {
+                                    map["content"] = map["text"]
+                                }
+                                if (map.containsKey("localPath") && !map.containsKey("filePath")) {
+                                    map["filePath"] = map["localPath"]
+                                }
+                                result.success(map)
+                            } catch (e: Exception) {
+                                result.error("SHARE_ERROR", e.message, null)
+                            }
+                        } else {
+                            result.success(null)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.setBackgroundDrawableResource(android.R.color.transparent)
@@ -98,11 +140,15 @@ class AuraShareActivity : FlutterActivity() {
             val payloadFile = File(cacheDir, "aura_share_payload.json")
             payloadFile.writeText(payload.toString())
 
-            // Notify Flutter share engine if cached
-            FlutterEngineCache.getInstance().get(MainActivity.SHARE_ENGINE_ID)?.let { engine ->
-                MethodChannel(engine.dartExecutor.binaryMessenger, "aura/share")
-                    .invokeMethod("onShareReceived", null)
+            val notifyEngine = {
+                val engine = flutterEngine ?: FlutterEngineCache.getInstance().get(MainActivity.SHARE_ENGINE_ID)
+                engine?.let {
+                    MethodChannel(it.dartExecutor.binaryMessenger, "aura/share")
+                        .invokeMethod("onShareReceived", null)
+                }
             }
+            notifyEngine()
+            window.decorView.postDelayed({ notifyEngine() }, 400)
         } catch (e: Exception) {
             e.printStackTrace()
         }

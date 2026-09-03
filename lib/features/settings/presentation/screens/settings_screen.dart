@@ -903,8 +903,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ),
                               onPressed: () async {
                                 final uri = Uri.parse('https://aistudio.google.com/app/apikey');
-                                if (await canLaunchUrl(uri)) {
+                                try {
                                   await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Could not open browser: $e')),
+                                    );
+                                  }
                                 }
                               },
                             ),
@@ -1086,21 +1092,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                       if (confirm == true && context.mounted) {
                         // 0. Cancel all scheduled system notifications & alarms
-                        await NotificationService().cancelAll();
+                        try {
+                          await NotificationService().cancelAll();
+                        } catch (e) {
+                          debugPrint('Reset: cancelAll notifications error: $e');
+                        }
 
-                        // 1. Wipe all SQLite tables in FK-safe order
-                        final db = ref.read(databaseProvider);
-                        await db.customStatement('DELETE FROM reminders_schedule');
-                        await db.customStatement('DELETE FROM notes');
-                        await db.customStatement('DELETE FROM shared_contents');
-                        await db.customStatement('DELETE FROM notification_logs');
-                        await db.customStatement('DELETE FROM ai_actions_logs');
-                        await db.customStatement('DELETE FROM offline_queues');
-                        await db.customStatement('DELETE FROM daily_logs');
-                        await db.customStatement('DELETE FROM sync_queues');
-                        await db.customStatement('DELETE FROM items');
-                        await db.customStatement('DELETE FROM workspace_sections');
-                        await db.customStatement('DELETE FROM workspaces');
+                        // 1. Wipe all SQLite tables safely
+                        try {
+                          final db = ref.read(databaseProvider);
+                          await db.customStatement('PRAGMA foreign_keys = OFF;');
+                          final tables = [
+                            'reminders_schedule',
+                            'notes',
+                            'shared_contents',
+                            'notification_logs',
+                            'ai_actions_logs',
+                            'offline_queues',
+                            'daily_logs',
+                            'sync_queues',
+                            'items',
+                            'workspace_sections',
+                            'workspaces',
+                          ];
+                          for (final table in tables) {
+                            try {
+                              await db.customStatement('DELETE FROM $table;');
+                            } catch (e) {
+                              debugPrint('Reset: error deleting $table: $e');
+                            }
+                          }
+                          await db.customStatement('PRAGMA foreign_keys = ON;');
+                        } catch (e) {
+                          debugPrint('Reset: db wipe error: $e');
+                        }
 
                         // 2. Clear native orb prefs
                         try {
@@ -1110,26 +1135,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         }
 
                         // 3. Clear SharedPreferences + the stored API key.
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.clear();
                         try {
-                          await const FlutterSecureStorage()
-                              .deleteAll();
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.clear();
+                        } catch (e) {
+                          debugPrint('Reset: prefs clear failed: $e');
+                        }
+                        try {
+                          await const FlutterSecureStorage().deleteAll();
                         } catch (_) {
                           // Secure storage unavailable
                         }
 
                         // 4. Invalidate live providers
-                        await ref
-                            .read(themeAccentProvider.notifier)
-                            .resetToDefault();
-                        await ref
-                            .read(themeModeProvider.notifier)
-                            .resetToDefault();
-                        ref.read(userNameProvider.notifier).reset();
-                        await ref.read(onboardingGateProvider.notifier).reset();
+                        try {
+                          await ref.read(themeAccentProvider.notifier).resetToDefault();
+                          await ref.read(themeModeProvider.notifier).resetToDefault();
+                          ref.read(userNameProvider.notifier).reset();
+                          await ref.read(onboardingGateProvider.notifier).reset();
+                        } catch (e) {
+                          debugPrint('Reset: live providers reset error: $e');
+                        }
 
-                        if (context.mounted) context.go(Routes.onboarding);
+                        if (context.mounted) {
+                          context.go(Routes.onboarding);
+                        }
                       }
                     },
                   ),

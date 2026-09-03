@@ -81,12 +81,16 @@ class OverlayChannel {
 
   /// Auto-start global orb service if permission was granted
   static Future<void> autoStartIfPermitted() async {
-    final granted = await isPermissionGranted();
-    if (granted) {
-      final running = await isRunning();
-      if (!running) {
-        await startOverlay();
+    try {
+      final granted = await isPermissionGranted();
+      if (granted) {
+        final running = await isRunning();
+        if (!running) {
+          await startOverlay();
+        }
       }
+    } catch (e) {
+      debugPrint('[OverlayChannel] autoStartIfPermitted error: $e');
     }
   }
 

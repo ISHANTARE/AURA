@@ -1,0 +1,1 @@
+lib\features\capture\domain\usecases\process_shared_content_usecase.dart:59: ['⚠'] -> extractedText = '⚠ ${e.message}';

@@ -56,7 +56,7 @@ class ProcessSharedContentUseCase {
       } on OcrException catch (e) {
         // OCR failure is user-relevant — surface it instead of silently
         // saving an empty capture.
-        extractedText = '⚠ ${e.message}';
+        extractedText = '[Notice] ${e.message}';
       }
     } else if (payload.type == 'video' && payload.filePath != null) {
       title = 'Shared Video';

@@ -37,11 +37,11 @@ class TaskOptionsSheet extends ConsumerWidget {
     final workspacesAsync = ref.watch(workspacesListProvider);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AuraColors.bgElevated,
+      decoration: BoxDecoration(
+        color: AuraColors.elevatedOf(context),
         border: Border(
           top: BorderSide(
-              color: AuraColors.border, width: AuraSpacing.borderWidth),
+              color: AuraColors.borderOf(context), width: AuraSpacing.borderWidth),
         ),
       ),
       padding: const EdgeInsets.all(AuraSpacing.md),
@@ -151,7 +151,7 @@ class TaskOptionsSheet extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AuraColors.bgCard,
+        backgroundColor: AuraColors.cardOf(context),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -188,7 +188,7 @@ class TaskOptionsSheet extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AuraColors.bgCard,
+        backgroundColor: AuraColors.cardOf(context),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -199,36 +199,24 @@ class TaskOptionsSheet extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            child: Text('CANCEL', style: AuraTypography.buttonSecondary),
             onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('CANCEL',
+                style: TextStyle(color: AuraColors.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AuraColors.accentRed,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
             ),
-            child: Text('DELETE',
-                style: AuraTypography.buttonPrimary
-                    .copyWith(color: Colors.white)),
             onPressed: () async {
               HapticFeedback.mediumImpact();
               await itemDao.softDelete(taskId);
               if (ctx.mounted) {
                 Navigator.of(ctx).pop();
-                if (context.mounted) {
-                  Navigator.of(context).pop(); // pop detail screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Task deleted'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
+                Navigator.of(context).pop();
               }
             },
+            child: const Text('DELETE'),
           ),
         ],
       ),
@@ -242,7 +230,7 @@ class _OptionTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.iconColor = AuraColors.textPrimary,
+    this.iconColor = AuraColors.accentLime,
     this.titleColor = AuraColors.textPrimary,
   });
 
@@ -259,9 +247,9 @@ class _OptionTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
         onTap: onTap,
-        tileColor: AuraColors.bgCard,
-        shape: const RoundedRectangleBorder(
-          side: BorderSide(color: AuraColors.border, width: 1),
+        tileColor: AuraColors.cardOf(context),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: AuraColors.borderOf(context), width: 1),
         ),
         leading: Icon(icon, color: iconColor, size: 20),
         title: Text(title,

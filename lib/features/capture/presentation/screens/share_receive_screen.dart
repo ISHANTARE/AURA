@@ -82,10 +82,15 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
         .listen((_) => _loadSharePayload());
   }
 
-  Future<void> _loadSharePayload() async {
+  Future<void> _loadSharePayload({int retries = 2}) async {
     try {
       final shareChannel = ref.read(shareChannelProvider);
-      final payload = await shareChannel.getInitialSharePayload();
+      var payload = await shareChannel.getInitialSharePayload();
+
+      if (payload == null && retries > 0) {
+        await Future.delayed(const Duration(milliseconds: 350));
+        return _loadSharePayload(retries: retries - 1);
+      }
 
       if (!mounted) return;
 
@@ -300,8 +305,8 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(AuraSpacing.md),
           decoration: BoxDecoration(
-            color: AuraColors.bgCard,
-            border: Border.all(color: AuraColors.border, width: 2),
+            color: AuraColors.cardOf(context),
+            border: Border.all(color: AuraColors.borderOf(context), width: 2),
             boxShadow: const [
               BoxShadow(
                   color: AuraColors.shadow, offset: Offset(4, 4), blurRadius: 0),
@@ -333,7 +338,7 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
               backgroundColor: AuraColors.accentLime,
               foregroundColor: Colors.black,
               shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              side: const BorderSide(color: AuraColors.border, width: 2),
+              side: BorderSide(color: AuraColors.borderOf(context), width: 2),
               elevation: 0,
             ),
             onPressed: _processAndCapture,
@@ -398,10 +403,10 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
             style: AuraTypography.cardTitle,
             decoration: InputDecoration(
               filled: true,
-              fillColor: AuraColors.bgCard,
+              fillColor: AuraColors.cardOf(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: AuraColors.border),
+                borderSide: BorderSide(color: AuraColors.borderOf(context)),
               ),
             ),
           ),
@@ -417,10 +422,10 @@ class _ShareReceiveScreenState extends ConsumerState<ShareReceiveScreen> {
             style: AuraTypography.bodyPrimary,
             decoration: InputDecoration(
               filled: true,
-              fillColor: AuraColors.bgCard,
+              fillColor: AuraColors.cardOf(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: AuraColors.border),
+                borderSide: BorderSide(color: AuraColors.borderOf(context)),
               ),
             ),
           ),

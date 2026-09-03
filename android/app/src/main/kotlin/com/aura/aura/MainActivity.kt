@@ -9,6 +9,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
@@ -76,6 +77,11 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "startOverlay" -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+                            Log.w("MainActivity", "Cannot start overlay: SYSTEM_ALERT_WINDOW not granted")
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
                         val colorHex = call.argument<String>("colorHex")
                         val intent = Intent(this, AuraOverlayService::class.java).apply {
                             action = "START_ORB"
@@ -83,18 +89,27 @@ class MainActivity : FlutterActivity() {
                                 putExtra("colorHex", colorHex)
                             }
                         }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            startForegroundService(intent)
-                        } else {
-                            startService(intent)
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                startForegroundService(intent)
+                            } else {
+                                startService(intent)
+                            }
+                            result.success(true)
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "startOverlay failed: ${e.message}", e)
+                            result.success(false)
                         }
-                        result.success(true)
                     }
                     "stopOverlay" -> {
                         val intent = Intent(this, AuraOverlayService::class.java).apply {
                             action = "STOP_ORB"
                         }
-                        startService(intent)
+                        try {
+                            startService(intent)
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "stopOverlay failed: ${e.message}", e)
+                        }
                         result.success(true)
                     }
                     "updateOverlayColor", "updateOrbColor" -> {
@@ -105,7 +120,11 @@ class MainActivity : FlutterActivity() {
                                 putExtra("colorHex", colorHex)
                             }
                         }
-                        startService(intent)
+                        try {
+                            startService(intent)
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "updateOverlayColor failed: ${e.message}", e)
+                        }
                         result.success(true)
                     }
                     "isOverlayRunning" -> {

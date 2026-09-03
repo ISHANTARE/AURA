@@ -16,6 +16,22 @@ class FloatingCaptureOverlayScreen extends ConsumerStatefulWidget {
 
 class _FloatingCaptureOverlayScreenState
     extends ConsumerState<FloatingCaptureOverlayScreen> {
+  static const _captureActivityChannel = MethodChannel('aura/capture_activity');
+
+  @override
+  void initState() {
+    super.initState();
+    _captureActivityChannel.setMethodCallHandler((call) async {
+      if (call.method == 'restartCapture') {
+        await ref.read(captureProvider.notifier).cancelCapture();
+        if (mounted) {
+          ref.read(captureProvider.notifier).startCapture();
+        }
+      }
+      return null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +44,9 @@ class _FloatingCaptureOverlayScreenState
               behavior: HitTestBehavior.opaque,
               onTap: () async {
                 await ref.read(captureProvider.notifier).cancelCapture();
-                SystemNavigator.pop();
+                if (context.mounted) {
+                  VoiceCaptureOverlay.closeOverlay(context);
+                }
               },
               child: Container(
                 color: Colors.black.withValues(alpha: 0.4),

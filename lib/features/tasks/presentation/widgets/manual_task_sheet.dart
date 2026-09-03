@@ -23,7 +23,7 @@ class ManualTaskSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AuraColors.bgElevated,
+      backgroundColor: AuraColors.elevatedOf(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -109,10 +109,10 @@ class _ManualTaskSheetState extends ConsumerState<ManualTaskSheet> {
                 hintText: 'What needs to be done?',
                 hintStyle: AuraTypography.body,
                 filled: true,
-                fillColor: AuraColors.bgCard,
+                fillColor: AuraColors.cardOf(context),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AuraColors.border),
+                  borderSide: BorderSide(color: AuraColors.borderOf(context)),
                 ),
               ),
             ),
@@ -126,15 +126,15 @@ class _ManualTaskSheetState extends ConsumerState<ManualTaskSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: AuraColors.bgCard,
+                      color: AuraColors.cardOf(context),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AuraColors.border),
+                      border: Border.all(color: AuraColors.borderOf(context)),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedWorkspaceId,
                         hint: Text('Workspace', style: AuraTypography.bodySmall),
-                        dropdownColor: AuraColors.bgCard,
+                        dropdownColor: AuraColors.cardOf(context),
                         style: AuraTypography.bodyPrimary,
                         isExpanded: true,
                         items: workspacesAsync.when(
@@ -159,9 +159,9 @@ class _ManualTaskSheetState extends ConsumerState<ManualTaskSheet> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AuraColors.bgCard,
+                    color: AuraColors.cardOf(context),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AuraColors.border),
+                    border: Border.all(color: AuraColors.borderOf(context)),
                   ),
                   child: Row(
                     children: ['low', 'medium', 'high'].map((p) {
@@ -208,9 +208,9 @@ class _ManualTaskSheetState extends ConsumerState<ManualTaskSheet> {
               child: Container(
                 padding: const EdgeInsets.all(AuraSpacing.md),
                 decoration: BoxDecoration(
-                  color: AuraColors.bgCard,
+                  color: AuraColors.cardOf(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AuraColors.border),
+                  border: Border.all(color: AuraColors.borderOf(context)),
                 ),
                 child: Row(
                   children: [
@@ -255,10 +255,10 @@ class _ManualTaskSheetState extends ConsumerState<ManualTaskSheet> {
                 hintText: 'Add notes, subtasks, or description...',
                 hintStyle: AuraTypography.bodySmall,
                 filled: true,
-                fillColor: AuraColors.bgCard,
+                fillColor: AuraColors.cardOf(context),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AuraColors.border),
+                  borderSide: BorderSide(color: AuraColors.borderOf(context)),
                 ),
               ),
             ),

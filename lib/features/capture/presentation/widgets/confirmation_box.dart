@@ -197,10 +197,10 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                   hintText: 'Add notes or context...',
                   hintStyle: AuraTypography.body,
                   filled: true,
-                  fillColor: AuraColors.bgElevated,
+                  fillColor: AuraColors.elevatedOf(context),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
-                    borderSide: const BorderSide(color: AuraColors.border),
+                    borderSide: BorderSide(color: AuraColors.borderOf(context)),
                   ),
                 ),
                 onChanged: (val) {
@@ -247,9 +247,9 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
     return Container(
       padding: const EdgeInsets.all(AuraSpacing.xs + 2),
       decoration: BoxDecoration(
-        color: AuraColors.bgElevated,
+        color: AuraColors.elevatedOf(context),
         border: Border.all(
-          color: isLowConf ? AuraColors.accentOrange : AuraColors.border,
+          color: isLowConf ? AuraColors.accentOrange : AuraColors.borderOf(context),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(4),
@@ -559,10 +559,10 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: AuraColors.bgCard,
+          backgroundColor: AuraColors.cardOf(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: AuraColors.border, width: 2),
+            side: BorderSide(color: AuraColors.borderOf(context), width: 2),
           ),
           title: Text('New Workspace Name', style: AuraTypography.cardTitle),
           content: TextField(
@@ -613,10 +613,10 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AuraColors.bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        side: BorderSide(color: AuraColors.border, width: 2),
+      backgroundColor: AuraColors.cardOf(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: AuraColors.borderOf(context), width: 2),
       ),
       builder: (ctx) {
         return SafeArea(

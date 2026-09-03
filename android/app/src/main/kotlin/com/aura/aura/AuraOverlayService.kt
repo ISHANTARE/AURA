@@ -12,14 +12,20 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.RadialGradient
+import android.content.pm.ServiceInfo
+import android.graphics.BlurMaskFilter
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.os.Build
 import android.os.IBinder
+import android.provider.Settings
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +39,7 @@ class AuraOverlayService : Service() {
 
     companion object {
         var isRunning = false
+        private const val TAG = "AuraOverlayService"
         private const val CHANNEL_ID = "aura_overlay_channel"
         private const val NOTIF_ID = 1001
         private const val PREFS_NAME = "aura_orb_prefs"
@@ -48,7 +55,22 @@ class AuraOverlayService : Service() {
         isRunning = true
         currentColorHex = getSavedAccentColor()
         createNotificationChannel()
-        startForeground(NOTIF_ID, buildNotification())
+        try {
+            if (Build.VERSION.SDK_INT >= 34) {
+                startForeground(
+                    NOTIF_ID,
+                    buildNotification(),
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                )
+            } else {
+                startForeground(NOTIF_ID, buildNotification())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start foreground service: ${e.message}", e)
+            isRunning = false
+            stopSelf()
+            return
+        }
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         setupOrb()
     }
@@ -71,11 +93,17 @@ class AuraOverlayService : Service() {
     }
 
     private fun setupOrb() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            Log.w(TAG, "Cannot setup orb: overlay permission not granted")
+            stopSelf()
+            return
+        }
+
         val density = resources.displayMetrics.density
-        val sizePx = (56 * density).toInt()
+        val sizePx = (72 * density).toInt()
 
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val savedX = prefs.getInt("orb_x", (16 * density).toInt())
+        val savedX = prefs.getInt("orb_x", (4 * density).toInt())
         val savedY = prefs.getInt("orb_y", (200 * density).toInt())
 
         orbView = OrbCanvasView(this)
@@ -99,9 +127,11 @@ class AuraOverlayService : Service() {
             y = savedY
         }
 
-        // Gesture mechanics: Drag + Tap + Long Press (600ms)
+        // Gesture mechanics: TouchSlop Drag + Tap + Long Press (600ms)
+        val scaledTouchSlop = ViewConfiguration.get(this).scaledTouchSlop
         var longPressJob: Job? = null
         var isDragging = false
+        var isLongPressed = false
         var startRawX = 0f
         var startRawY = 0f
         var startX = 0
@@ -111,6 +141,7 @@ class AuraOverlayService : Service() {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     isDragging = false
+                    isLongPressed = false
                     startRawX = event.rawX
                     startRawY = event.rawY
                     startX = params.x
@@ -119,6 +150,8 @@ class AuraOverlayService : Service() {
                     longPressJob = CoroutineScope(Dispatchers.Main).launch {
                         delay(600)
                         if (!isDragging) {
+                            isLongPressed = true
+                            orbView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                             launchOrbMenu(params.x, params.y)
                         }
                     }
@@ -126,17 +159,27 @@ class AuraOverlayService : Service() {
                 MotionEvent.ACTION_MOVE -> {
                     val dx = (event.rawX - startRawX).toInt()
                     val dy = (event.rawY - startRawY).toInt()
-                    if (abs(dx) > 10 || abs(dy) > 10) {
+                    if (abs(dx) > scaledTouchSlop || abs(dy) > scaledTouchSlop) {
                         isDragging = true
                         longPressJob?.cancel()
-                        params.x = startX + dx
-                        params.y = startY + dy
-                        windowManager.updateViewLayout(orbView, params)
+                        val metrics = resources.displayMetrics
+                        val screenWidth = metrics.widthPixels
+                        val screenHeight = metrics.heightPixels
+                        // Allow dragging all the way to the screen edges
+                        params.x = (startX + dx).coerceIn(-(10 * density).toInt(), screenWidth - sizePx + (10 * density).toInt())
+                        params.y = (startY + dy).coerceIn(0, screenHeight - sizePx)
+                        try {
+                            windowManager.updateViewLayout(orbView, params)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "updateViewLayout failed: ${e.message}")
+                        }
                     }
                 }
                 MotionEvent.ACTION_UP -> {
                     longPressJob?.cancel()
-                    if (!isDragging) {
+                    if (isLongPressed) {
+                        // Handled by long press menu
+                    } else if (!isDragging) {
                         launchCaptureActivity()
                     } else {
                         // Snap to nearest screen edge (left or right)
@@ -147,11 +190,15 @@ class AuraOverlayService : Service() {
             true
         }
 
-        windowManager.addView(orbView, params)
-        orbView.startPulse()
-
-        // Mark enabled in prefs
-        prefs.edit().putBoolean("orb_enabled", true).apply()
+        try {
+            windowManager.addView(orbView, params)
+            orbView.startPulse()
+            // Mark enabled in prefs
+            prefs.edit().putBoolean("orb_enabled", true).apply()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to add orb view: ${e.message}", e)
+            stopSelf()
+        }
     }
 
     private fun snapToEdge() {
@@ -159,7 +206,8 @@ class AuraOverlayService : Service() {
         windowManager.defaultDisplay.getMetrics(metrics)
         val screenWidth = metrics.widthPixels
         val density = resources.displayMetrics.density
-        val margin = (16 * density).toInt()
+        // Align flush to edge (envelope has padding so core touches edge)
+        val margin = -(6 * density).toInt()
 
         params.x = if (params.x + (orbView.width / 2) < screenWidth / 2) {
             margin
@@ -167,7 +215,11 @@ class AuraOverlayService : Service() {
             screenWidth - orbView.width - margin
         }
 
-        windowManager.updateViewLayout(orbView, params)
+        try {
+            windowManager.updateViewLayout(orbView, params)
+        } catch (e: Exception) {
+            Log.e(TAG, "snapToEdge updateViewLayout failed: ${e.message}")
+        }
 
         // Save position
         getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
@@ -270,6 +322,11 @@ class AuraOverlayService : Service() {
             style = Paint.Style.FILL
         }
 
+        private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = Color.argb(120, 0, 0, 0)
+        }
+
         private val corePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
             color = parsedColor
@@ -277,8 +334,8 @@ class AuraOverlayService : Service() {
 
         private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
-            strokeWidth = 1.5f * resources.displayMetrics.density
-            color = Color.parseColor("#60FFFFFF")
+            strokeWidth = 2f * resources.displayMetrics.density
+            color = Color.argb(90, 255, 255, 255)
         }
 
         private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -286,6 +343,11 @@ class AuraOverlayService : Service() {
             textAlign = Paint.Align.CENTER
             textSize = 20f * resources.displayMetrics.density
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+
+        init {
+            setLayerType(LAYER_TYPE_SOFTWARE, null)
+            shadowPaint.maskFilter = BlurMaskFilter(6f * resources.displayMetrics.density, BlurMaskFilter.Blur.NORMAL)
         }
 
         fun updateColor(hex: String) {
@@ -300,8 +362,9 @@ class AuraOverlayService : Service() {
         }
 
         fun startPulse() {
-            animator = ValueAnimator.ofFloat(1.0f, 1.08f, 1.0f).apply {
-                duration = 2000
+            animator = ValueAnimator.ofFloat(0.95f, 1.0f).apply {
+                duration = 2200
+                repeatMode = ValueAnimator.REVERSE
                 repeatCount = ValueAnimator.INFINITE
                 addUpdateListener {
                     pulseScale = it.animatedValue as Float
@@ -318,32 +381,41 @@ class AuraOverlayService : Service() {
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
+            val density = resources.displayMetrics.density
             val cx = width / 2f
             val cy = height / 2f
-            val baseRadius = (width / 2f) * 0.72f
-            val currentRadius = baseRadius * pulseScale
+            val coreRadius = (25f * density) * pulseScale
+            val glowRadius = 34f * density
 
-            // Draw radial glow matching theme color
-            val glowColorHex = "#66" + parsedColorHex.removePrefix("#")
-            try {
-                glowPaint.shader = RadialGradient(
-                    cx, cy, currentRadius * 1.35f,
-                    intArrayOf(Color.parseColor(glowColorHex), Color.TRANSPARENT),
-                    floatArrayOf(0.4f, 1.0f),
-                    Shader.TileMode.CLAMP
-                )
-                canvas.drawCircle(cx, cy, currentRadius * 1.35f, glowPaint)
-            } catch (e: Exception) {
-                // Fallback if hex formatting had issues
-            }
+            // 1. Atmospheric Glow (Multi-stop smooth radial bloom matching accent color)
+            val r = Color.red(parsedColor)
+            val g = Color.green(parsedColor)
+            val b = Color.blue(parsedColor)
+            val glowAlpha = (110 * pulseScale).toInt().coerceIn(0, 255)
+            val glowMidAlpha = (45 * pulseScale).toInt().coerceIn(0, 255)
 
-            // Draw Core Orb
-            canvas.drawCircle(cx, cy, currentRadius, corePaint)
+            glowPaint.shader = RadialGradient(
+                cx, cy, glowRadius,
+                intArrayOf(
+                    Color.argb(glowAlpha, r, g, b),
+                    Color.argb(glowMidAlpha, r, g, b),
+                    Color.TRANSPARENT
+                ),
+                floatArrayOf(0.55f, 0.82f, 1.0f),
+                Shader.TileMode.CLAMP
+            )
+            canvas.drawCircle(cx, cy, glowRadius, glowPaint)
 
-            // Draw Subtle Inner Ring
-            canvas.drawCircle(cx, cy, currentRadius * 0.88f, ringPaint)
+            // 2. Soft Drop Shadow
+            canvas.drawCircle(cx + (2f * density), cy + (3f * density), coreRadius, shadowPaint)
 
-            // Draw AURA 'A' Label in the center
+            // 3. Core Orb Body
+            canvas.drawCircle(cx, cy, coreRadius, corePaint)
+
+            // 4. Subtle Clean White Border Ring (matching Flutter FloatingOrb 2dp border)
+            canvas.drawCircle(cx, cy, coreRadius - (1f * density), ringPaint)
+
+            // 5. Centered AURA 'A' Glyph
             val textY = cy - ((textPaint.descent() + textPaint.ascent()) / 2f)
             canvas.drawText("A", cx, textY, textPaint)
         }

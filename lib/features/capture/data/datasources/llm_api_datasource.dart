@@ -150,6 +150,7 @@ CRITICAL RULES:
 2. NOTES CATCH-ALL RULE: Put any extra details, subtasks, instructions, or descriptions inside "notes".
 3. ALARM RULE: If the user says "add an alarm", "set alarm", or mentions a specific wake-up/alert time without task context, set intent_type to "create_alarm".
 4. Relative dates: Resolve relative to current_datetime in context.
+5. STRICT EMOJI PROHIBITION: NEVER output any emojis anywhere in the JSON output (in title, notes, or elsewhere). Use clean plain text only.
 
 EXAMPLES:
 - "Add an alarm for 1.45pm today"

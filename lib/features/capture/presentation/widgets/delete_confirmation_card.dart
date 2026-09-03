@@ -24,7 +24,7 @@ class DeleteConfirmationCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(AuraSpacing.md),
       decoration: BoxDecoration(
-        color: AuraColors.bgCard,
+        color: AuraColors.cardOf(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AuraColors.accentRed, width: 1.5),
       ),

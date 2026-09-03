@@ -27,6 +27,11 @@ class OrbMenuActivity : Activity() {
             Color.parseColor("#7B6FF0")
         }
 
+        val isLightMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_NO
+        val cardBgColor = if (isLightMode) Color.parseColor("#FFFFFF") else Color.parseColor("#1C1C24")
+        val cardBorderColor = if (isLightMode) Color.parseColor("#CBD5E1") else Color.parseColor("#33FFFFFF")
+        val textColor = if (isLightMode) Color.parseColor("#0F172A") else Color.WHITE
+
         val root = FrameLayout(this).apply {
             setBackgroundColor(Color.parseColor("#99000000"))
             setOnClickListener { finish() }
@@ -37,9 +42,9 @@ class OrbMenuActivity : Activity() {
             val pad = (20 * density).toInt()
             setPadding(pad, pad, pad, pad)
             background = GradientDrawable().apply {
-                setColor(Color.parseColor("#1C1C24"))
+                setColor(cardBgColor)
                 cornerRadius = 16 * density
-                setStroke((1 * density).toInt(), Color.parseColor("#33FFFFFF"))
+                setStroke((1 * density).toInt(), cardBorderColor)
             }
         }
 
@@ -57,7 +62,7 @@ class OrbMenuActivity : Activity() {
             return TextView(this).apply {
                 text = label
                 textSize = 15f
-                setTextColor(Color.WHITE)
+                setTextColor(textColor)
                 val padY = (12 * density).toInt()
                 val padX = (8 * density).toInt()
                 setPadding(padX, padY, padX, padY)
@@ -68,27 +73,27 @@ class OrbMenuActivity : Activity() {
             }
         }
 
-        card.addView(createMenuItem("🎙️ Voice Capture") {
+        card.addView(createMenuItem("Voice Capture") {
             startActivity(Intent(this, AuraCaptureActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
         })
 
-        card.addView(createMenuItem("⏰ Open Alarms") {
+        card.addView(createMenuItem("Open Alarms") {
             startActivity(Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 putExtra("route", "/alarms")
             })
         })
 
-        card.addView(createMenuItem("📝 Quick Notes") {
+        card.addView(createMenuItem("Quick Notes") {
             startActivity(Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 putExtra("route", "/notes")
             })
         })
 
-        card.addView(createMenuItem("❌ Dismiss Orb") {
+        card.addView(createMenuItem("Dismiss Orb") {
             stopService(Intent(this, AuraOverlayService::class.java))
         })
 

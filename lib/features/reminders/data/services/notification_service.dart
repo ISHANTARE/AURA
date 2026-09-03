@@ -157,21 +157,26 @@ class NotificationService {
   /// Returns whether NOTIFICATIONS were granted. Exact-alarm denial is not a
   /// failure — callers fall back to inexact scheduling via [alarmCapability].
   Future<bool> requestPermissions() async {
-    final androidImplementation = _notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    try {
+      final androidImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
 
-    if (androidImplementation != null) {
-      final notificationsGranted =
-          await androidImplementation.requestNotificationsPermission();
-      try {
-        await androidImplementation.requestExactAlarmsPermission();
-      } catch (e) {
-        debugPrint('NotificationService: exact-alarm request failed: $e');
+      if (androidImplementation != null) {
+        final notificationsGranted =
+            await androidImplementation.requestNotificationsPermission();
+        try {
+          await androidImplementation.requestExactAlarmsPermission();
+        } catch (e) {
+          debugPrint('NotificationService: exact-alarm request failed: $e');
+        }
+        return notificationsGranted ?? false;
       }
-      return notificationsGranted ?? false;
+      return true; // Non-Android platforms.
+    } catch (e) {
+      debugPrint('NotificationService: requestPermissions failed: $e');
+      return false;
     }
-    return true; // Non-Android platforms.
   }
 
   /// Snapshot of what the OS currently allows for scheduling.

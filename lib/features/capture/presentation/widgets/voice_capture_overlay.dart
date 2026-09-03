@@ -21,14 +21,13 @@ class VoiceCaptureOverlay extends ConsumerStatefulWidget {
   /// Helper to dismiss/close the overlay cleanly regardless of whether
   /// it is presented inside a modal bottom sheet or in FloatingCaptureOverlayScreen Activity.
   static void closeOverlay(BuildContext context) {
-    final routeName = ModalRoute.of(context)?.settings.name;
-    if (routeName == '/capture-overlay' || !Navigator.of(context).canPop()) {
-      SystemNavigator.pop();
-    } else {
+    try {
+      const MethodChannel('aura/capture_activity').invokeMethod('close');
+    } catch (_) {}
+    if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
-      if (ModalRoute.of(context)?.settings.name == '/capture-overlay') {
-        SystemNavigator.pop();
-      }
+    } else {
+      SystemNavigator.pop();
     }
   }
 
@@ -91,13 +90,13 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AuraColors.bgCard,
+          color: AuraColors.cardOf(context),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           border: Border(
             top: BorderSide(
               color: captureState.status == CaptureStatus.error
                   ? AuraColors.accentRed
-                  : AuraColors.border,
+                  : AuraColors.borderOf(context),
               width: 1,
             ),
           ),

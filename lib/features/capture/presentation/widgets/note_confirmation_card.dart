@@ -46,9 +46,9 @@ class _NoteConfirmationCardState extends ConsumerState<NoteConfirmationCard> {
     return Container(
       padding: const EdgeInsets.all(AuraSpacing.md),
       decoration: BoxDecoration(
-        color: AuraColors.bgCard,
+        color: AuraColors.cardOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AuraColors.border, width: 1),
+        border: Border.all(color: AuraColors.borderOf(context), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

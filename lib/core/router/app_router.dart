@@ -224,7 +224,9 @@ class _MainShellState extends ConsumerState<_MainShell> with WidgetsBindingObser
     Routes.settings,
   ];
 
-  bool _isOverlayRunning = false;
+  // Default to true to prevent the in-app orb from briefly flashing on app launch
+  // while checking if the native overlay service is running.
+  bool _isOverlayRunning = true;
 
   @override
   void initState() {
@@ -262,7 +264,7 @@ class _MainShellState extends ConsumerState<_MainShell> with WidgetsBindingObser
     final effectiveIndex = idx < 0 ? 0 : idx;
 
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: AuraColors.bgOf(context),
       body: Stack(
         children: [
           widget.child,

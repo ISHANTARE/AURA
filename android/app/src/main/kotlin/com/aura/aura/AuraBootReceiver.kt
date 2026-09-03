@@ -17,10 +17,14 @@ class AuraBootReceiver : BroadcastReceiver() {
                 val serviceIntent = Intent(context, AuraOverlayService::class.java).apply {
                     this.action = "START_ORB"
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(serviceIntent)
-                } else {
-                    context.startService(serviceIntent)
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent)
+                    } else {
+                        context.startService(serviceIntent)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("AuraBootReceiver", "Failed to auto-start AuraOverlayService on boot: ${e.message}", e)
                 }
             }
         }

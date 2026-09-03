@@ -23,7 +23,11 @@ Future<void> main() async {
   // Initialize local notifications (channels + timezone)
   final notificationService = NotificationService();
   await notificationService.initialize();
-  await notificationService.requestPermissions();
+  try {
+    await notificationService.requestPermissions();
+  } catch (e) {
+    debugPrint('Notification permissions deferred: $e');
+  }
 
   runApp(
     // ProviderScope is the root of Riverpod state management
