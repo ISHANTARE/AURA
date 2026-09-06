@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
@@ -347,6 +349,18 @@ class _DetailsTab extends StatelessWidget {
             ),
           ),
 
+          if (_extractAttachmentPath(item) != null) ...[
+            const SizedBox(height: AuraSpacing.md),
+            _buildAttachmentCard(
+              context,
+              _extractAttachmentPath(item)!,
+              cardBg,
+              borderColor,
+              textPrimary,
+              textSecondary,
+            ),
+          ],
+
           const SizedBox(height: AuraSpacing.xl),
 
           // ── Actions ─────────────────────────────────────────────
@@ -451,6 +465,131 @@ class _DetailsTab extends StatelessWidget {
       default:
         return AuraColors.accentLime;
     }
+  }
+
+  String? _extractAttachmentPath(Item item) {
+    if (item.location != null &&
+        (item.location!.startsWith('/') || item.location!.contains(':\\')) &&
+        File(item.location!).existsSync()) {
+      return item.location;
+    }
+    if (item.notes != null) {
+      final match = RegExp(r'\[Attachment:\s*(.+?)\]').firstMatch(item.notes!);
+      if (match != null) {
+        final path = match.group(1)?.trim();
+        if (path != null && File(path).existsSync()) {
+          return path;
+        }
+      }
+    }
+    return null;
+  }
+
+  Widget _buildAttachmentCard(
+    BuildContext context,
+    String filePath,
+    Color cardBg,
+    Color borderColor,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    final file = File(filePath);
+    final ext = p.extension(filePath).toLowerCase();
+    final isImage = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'].contains(ext);
+    final fileName = p.basename(filePath);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      padding: const EdgeInsets.all(AuraSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isImage ? LucideIcons.image : LucideIcons.fileText,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'ATTACHED ${isImage ? "IMAGE" : "FILE"}',
+                  style: AuraTypography.label.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AuraSpacing.sm),
+          if (isImage)
+            GestureDetector(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => Dialog(
+                    backgroundColor: Colors.transparent,
+                    insetPadding: const EdgeInsets.all(12),
+                    child: Stack(
+                      alignment: Alignment.topRight,
+                      children: [
+                        InteractiveViewer(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(file),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(LucideIcons.x, color: Colors.white),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(
+                  file,
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text('Failed to load image', style: TextStyle(color: textSecondary)),
+                  ),
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.file, size: 24, color: textSecondary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      fileName,
+                      style: AuraTypography.body.copyWith(color: textPrimary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 

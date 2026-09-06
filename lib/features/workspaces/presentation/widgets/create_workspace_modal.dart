@@ -117,18 +117,18 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
   Widget build(BuildContext context) {
     final isEdit = widget.initialWorkspace != null;
     final activeColor = _parseColor(_selectedColorHex);
+    final onActiveColor = ThemeData.estimateBrightnessForColor(activeColor) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
-        decoration: const BoxDecoration(
-          color: AuraColors.bgElevated,
-          border: Border(
-            top:   BorderSide(color: AuraColors.border, width: 2.0),
-            left:  BorderSide(color: AuraColors.border, width: 2.0),
-            right: BorderSide(color: AuraColors.border, width: 2.0),
-          ),
+        decoration: BoxDecoration(
+          color: AuraColors.elevatedOf(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24.0)),
+          border: Border.all(color: AuraColors.borderOf(context), width: 1.5),
         ),
         padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 0.0),
         child: SingleChildScrollView(
@@ -147,11 +147,12 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                       style: AuraTypography.cardTitle.copyWith(
                         fontSize: 18.0,
                         letterSpacing: 1.0,
+                        color: AuraColors.textPrimaryOf(context),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(AuraIcons.close,
-                          color: AuraColors.textPrimary),
+                      icon: Icon(AuraIcons.close,
+                          color: AuraColors.textPrimaryOf(context)),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
@@ -165,32 +166,32 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                 TextFormField(
                   controller: _nameController,
                   autofocus: true,
-                  style: AuraTypography.bodyMedium,
+                  style: AuraTypography.bodyMedium.copyWith(color: AuraColors.textPrimaryOf(context)),
                   decoration: InputDecoration(
                     hintText: 'e.g. VIT Academics, GATE Prep…',
                     hintStyle: AuraTypography.bodySmall
                         .copyWith(color: AuraColors.textDisabled),
                     filled: true,
-                    fillColor: AuraColors.bgCard,
+                    fillColor: AuraColors.cardOf(context),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 14.0),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          const BorderSide(color: AuraColors.border, width: 1.0),
+                          BorderSide(color: AuraColors.borderOf(context), width: 1.0),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
                           color: Theme.of(context).colorScheme.primary, width: 2.0),
                     ),
                     errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide:
                           const BorderSide(color: AuraColors.accentRed, width: 1.5),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide:
                           const BorderSide(color: AuraColors.accentRed, width: 1.5),
                     ),
@@ -217,16 +218,17 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 100),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10.0, vertical: 7.0),
+                            horizontal: 12.0, vertical: 8.0),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? activeColor
-                              : AuraColors.bgCard,
+                              : AuraColors.cardOf(context),
+                          borderRadius: BorderRadius.circular(10.0),
                           border: Border.all(
                             color: isSelected
-                                ? AuraColors.border
-                                : AuraColors.borderMuted,
-                            width: 2.0,
+                                ? activeColor
+                                : AuraColors.borderOf(context),
+                            width: 1.5,
                           ),
                         ),
                         child: Row(
@@ -236,16 +238,16 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                               opt.icon,
                               size: AuraIcons.sizeStandard,
                               color: isSelected
-                                  ? AuraColors.textOnAccent
-                                  : AuraColors.textPrimary,
+                                  ? onActiveColor
+                                  : AuraColors.textPrimaryOf(context),
                             ),
-                            const SizedBox(width: 5.0),
+                            const SizedBox(width: 6.0),
                             Text(
                               opt.label,
                               style: AuraTypography.bodySmall.copyWith(
                                 color: isSelected
-                                    ? AuraColors.textOnAccent
-                                    : AuraColors.textPrimary,
+                                    ? onActiveColor
+                                    : AuraColors.textPrimaryOf(context),
                                 fontWeight: isSelected
                                     ? FontWeight.bold
                                     : FontWeight.normal,
@@ -268,6 +270,7 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                   children: _colorOptions.map((hex) {
                     final color = _parseColor(hex);
                     final isSelected = _selectedColorHex == hex;
+                    final isDarkSwatch = ThemeData.estimateBrightnessForColor(color) == Brightness.dark;
                     return GestureDetector(
                       onTap: () =>
                           setState(() => _selectedColorHex = hex),
@@ -276,18 +279,30 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                         height: 38.0,
                         decoration: BoxDecoration(
                           color: color,
+                          shape: BoxShape.circle,
                           border: Border.all(
                             color: isSelected
-                                ? AuraColors.border
-                                : Colors.transparent,
-                            width: 3.0,
+                                ? (Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black)
+                                : AuraColors.borderOf(context),
+                            width: isSelected ? 3.0 : 1.5,
                           ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: color.withValues(alpha: 0.45),
+                                    blurRadius: 8.0,
+                                    spreadRadius: 1.0,
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: isSelected
-                            ? const Icon(
+                            ? Icon(
                                 AuraIcons.done,
                                 size: AuraIcons.sizeInline,
-                                color: AuraColors.textOnAccent,
+                                color: isDarkSwatch ? Colors.white : Colors.black,
                               )
                             : null,
                       ),
@@ -303,23 +318,27 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                 Container(
                   padding: const EdgeInsets.all(14.0),
                   decoration: BoxDecoration(
-                    color: AuraColors.bgCard,
+                    color: AuraColors.cardOf(context),
+                    borderRadius: BorderRadius.circular(16.0),
                     border: Border.all(
-                        color: AuraColors.border, width: 2.0),
-                    boxShadow: const [
+                        color: AuraColors.borderOf(context), width: 1.5),
+                    boxShadow: [
                       BoxShadow(
-                        color: AuraColors.shadow,
-                        offset: Offset(4, 4),
-                        blurRadius: 0,
+                        color: AuraColors.isDarkMode(context)
+                            ? Colors.black.withValues(alpha: 0.25)
+                            : Colors.black.withValues(alpha: 0.06),
+                        offset: const Offset(0, 4),
+                        blurRadius: 12.0,
                       ),
                     ],
                   ),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(10.0),
                         decoration: BoxDecoration(
                           color: activeColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12.0),
                           border: Border.all(color: activeColor, width: 1.5),
                         ),
                         child: Icon(_selectedIcon(),
@@ -335,13 +354,13 @@ class _CreateWorkspaceModalState extends ConsumerState<CreateWorkspaceModal> {
                               _nameController.text.trim().isEmpty
                                   ? 'Workspace Name'
                                   : _nameController.text.trim(),
-                              style: AuraTypography.cardTitle,
+                              style: AuraTypography.cardTitle.copyWith(color: AuraColors.textPrimaryOf(context)),
                             ),
                             const SizedBox(height: 4.0),
                             Text(
                               'TASKS: 0   EVENTS: 0',
                               style: AuraTypography.bentoMetricLabel.copyWith(
-                                  color: AuraColors.textSecondary,
+                                  color: AuraColors.textSecondaryOf(context),
                                   fontSize: 10.0),
                             ),
                           ],

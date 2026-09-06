@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/theme_provider.dart';
 import '../widgets/voice_capture_overlay.dart';
 import '../providers/capture_provider.dart';
 
@@ -21,8 +22,13 @@ class _FloatingCaptureOverlayScreenState
   @override
   void initState() {
     super.initState();
+    ref.read(themeModeProvider.notifier).reloadThemeMode();
+    ref.read(themeAccentProvider.notifier).reloadAccent();
+
     _captureActivityChannel.setMethodCallHandler((call) async {
       if (call.method == 'restartCapture') {
+        ref.read(themeModeProvider.notifier).reloadThemeMode();
+        ref.read(themeAccentProvider.notifier).reloadAccent();
         await ref.read(captureProvider.notifier).cancelCapture();
         if (mounted) {
           ref.read(captureProvider.notifier).startCapture();

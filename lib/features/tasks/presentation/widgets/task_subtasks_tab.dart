@@ -114,8 +114,8 @@ class _TaskSubtasksTabState extends ConsumerState<TaskSubtasksTab> {
                       vertical: AuraSpacing.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: AuraColors.bgCard,
-                      border: Border.all(color: AuraColors.border, width: 1),
+                      color: AuraColors.cardOf(context),
+                      border: Border.all(color: AuraColors.borderOf(context), width: 1),
                     ),
                     child: Row(
                       children: [
@@ -139,13 +139,13 @@ class _TaskSubtasksTabState extends ConsumerState<TaskSubtasksTab> {
                                   isDone ? TextDecoration.lineThrough : null,
                               color: isDone
                                   ? AuraColors.textDisabled
-                                  : AuraColors.textPrimary,
+                                  : AuraColors.textPrimaryOf(context),
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(LucideIcons.trash2,
-                              color: AuraColors.textSecondary, size: 16),
+                          icon: Icon(LucideIcons.trash2,
+                              color: AuraColors.textSecondaryOf(context), size: 16),
                           onPressed: () async {
                             HapticFeedback.lightImpact();
                             await itemDao.softDelete(subtask.id);
@@ -168,10 +168,10 @@ class _TaskSubtasksTabState extends ConsumerState<TaskSubtasksTab> {
             Expanded(
               child: TextField(
                 controller: _subtaskController,
-                style: AuraTypography.bodyPrimary,
+                style: AuraTypography.bodyPrimary.copyWith(color: AuraColors.textPrimaryOf(context)),
                 decoration: InputDecoration(
                   hintText: 'Add subtask...',
-                  hintStyle: AuraTypography.bodySmall,
+                  hintStyle: AuraTypography.bodySmall.copyWith(color: AuraColors.textSecondaryOf(context)),
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: AuraSpacing.md, vertical: AuraSpacing.sm),
                 ),
@@ -183,8 +183,8 @@ class _TaskSubtasksTabState extends ConsumerState<TaskSubtasksTab> {
               style: IconButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
-                shape: const RoundedRectangleBorder(
-                  side: BorderSide(color: AuraColors.border, width: 2),
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: AuraColors.borderOf(context), width: 2),
                 ),
               ),
               icon: const Icon(LucideIcons.plus, size: 20),

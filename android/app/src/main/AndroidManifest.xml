@@ -55,7 +55,10 @@
             android:name=".AuraShareActivity"
             android:theme="@style/TranslucentTheme"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -80,7 +83,10 @@
         <activity
             android:name=".OrbMenuActivity"
             android:theme="@style/TranslucentTheme"
-            android:exported="false" />
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask" />
 
         <!-- Foreground Floating Canvas Orb Service -->
         <service

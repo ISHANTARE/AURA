@@ -20,9 +20,6 @@ import '../../features/capture/presentation/screens/floating_capture_overlay_scr
 import '../constants/colors.dart';
 import '../constants/typography.dart';
 import '../widgets/bottom_nav.dart';
-import '../../features/home/presentation/widgets/floating_orb.dart';
-import '../../features/capture/presentation/widgets/voice_capture_overlay.dart';
-import '../../platform/overlay_channel.dart';
 
 /// Route name constants — use these everywhere instead of string literals.
 abstract final class Routes {
@@ -207,15 +204,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
 // ── Main navigation shell ──────────────────────────────────────────────────
 
-class _MainShell extends ConsumerStatefulWidget {
+class _MainShell extends StatelessWidget {
   const _MainShell({required this.child});
   final Widget child;
 
-  @override
-  ConsumerState<_MainShell> createState() => _MainShellState();
-}
-
-class _MainShellState extends ConsumerState<_MainShell> with WidgetsBindingObserver {
   static const _routes = [
     Routes.home,
     Routes.alarms,
@@ -223,37 +215,6 @@ class _MainShellState extends ConsumerState<_MainShell> with WidgetsBindingObser
     Routes.notes,
     Routes.settings,
   ];
-
-  // Default to true to prevent the in-app orb from briefly flashing on app launch
-  // while checking if the native overlay service is running.
-  bool _isOverlayRunning = true;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _checkOverlayStatus();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _checkOverlayStatus();
-    }
-  }
-
-  Future<void> _checkOverlayStatus() async {
-    final running = await OverlayChannel.isRunning();
-    if (mounted && running != _isOverlayRunning) {
-      setState(() => _isOverlayRunning = running);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -265,15 +226,7 @@ class _MainShellState extends ConsumerState<_MainShell> with WidgetsBindingObser
 
     return Scaffold(
       backgroundColor: AuraColors.bgOf(context),
-      body: Stack(
-        children: [
-          widget.child,
-          if (!_isOverlayRunning)
-            FloatingOrb(
-              onTap: () => VoiceCaptureOverlay.show(context),
-            ),
-        ],
-      ),
+      body: child,
       bottomNavigationBar: AuraBottomNav(
         selectedIndex: effectiveIndex,
         onDestinationSelected: (index) {

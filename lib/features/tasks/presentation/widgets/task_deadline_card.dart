@@ -23,16 +23,16 @@ class TaskDeadlineCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AuraColors.bgCard,
-            border: Border.all(color: AuraColors.borderMuted, width: 1.5),
+            color: AuraColors.cardOf(context),
+            border: Border.all(color: AuraColors.borderOf(context), width: 1.5),
           ),
           child: Row(
             children: [
-              const Icon(LucideIcons.calendar, color: AuraColors.textSecondary, size: 18),
+              Icon(LucideIcons.calendar, color: AuraColors.textSecondaryOf(context), size: 18),
               const SizedBox(width: 10),
               Text(
                 'No deadline set — tap to add',
-                style: AuraTypography.bodySmall.copyWith(fontStyle: FontStyle.italic),
+                style: AuraTypography.bodySmall.copyWith(fontStyle: FontStyle.italic, color: AuraColors.textSecondaryOf(context)),
               ),
             ],
           ),
@@ -69,9 +69,9 @@ class TaskDeadlineCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AuraColors.bgCard,
+          color: AuraColors.cardOf(context),
           border: Border.all(
-            color: isOverdue ? AuraColors.accentRed : AuraColors.border,
+            color: isOverdue ? AuraColors.accentRed : AuraColors.borderOf(context),
             width: 2,
           ),
         ),
@@ -80,11 +80,11 @@ class TaskDeadlineCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(LucideIcons.calendar, color: AuraColors.textPrimary, size: 18),
+                Icon(LucideIcons.calendar, color: AuraColors.textPrimaryOf(context), size: 18),
                 const SizedBox(width: 8),
                 Text(
                   formattedDate,
-                  style: AuraTypography.cardTitle.copyWith(color: AuraColors.textPrimary),
+                  style: AuraTypography.cardTitle.copyWith(color: AuraColors.textPrimaryOf(context)),
                 ),
               ],
             ),

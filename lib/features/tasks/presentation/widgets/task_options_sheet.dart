@@ -56,19 +56,19 @@ class TaskOptionsSheet extends ConsumerWidget {
               Expanded(
                 child: Text(
                   taskTitle,
-                  style: AuraTypography.screenHeader,
+                  style: AuraTypography.screenHeader.copyWith(color: AuraColors.textPrimaryOf(context)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               IconButton(
-                icon: const Icon(LucideIcons.x, color: AuraColors.textPrimary),
+                icon: Icon(LucideIcons.x, color: AuraColors.textPrimaryOf(context)),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),
           const SizedBox(height: AuraSpacing.xs),
-          const Divider(color: AuraColors.borderMuted, height: 1),
+          Divider(color: AuraColors.isDarkMode(context) ? AuraColors.borderMuted : AuraColors.lightBorderMuted, height: 1),
           const SizedBox(height: AuraSpacing.sm),
 
           // 1. Share Item
@@ -231,7 +231,7 @@ class _OptionTile extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     this.iconColor = AuraColors.accentLime,
-    this.titleColor = AuraColors.textPrimary,
+    this.titleColor,
   });
 
   final IconData icon;
@@ -239,10 +239,12 @@ class _OptionTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
   final Color iconColor;
-  final Color titleColor;
+  final Color? titleColor;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveTitleColor = titleColor ?? AuraColors.textPrimaryOf(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
@@ -253,10 +255,10 @@ class _OptionTile extends StatelessWidget {
         ),
         leading: Icon(icon, color: iconColor, size: 20),
         title: Text(title,
-            style: AuraTypography.cardTitle.copyWith(color: titleColor)),
-        subtitle: Text(subtitle, style: AuraTypography.bodySmall),
-        trailing: const Icon(LucideIcons.chevronRight,
-            color: AuraColors.textSecondary, size: 16),
+            style: AuraTypography.cardTitle.copyWith(color: effectiveTitleColor)),
+        subtitle: Text(subtitle, style: AuraTypography.bodySmall.copyWith(color: AuraColors.textSecondaryOf(context))),
+        trailing: Icon(LucideIcons.chevronRight,
+            color: AuraColors.textSecondaryOf(context), size: 16),
       ),
     );
   }

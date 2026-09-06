@@ -72,4 +72,11 @@ class ShareChannel {
     }
     return null;
   }
+
+  /// Close the native AuraShareActivity host when dismissed or completed.
+  Future<void> close() async {
+    try {
+      await _channel.invokeMethod<void>('close');
+    } catch (_) {}
+  }
 }

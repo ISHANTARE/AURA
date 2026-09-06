@@ -377,19 +377,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? Theme.of(context).colorScheme.primary
-                        : AuraColors.bgCard,
+                        : AuraColors.cardOf(context),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected
                           ? Theme.of(context).colorScheme.primary
-                          : AuraColors.border,
+                          : AuraColors.borderOf(context),
                       width: 1,
                     ),
                   ),
                   child: Text(
                     ws,
                     style: AuraTypography.badgeText.copyWith(
-                      color: isSelected ? Colors.white : AuraColors.textPrimary,
+                      color: isSelected ? Colors.white : AuraColors.textPrimaryOf(context),
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),

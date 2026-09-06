@@ -29,15 +29,15 @@ class MorningBriefingScreen extends ConsumerWidget {
     final statsAsync = ref.watch(quickStatsProvider);
 
     return Scaffold(
-      backgroundColor: AuraColors.bgBase,
+      backgroundColor: AuraColors.bgBaseOf(context),
       appBar: AppBar(
-        backgroundColor: AuraColors.bgBase,
+        backgroundColor: AuraColors.bgBaseOf(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.x, color: AuraColors.textPrimary),
+          icon: Icon(LucideIcons.x, color: AuraColors.textPrimaryOf(context)),
           onPressed: () => context.go(Routes.home),
         ),
-        title: Text('MORNING BRIEFING', style: AuraTypography.screenHeader),
+        title: Text('MORNING BRIEFING', style: AuraTypography.screenHeader.copyWith(color: AuraColors.textPrimaryOf(context))),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -48,7 +48,7 @@ class MorningBriefingScreen extends ConsumerWidget {
               // ── Greeting ───────────────────────────────────────────────
               Text(
                 greeting,
-                style: AuraTypography.display.copyWith(fontSize: 22),
+                style: AuraTypography.display.copyWith(fontSize: 22, color: AuraColors.textPrimaryOf(context)),
               ),
               const SizedBox(height: 4),
               Text(dateStr, style: AuraTypography.overline),
@@ -204,7 +204,7 @@ class _BriefingSection extends StatelessWidget {
       children: [
         Text(title, style: AuraTypography.label),
         const SizedBox(height: AuraSpacing.xs),
-        Container(height: 1, color: AuraColors.borderMuted),
+        Container(height: 1, color: AuraColors.isDarkMode(context) ? AuraColors.borderMuted : AuraColors.lightBorderMuted),
         const SizedBox(height: AuraSpacing.sm),
         child,
       ],
@@ -230,8 +230,8 @@ class _StatTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: AuraSpacing.sm, vertical: AuraSpacing.sm),
         decoration: BoxDecoration(
-          color: AuraColors.bgCard,
-          border: Border.all(color: AuraColors.border, width: 2),
+          color: AuraColors.cardOf(context),
+          border: Border.all(color: AuraColors.borderOf(context), width: 2),
           boxShadow: const [
             BoxShadow(
                 color: AuraColors.shadow, offset: Offset(3, 3), blurRadius: 0),
@@ -245,7 +245,7 @@ class _StatTile extends StatelessWidget {
                   fontSize: 24,
                 )),
             const SizedBox(height: 2),
-            Text(label, style: AuraTypography.overline),
+            Text(label, style: AuraTypography.overline.copyWith(color: AuraColors.textSecondaryOf(context))),
           ],
         ),
       ),
@@ -286,7 +286,7 @@ class _FocusRow extends StatelessWidget {
             Expanded(
               child: Text(
                 item.title,
-                style: AuraTypography.cardTitle,
+                style: AuraTypography.cardTitle.copyWith(color: AuraColors.textPrimaryOf(context)),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -304,8 +304,8 @@ class _FocusRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AuraSpacing.xs),
-            const Icon(LucideIcons.chevronRight,
-                size: 14, color: AuraColors.textSecondary),
+            Icon(LucideIcons.chevronRight,
+                size: 14, color: AuraColors.textSecondaryOf(context)),
           ],
         ),
       ),

@@ -1,10 +1,17 @@
 package com.aura.aura
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.webkit.MimeTypeMap
 import io.flutter.embedding.android.FlutterActivity
-import io.flutter.embedding.engine.FlutterEngineCache
+import io.flutter.embedding.android.FlutterActivityLaunchConfigs
+import io.flutter.embedding.android.RenderMode
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONArray
 import org.json.JSONObject
@@ -13,50 +20,38 @@ import java.io.FileOutputStream
 
 class AuraShareActivity : FlutterActivity() {
 
-    override fun getCachedEngineId(): String = MainActivity.SHARE_ENGINE_ID
+    companion object {
+        const val TAG = "AuraShareActivity"
+        const val CHANNEL_NAME = "aura/share"
 
-    override fun shouldDestroyEngineWithHost(): Boolean = false
-
-    override fun configureFlutterEngine(flutterEngine: io.flutter.embedding.engine.FlutterEngine) {
-        super.configureFlutterEngine(flutterEngine)
-        AuraChannelRegistrar.registerWith(this, flutterEngine)
-        registerShareChannel(flutterEngine)
+        @Volatile
+        var pendingPayloadJson: String? = null
     }
 
-    private fun registerShareChannel(engine: io.flutter.embedding.engine.FlutterEngine) {
-        MethodChannel(engine.dartExecutor.binaryMessenger, "aura/share")
-            .setMethodCallHandler { call, result ->
-                when (call.method) {
-                    "getInitialSharePayload" -> {
-                        val cacheFile = File(cacheDir, "aura_share_payload.json")
-                        if (cacheFile.exists()) {
-                            try {
-                                val content = cacheFile.readText()
-                                cacheFile.delete()
-                                val jsonObj = JSONObject(content)
-                                val map = HashMap<String, Any?>()
-                                val keys = jsonObj.keys()
-                                while (keys.hasNext()) {
-                                    val key = keys.next()
-                                    map[key] = jsonObj.opt(key)
-                                }
-                                if (map.containsKey("text") && !map.containsKey("content")) {
-                                    map["content"] = map["text"]
-                                }
-                                if (map.containsKey("localPath") && !map.containsKey("filePath")) {
-                                    map["filePath"] = map["localPath"]
-                                }
-                                result.success(map)
-                            } catch (e: Exception) {
-                                result.error("SHARE_ERROR", e.message, null)
-                            }
-                        } else {
-                            result.success(null)
-                        }
-                    }
-                    else -> result.notImplemented()
-                }
-            }
+    override fun getCachedEngineId(): String? = null
+
+    override fun shouldDestroyEngineWithHost(): Boolean = true
+
+    override fun getBackgroundMode(): FlutterActivityLaunchConfigs.BackgroundMode {
+        return FlutterActivityLaunchConfigs.BackgroundMode.transparent
+    }
+
+    override fun getRenderMode(): RenderMode {
+        return RenderMode.texture
+    }
+
+    override fun provideFlutterEngine(context: Context): FlutterEngine {
+        return FlutterEngine(context.applicationContext).apply {
+            navigationChannel.setInitialRoute("/share")
+            dartExecutor.executeDartEntrypoint(DartExecutor.DartEntrypoint.createDefault())
+        }
+    }
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        // AuraChannelRegistrar registers aura/overlay + aura/share in one place.
+        // The close() and getInitialSharePayload() methods in aura/share are handled there.
+        AuraChannelRegistrar.registerWith(this, flutterEngine)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,6 +63,7 @@ class AuraShareActivity : FlutterActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleShareIntent(intent)
     }
 
@@ -90,8 +86,8 @@ class AuraShareActivity : FlutterActivity() {
                     payload.put("subject", subject)
                     payload.put("mimeType", type)
                 } else {
-                    val streamUri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-                    val localPath = streamUri?.let { copyUriToCache(it) }
+                    val streamUri = extractSingleUri(intent)
+                    val localPath = streamUri?.let { copyUriToCache(it) } ?: ""
                     val itemType = when {
                         type.startsWith("image/") -> "image"
                         type.startsWith("video/") -> "video"
@@ -102,18 +98,18 @@ class AuraShareActivity : FlutterActivity() {
                     payload.put("type", itemType)
                     payload.put("mimeType", type)
                     payload.put("uri", streamUri?.toString() ?: "")
-                    payload.put("filePath", localPath ?: "")
-                    payload.put("localPath", localPath ?: "")
+                    payload.put("filePath", localPath)
+                    payload.put("localPath", localPath)
                     val extraText = intent.getStringExtra(Intent.EXTRA_TEXT)
                     if (!extraText.isNullOrEmpty()) {
                         payload.put("content", extraText)
                     }
                 }
             } else if (action == Intent.ACTION_SEND_MULTIPLE) {
-                val streamUris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+                val streamUris = extractMultipleUris(intent)
                 val filesArray = JSONArray()
                 var firstPath = ""
-                streamUris?.forEachIndexed { index, uri ->
+                streamUris.forEachIndexed { index, uri ->
                     val path = copyUriToCache(uri)
                     if (index == 0) firstPath = path
                     filesArray.put(JSONObject().apply {
@@ -136,29 +132,96 @@ class AuraShareActivity : FlutterActivity() {
                 payload.put("files", filesArray)
             }
 
-            // Save payload JSON to cache file
-            val payloadFile = File(cacheDir, "aura_share_payload.json")
-            payloadFile.writeText(payload.toString())
+            val jsonStr = payload.toString()
+            pendingPayloadJson = jsonStr
 
-            val notifyEngine = {
-                val engine = flutterEngine ?: FlutterEngineCache.getInstance().get(MainActivity.SHARE_ENGINE_ID)
-                engine?.let {
-                    MethodChannel(it.dartExecutor.binaryMessenger, "aura/share")
-                        .invokeMethod("onShareReceived", null)
+            // Save payload JSON to cache file as backup
+            val payloadFile = File(cacheDir, "aura_share_payload.json")
+            payloadFile.writeText(jsonStr)
+
+            // Notify Flutter if engine is already mounted
+            flutterEngine?.let { engine ->
+                MethodChannel(engine.dartExecutor.binaryMessenger, CHANNEL_NAME)
+                    .invokeMethod("onShareReceived", null)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "handleShareIntent failed: ${e.message}", e)
+        }
+    }
+
+    private fun extractSingleUri(intent: Intent): Uri? {
+        val streamUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            try {
+                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+        }
+        if (streamUri != null) return streamUri
+
+        intent.clipData?.let { clip ->
+            if (clip.itemCount > 0) {
+                clip.getItemAt(0)?.uri?.let { return it }
+            }
+        }
+
+        return intent.data
+    }
+
+    private fun extractMultipleUris(intent: Intent): List<Uri> {
+        val list = mutableListOf<Uri>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            try {
+                intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)?.let {
+                    list.addAll(it)
+                }
+            } catch (e: Exception) {
+                // Ignore and fall through to clipData
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.let {
+                list.addAll(it)
+            }
+        }
+
+        if (list.isEmpty()) {
+            intent.clipData?.let { clip ->
+                for (i in 0 until clip.itemCount) {
+                    clip.getItemAt(i)?.uri?.let { list.add(it) }
                 }
             }
-            notifyEngine()
-            window.decorView.postDelayed({ notifyEngine() }, 400)
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
+        return list
     }
 
     private fun copyUriToCache(uri: Uri): String {
         return try {
             val shareDir = File(cacheDir, "aura_shared").apply { if (!exists()) mkdirs() }
-            val fileName = "aura_share_${System.currentTimeMillis()}_${uri.lastPathSegment ?: "file"}"
-            val destFile = File(shareDir, fileName)
+            val safeName = "aura_share_${System.currentTimeMillis()}_${System.nanoTime()}"
+            var extension = contentResolver.getType(uri)?.let { mime ->
+                MimeTypeMap.getSingleton().getExtensionFromMimeType(mime)
+            }
+            if (extension.isNullOrEmpty()) {
+                val path = uri.path
+                if (path != null && path.contains(".")) {
+                    extension = path.substringAfterLast('.', "bin")
+                } else {
+                    extension = "bin"
+                }
+            }
+            val destFile = File(shareDir, "$safeName.$extension")
+
+            if (uri.scheme == "file") {
+                val srcFile = File(uri.path ?: "")
+                if (srcFile.exists()) {
+                    srcFile.copyTo(destFile, overwrite = true)
+                    return destFile.absolutePath
+                }
+            }
 
             contentResolver.openInputStream(uri)?.use { input ->
                 FileOutputStream(destFile).use { output ->
@@ -167,6 +230,7 @@ class AuraShareActivity : FlutterActivity() {
             }
             destFile.absolutePath
         } catch (e: Exception) {
+            Log.e(TAG, "copyUriToCache failed for $uri: ${e.message}", e)
             ""
         }
     }
@@ -183,7 +247,7 @@ class AuraShareActivity : FlutterActivity() {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "purgeOldSharedCache error: ${e.message}", e)
         }
     }
 }

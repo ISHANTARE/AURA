@@ -28,12 +28,12 @@ class WorkspaceOptionsSheet extends ConsumerWidget {
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AuraColors.bgElevated,
+      decoration: BoxDecoration(
+        color: AuraColors.elevatedOf(context),
         border: Border(
-          top: BorderSide(color: AuraColors.border, width: 2.0),
-          left: BorderSide(color: AuraColors.border, width: 2.0),
-          right: BorderSide(color: AuraColors.border, width: 2.0),
+          top: BorderSide(color: AuraColors.borderOf(context), width: 2.0),
+          left: BorderSide(color: AuraColors.borderOf(context), width: 2.0),
+          right: BorderSide(color: AuraColors.borderOf(context), width: 2.0),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
@@ -52,19 +52,22 @@ class WorkspaceOptionsSheet extends ConsumerWidget {
               const SizedBox(width: 10.0),
               Text(
                 workspace.name.toUpperCase(),
-                style: AuraTypography.cardTitle.copyWith(letterSpacing: 1.0),
+                style: AuraTypography.cardTitle.copyWith(
+                  letterSpacing: 1.0,
+                  color: AuraColors.textPrimaryOf(context),
+                ),
               ),
             ],
           ),
 
           const SizedBox(height: 16.0),
-          const Divider(color: AuraColors.borderMuted, height: 1.0),
+          Divider(color: AuraColors.isDarkMode(context) ? AuraColors.borderMuted : AuraColors.lightBorderMuted, height: 1.0),
           const SizedBox(height: 12.0),
 
           // Option: Edit
           ListTile(
-            leading: const Icon(AuraIcons.edit, color: AuraColors.textPrimary),
-            title: Text('Edit Workspace', style: AuraTypography.bodyMedium),
+            leading: Icon(AuraIcons.edit, color: AuraColors.textPrimaryOf(context)),
+            title: Text('Edit Workspace', style: AuraTypography.bodyMedium.copyWith(color: AuraColors.textPrimaryOf(context))),
             onTap: () {
               Navigator.of(context).pop();
               CreateWorkspaceModal.show(context, workspace: workspace);
@@ -75,7 +78,7 @@ class WorkspaceOptionsSheet extends ConsumerWidget {
           if (workspace.isArchived)
             ListTile(
               leading: Icon(AuraIcons.archive, color: primaryColor),
-              title: Text('Unarchive Workspace', style: AuraTypography.bodyMedium),
+              title: Text('Unarchive Workspace', style: AuraTypography.bodyMedium.copyWith(color: AuraColors.textPrimaryOf(context))),
               onTap: () async {
                 Navigator.of(context).pop();
                 await notifier.unarchiveWorkspace(workspace.id);
@@ -84,7 +87,7 @@ class WorkspaceOptionsSheet extends ConsumerWidget {
           else
             ListTile(
               leading: const Icon(AuraIcons.archive, color: AuraColors.accentOrange),
-              title: Text('Archive Workspace', style: AuraTypography.bodyMedium),
+              title: Text('Archive Workspace', style: AuraTypography.bodyMedium.copyWith(color: AuraColors.textPrimaryOf(context))),
               onTap: () async {
                 Navigator.of(context).pop();
                 await notifier.archiveWorkspace(workspace.id);

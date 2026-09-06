@@ -45,11 +45,11 @@ class SnoozePickerSheet extends ConsumerWidget {
     final snoozeUseCase = ref.watch(snoozeReminderUseCaseProvider);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AuraColors.bgElevated,
+      decoration: BoxDecoration(
+        color: AuraColors.elevatedOf(context),
         border: Border(
           top: BorderSide(
-              color: AuraColors.border, width: AuraSpacing.borderWidth),
+              color: AuraColors.borderOf(context), width: AuraSpacing.borderWidth),
         ),
       ),
       padding: const EdgeInsets.all(AuraSpacing.md),
@@ -61,19 +61,19 @@ class SnoozePickerSheet extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('SNOOZE REMINDER', style: AuraTypography.screenHeader),
+              Text('SNOOZE REMINDER', style: AuraTypography.screenHeader.copyWith(color: AuraColors.textPrimaryOf(context))),
               IconButton(
-                icon: const Icon(LucideIcons.x, color: AuraColors.textPrimary),
+                icon: Icon(LucideIcons.x, color: AuraColors.textPrimaryOf(context)),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),
           Text('Task: "$taskTitle"',
-              style: AuraTypography.bodySmall,
+              style: AuraTypography.bodySmall.copyWith(color: AuraColors.textSecondaryOf(context)),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: AuraSpacing.md),
-          const Divider(color: AuraColors.borderMuted, height: 1),
+          Divider(color: AuraColors.isDarkMode(context) ? AuraColors.borderMuted : AuraColors.lightBorderMuted, height: 1),
           const SizedBox(height: AuraSpacing.sm),
 
           // Presets list
@@ -104,17 +104,10 @@ class SnoozePickerSheet extends ConsumerWidget {
 
                 if (context.mounted) {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Snoozed: ${preset.label}'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
                 }
               },
             ),
           ),
-          const SizedBox(height: AuraSpacing.md),
         ],
       ),
     );
@@ -181,15 +174,15 @@ class _SnoozeTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
         onTap: onTap,
-        shape: const RoundedRectangleBorder(
-          side: BorderSide(color: AuraColors.border, width: 1),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: AuraColors.borderOf(context), width: 1),
           borderRadius: BorderRadius.zero,
         ),
-        tileColor: AuraColors.bgCard,
+        tileColor: AuraColors.cardOf(context),
         leading: Icon(icon, color: primaryColor, size: 20),
-        title: Text(label, style: AuraTypography.cardTitle),
-        trailing: const Icon(LucideIcons.chevronRight,
-            color: AuraColors.textSecondary, size: 16),
+        title: Text(label, style: AuraTypography.cardTitle.copyWith(color: AuraColors.textPrimaryOf(context))),
+        trailing: Icon(LucideIcons.chevronRight,
+            color: AuraColors.textSecondaryOf(context), size: 16),
       ),
     );
   }

@@ -23,11 +23,15 @@ Future<void> main() async {
   // Initialize local notifications (channels + timezone)
   final notificationService = NotificationService();
   await notificationService.initialize();
-  try {
-    await notificationService.requestPermissions();
-  } catch (e) {
-    debugPrint('Notification permissions deferred: $e');
-  }
+  // Defer permission request to post-frame so the plugin context is fully
+  // bound — prevents NullPointerException on Android 16 cold launch.
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await notificationService.requestPermissions();
+    } catch (e) {
+      debugPrint('Notification permissions deferred: $e');
+    }
+  });
 
   runApp(
     // ProviderScope is the root of Riverpod state management

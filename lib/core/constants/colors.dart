@@ -87,6 +87,8 @@ abstract final class AuraColors {
   static Color bgOf(BuildContext context) =>
       isDarkMode(context) ? bgBase : lightBgBase;
 
+  static Color bgBaseOf(BuildContext context) => bgOf(context);
+
   static Color cardOf(BuildContext context) =>
       isDarkMode(context) ? bgCard : lightBgCard;
 

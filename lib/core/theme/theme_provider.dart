@@ -20,8 +20,13 @@ class ThemeAccentNotifier extends StateNotifier<ThemeAccent> {
     _loadAccent();
   }
 
-  Future<void> _loadAccent() async {
+  Future<void> _loadAccent() async => reloadAccent();
+
+  Future<void> reloadAccent() async {
     final prefs = await SharedPreferences.getInstance();
+    try {
+      await prefs.reload();
+    } catch (_) {}
     final name = prefs.getString('THEME_ACCENT') ?? ThemeAccent.indigoPrimary.label;
     final accent = ThemeAccent.values.firstWhere(
       (a) => a.label == name,
@@ -63,8 +68,13 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
     _loadThemeMode();
   }
 
-  Future<void> _loadThemeMode() async {
+  Future<void> _loadThemeMode() async => reloadThemeMode();
+
+  Future<void> reloadThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
+    try {
+      await prefs.reload();
+    } catch (_) {}
     final modeStr = prefs.getString('THEME_MODE') ?? 'dark';
     final mode = modeStr == 'light' ? ThemeMode.light : ThemeMode.dark;
     state = mode;

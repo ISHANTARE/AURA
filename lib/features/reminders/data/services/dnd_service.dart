@@ -17,21 +17,44 @@ class DndService {
 
   StreamSubscription<dynamic>? _subscription;
   bool _wasDnd = false;
+  bool _stopped = false;
+  Timer? _retryTimer;
 
   DndService(this._db, {ReplayDndNotificationsUseCase? replayDndUseCase})
       : _replayDndUseCase =
             replayDndUseCase ?? ReplayDndNotificationsUseCase(db: _db);
 
   /// Start listening to DND state changes.
+  /// Retries if the native channel isn't ready yet (cold-start race condition).
   void start() {
-    _subscription = _eventChannel
-        .receiveBroadcastStream()
-        .listen(_onDndStateChanged, onError: _onError);
-
+    _stopped = false;
+    _trySubscribe();
     _checkInitialDndState();
   }
 
+  void _trySubscribe() {
+    if (_stopped) return;
+    _subscription?.cancel();
+    _subscription = _eventChannel
+        .receiveBroadcastStream()
+        .listen(_onDndStateChanged, onError: (dynamic error) {
+      // MissingPluginException: channel not registered yet — retry in 2s.
+      if (error is PlatformException || error is MissingPluginException) {
+        _scheduleRetry();
+      }
+    });
+  }
+
+  void _scheduleRetry() {
+    _retryTimer?.cancel();
+    if (_stopped) return;
+    _retryTimer = Timer(const Duration(seconds: 2), _trySubscribe);
+  }
+
   void stop() {
+    _stopped = true;
+    _retryTimer?.cancel();
+    _retryTimer = null;
     _subscription?.cancel();
     _subscription = null;
   }
@@ -51,8 +74,6 @@ class DndService {
     }
     _wasDnd = isDnd;
   }
-
-  void _onError(dynamic error) {}
 
   Future<void> _replayMissedReminders() async {
     await _replayDndUseCase.execute();

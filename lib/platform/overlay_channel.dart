@@ -12,7 +12,7 @@ class OverlayChannel {
       final bool granted =
           await _channel.invokeMethod('isOverlayPermissionGranted') ?? false;
       return granted;
-    } on PlatformException catch (e) {
+    } catch (e) {
       debugPrint('[OverlayChannel] Error checking permission: $e');
       return false;
     }
@@ -22,7 +22,7 @@ class OverlayChannel {
   static Future<void> requestPermission() async {
     try {
       await _channel.invokeMethod('requestOverlayPermission');
-    } on PlatformException catch (e) {
+    } catch (e) {
       debugPrint('[OverlayChannel] Error requesting permission: $e');
     }
   }
@@ -35,7 +35,7 @@ class OverlayChannel {
           }) ??
           false;
       return success;
-    } on PlatformException catch (e) {
+    } catch (e) {
       debugPrint('[OverlayChannel] Error starting overlay: $e');
       return false;
     }
@@ -49,7 +49,7 @@ class OverlayChannel {
           }) ??
           false;
       return success;
-    } on PlatformException catch (e) {
+    } catch (e) {
       debugPrint('[OverlayChannel] Error updating overlay color: $e');
       return false;
     }
@@ -61,7 +61,7 @@ class OverlayChannel {
       final bool success =
           await _channel.invokeMethod('stopOverlay') ?? false;
       return success;
-    } on PlatformException catch (e) {
+    } catch (e) {
       debugPrint('[OverlayChannel] Error stopping overlay: $e');
       return false;
     }
@@ -73,7 +73,7 @@ class OverlayChannel {
       final bool running =
           await _channel.invokeMethod('isOverlayRunning') ?? false;
       return running;
-    } on PlatformException catch (e) {
+    } catch (e) {
       debugPrint('[OverlayChannel] Error checking status: $e');
       return false;
     }

@@ -117,6 +117,24 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('PRAGMA cache_size = 2000');
         },
       );
+
+  /// Safely wipes all data from all tables using typed delete queries
+  /// so Drift stream observers are immediately notified of empty tables.
+  Future<void> wipeAllData() async {
+    await customStatement('PRAGMA foreign_keys = OFF;');
+    try {
+      await transaction(() async {
+        for (final table in allTables.toList().reversed) {
+          await delete(table).go();
+        }
+      });
+    } finally {
+      await customStatement('PRAGMA foreign_keys = ON;');
+    }
+    try {
+      await customStatement('VACUUM;');
+    } catch (_) {}
+  }
 }
 
 /// Opens the SQLite database file in the application document directory.

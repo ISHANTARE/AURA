@@ -11,6 +11,8 @@ import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../platform/overlay_channel.dart';
 import '../../../reminders/domain/services/reminder_scheduling_service.dart';
+import '../../../capture/presentation/widgets/voice_capture_overlay.dart';
+import '../../../capture/presentation/providers/capture_provider.dart';
 
 enum AlarmRepeatType { repeatDays, specificDate }
 
@@ -18,14 +20,22 @@ class EditAlarmModal extends ConsumerStatefulWidget {
   const EditAlarmModal({
     super.key,
     this.alarm,
+    this.initialTime,
+    this.initialTitle,
+    this.isCaptureFlow = false,
+    this.onSaved,
   });
 
   final Item? alarm;
+  final DateTime? initialTime;
+  final String? initialTitle;
+  final bool isCaptureFlow;
+  final VoidCallback? onSaved;
 
   static Future<void> show(BuildContext context, WidgetRef ref, Item alarm) async {
     await showModalBottomSheet(
       context: context,
-      backgroundColor: AuraColors.bgElevated,
+      backgroundColor: AuraColors.elevatedOf(context),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -37,7 +47,7 @@ class EditAlarmModal extends ConsumerStatefulWidget {
   static Future<void> showCreate(BuildContext context, WidgetRef ref) async {
     await showModalBottomSheet(
       context: context,
-      backgroundColor: AuraColors.bgElevated,
+      backgroundColor: AuraColors.elevatedOf(context),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -65,11 +75,11 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
   void initState() {
     super.initState();
     final alarm = widget.alarm;
-    _titleCtrl = TextEditingController(text: alarm?.title ?? 'Alarm');
+    _titleCtrl = TextEditingController(text: alarm?.title ?? widget.initialTitle ?? 'Alarm');
 
     final initialDt = alarm?.fireAt != null
         ? DateTime.fromMillisecondsSinceEpoch(alarm!.fireAt!)
-        : DateTime.now().add(const Duration(minutes: 5));
+        : (widget.initialTime ?? DateTime.now().add(const Duration(minutes: 5)));
 
     _selectedTime = TimeOfDay.fromDateTime(initialDt);
     _selectedDate = DateTime(initialDt.year, initialDt.month, initialDt.day);
@@ -200,28 +210,33 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: AuraSpacing.md),
                 decoration: BoxDecoration(
-                  color: AuraColors.borderMuted,
+                  color: AuraColors.isDarkMode(context) ? AuraColors.borderMuted : AuraColors.lightBorderMuted,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             Text(
               isEditing ? 'EDIT ALARM' : 'NEW ALARM',
-              style: AuraTypography.cardTitle,
+              style: AuraTypography.cardTitle.copyWith(color: AuraColors.textPrimaryOf(context)),
             ),
             const SizedBox(height: AuraSpacing.md),
 
             // Alarm label field
             TextField(
               controller: _titleCtrl,
-              style: AuraTypography.body,
+              style: AuraTypography.body.copyWith(color: AuraColors.textPrimaryOf(context)),
               decoration: InputDecoration(
                 labelText: 'Alarm label',
+                labelStyle: TextStyle(color: AuraColors.textSecondaryOf(context)),
                 filled: true,
-                fillColor: AuraColors.bgCard,
+                fillColor: AuraColors.cardOf(context),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AuraColors.border),
+                  borderSide: BorderSide(color: AuraColors.borderOf(context)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AuraColors.borderOf(context)),
                 ),
               ),
             ),
@@ -231,9 +246,9 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
             Container(
               padding: const EdgeInsets.all(AuraSpacing.md),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
+                color: AuraColors.cardOf(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AuraColors.border, width: 1),
+                border: Border.all(color: AuraColors.borderOf(context), width: 1),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -241,7 +256,7 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Time', style: AuraTypography.caption),
+                      Text('Time', style: AuraTypography.caption.copyWith(color: AuraColors.textSecondaryOf(context))),
                       Text(
                         _selectedTime.format(context),
                         style: AuraTypography.display.copyWith(
@@ -282,13 +297,14 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
               children: [
                 Expanded(
                   child: ChoiceChip(
-                    label: const Center(child: Text('DAYS OF WEEK')),
+                    label: Center(child: Text('DAYS OF WEEK', style: TextStyle(color: _repeatType == AlarmRepeatType.repeatDays ? primaryColor : AuraColors.textSecondaryOf(context)))),
                     selected: _repeatType == AlarmRepeatType.repeatDays,
                     selectedColor: primaryColor.withValues(alpha: 0.2),
+                    backgroundColor: AuraColors.cardOf(context),
                     side: BorderSide(
                       color: _repeatType == AlarmRepeatType.repeatDays
                           ? primaryColor
-                          : AuraColors.border,
+                          : AuraColors.borderOf(context),
                     ),
                     onSelected: (_) {
                       setState(() => _repeatType = AlarmRepeatType.repeatDays);
@@ -298,13 +314,14 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                 const SizedBox(width: AuraSpacing.sm),
                 Expanded(
                   child: ChoiceChip(
-                    label: const Center(child: Text('SPECIFIC DATE')),
+                    label: Center(child: Text('SPECIFIC DATE', style: TextStyle(color: _repeatType == AlarmRepeatType.specificDate ? primaryColor : AuraColors.textSecondaryOf(context)))),
                     selected: _repeatType == AlarmRepeatType.specificDate,
                     selectedColor: primaryColor.withValues(alpha: 0.2),
+                    backgroundColor: AuraColors.cardOf(context),
                     side: BorderSide(
                       color: _repeatType == AlarmRepeatType.specificDate
                           ? primaryColor
-                          : AuraColors.border,
+                          : AuraColors.borderOf(context),
                     ),
                     onSelected: (_) {
                       setState(() => _repeatType = AlarmRepeatType.specificDate);
@@ -322,15 +339,21 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                 spacing: 6,
                 children: [
                   ActionChip(
-                    label: const Text('Everyday', style: TextStyle(fontSize: 12)),
+                    backgroundColor: AuraColors.cardOf(context),
+                    side: BorderSide(color: AuraColors.borderOf(context)),
+                    label: Text('Everyday', style: TextStyle(fontSize: 12, color: AuraColors.textPrimaryOf(context))),
                     onPressed: () => _applyPreset('everyday'),
                   ),
                   ActionChip(
-                    label: const Text('Weekdays', style: TextStyle(fontSize: 12)),
+                    backgroundColor: AuraColors.cardOf(context),
+                    side: BorderSide(color: AuraColors.borderOf(context)),
+                    label: Text('Weekdays', style: TextStyle(fontSize: 12, color: AuraColors.textPrimaryOf(context))),
                     onPressed: () => _applyPreset('weekdays'),
                   ),
                   ActionChip(
-                    label: const Text('Weekends', style: TextStyle(fontSize: 12)),
+                    backgroundColor: AuraColors.cardOf(context),
+                    side: BorderSide(color: AuraColors.borderOf(context)),
+                    label: Text('Weekends', style: TextStyle(fontSize: 12, color: AuraColors.textPrimaryOf(context))),
                     onPressed: () => _applyPreset('weekends'),
                   ),
                 ],
@@ -340,7 +363,7 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(7, (index) {
-                  final weekday = index + 1; // 1-7
+                  final weekday = index + 1;
                   final isSelected = _selectedWeekdays.contains(weekday);
                   return GestureDetector(
                     onTap: () {
@@ -360,10 +383,10 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? primaryColor
-                            : AuraColors.bgCard,
+                            : AuraColors.cardOf(context),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isSelected ? primaryColor : AuraColors.border,
+                          color: isSelected ? primaryColor : AuraColors.borderOf(context),
                         ),
                       ),
                       alignment: Alignment.center,
@@ -371,7 +394,7 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                         _dayLabels[index],
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: isSelected ? Colors.white : AuraColors.textPrimary,
+                          color: isSelected ? Colors.white : AuraColors.textPrimaryOf(context),
                         ),
                       ),
                     ),
@@ -383,9 +406,9 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
               Container(
                 padding: const EdgeInsets.all(AuraSpacing.md),
                 decoration: BoxDecoration(
-                  color: AuraColors.bgCard,
+                  color: AuraColors.cardOf(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AuraColors.border, width: 1),
+                  border: Border.all(color: AuraColors.borderOf(context), width: 1),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -393,11 +416,11 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Target Date', style: AuraTypography.caption),
+                        Text('Target Date', style: AuraTypography.caption.copyWith(color: AuraColors.textSecondaryOf(context))),
                         const SizedBox(height: 2),
                         Text(
                           DateFormat('EEEE, MMM d, yyyy').format(_selectedDate),
-                          style: AuraTypography.bodyPrimary.copyWith(fontSize: 15),
+                          style: AuraTypography.bodyPrimary.copyWith(fontSize: 15, color: AuraColors.textPrimaryOf(context)),
                         ),
                       ],
                     ),
@@ -433,9 +456,9 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
             Container(
               padding: const EdgeInsets.all(AuraSpacing.md),
               decoration: BoxDecoration(
-                color: AuraColors.bgCard,
+                color: AuraColors.cardOf(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AuraColors.border, width: 1),
+                border: Border.all(color: AuraColors.borderOf(context), width: 1),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -444,11 +467,11 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Ringtone Audio', style: AuraTypography.caption),
+                        Text('Ringtone Audio', style: AuraTypography.caption.copyWith(color: AuraColors.textSecondaryOf(context))),
                         const SizedBox(height: 2),
                         Text(
                           _selectedSoundTitle,
-                          style: AuraTypography.bodyPrimary.copyWith(fontSize: 14),
+                          style: AuraTypography.bodyPrimary.copyWith(fontSize: 14, color: AuraColors.textPrimaryOf(context)),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -547,7 +570,18 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                     }
                   }
 
-                  if (context.mounted) Navigator.pop(context);
+                  if (widget.onSaved != null) {
+                    widget.onSaved!();
+                  }
+
+                  if (widget.isCaptureFlow) {
+                    ref.read(captureProvider.notifier).reset();
+                    if (context.mounted) {
+                      VoiceCaptureOverlay.closeOverlay(context);
+                    }
+                  } else {
+                    if (context.mounted) Navigator.pop(context);
+                  }
                 },
                 child: Text(isEditing ? 'SAVE CHANGES' : 'SET ALARM'),
               ),

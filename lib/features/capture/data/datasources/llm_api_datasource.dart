@@ -99,6 +99,9 @@ class _RuntimeConfig {
 
   static Future<_RuntimeConfig> load({SecretStore? secretStore}) async {
     final prefs = await SharedPreferences.getInstance();
+    try {
+      await prefs.reload();
+    } catch (_) {}
     final store = secretStore ?? SecretStore();
     final key = await store.readApiKey();
     final url = prefs.getString('LLM_BASE_URL') ?? '';

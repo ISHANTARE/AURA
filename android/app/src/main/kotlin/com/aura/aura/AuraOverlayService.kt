@@ -100,10 +100,10 @@ class AuraOverlayService : Service() {
         }
 
         val density = resources.displayMetrics.density
-        val sizePx = (72 * density).toInt()
+        val sizePx = (80 * density).toInt()
 
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val savedX = prefs.getInt("orb_x", (4 * density).toInt())
+        val savedX = prefs.getInt("orb_x", -(12 * density).toInt())
         val savedY = prefs.getInt("orb_y", (200 * density).toInt())
 
         orbView = OrbCanvasView(this)
@@ -165,8 +165,9 @@ class AuraOverlayService : Service() {
                         val metrics = resources.displayMetrics
                         val screenWidth = metrics.widthPixels
                         val screenHeight = metrics.heightPixels
-                        // Allow dragging all the way to the screen edges
-                        params.x = (startX + dx).coerceIn(-(10 * density).toInt(), screenWidth - sizePx + (10 * density).toInt())
+                        // Allow dragging all the way to the screen edges (core flush with edge)
+                        val edgeInset = (12 * density).toInt()
+                        params.x = (startX + dx).coerceIn(-edgeInset, screenWidth - sizePx + edgeInset)
                         params.y = (startY + dy).coerceIn(0, screenHeight - sizePx)
                         try {
                             windowManager.updateViewLayout(orbView, params)
@@ -206,8 +207,8 @@ class AuraOverlayService : Service() {
         windowManager.defaultDisplay.getMetrics(metrics)
         val screenWidth = metrics.widthPixels
         val density = resources.displayMetrics.density
-        // Align flush to edge (envelope has padding so core touches edge)
-        val margin = -(6 * density).toInt()
+        // Align core flush to edge (80dp view envelope with 56dp core has 12dp padding)
+        val margin = -(12 * density).toInt()
 
         params.x = if (params.x + (orbView.width / 2) < screenWidth / 2) {
             margin
@@ -341,13 +342,13 @@ class AuraOverlayService : Service() {
         private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             textAlign = Paint.Align.CENTER
-            textSize = 20f * resources.displayMetrics.density
+            textSize = 22f * resources.displayMetrics.density
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
 
         init {
             setLayerType(LAYER_TYPE_SOFTWARE, null)
-            shadowPaint.maskFilter = BlurMaskFilter(6f * resources.displayMetrics.density, BlurMaskFilter.Blur.NORMAL)
+            shadowPaint.maskFilter = BlurMaskFilter(8f * resources.displayMetrics.density, BlurMaskFilter.Blur.NORMAL)
         }
 
         fun updateColor(hex: String) {
@@ -363,7 +364,7 @@ class AuraOverlayService : Service() {
 
         fun startPulse() {
             animator = ValueAnimator.ofFloat(0.95f, 1.0f).apply {
-                duration = 2200
+                duration = 2400
                 repeatMode = ValueAnimator.REVERSE
                 repeatCount = ValueAnimator.INFINITE
                 addUpdateListener {
@@ -384,14 +385,14 @@ class AuraOverlayService : Service() {
             val density = resources.displayMetrics.density
             val cx = width / 2f
             val cy = height / 2f
-            val coreRadius = (25f * density) * pulseScale
-            val glowRadius = 34f * density
+            val coreRadius = (28f * density) * pulseScale
+            val glowRadius = 38f * density
 
             // 1. Atmospheric Glow (Multi-stop smooth radial bloom matching accent color)
             val r = Color.red(parsedColor)
             val g = Color.green(parsedColor)
             val b = Color.blue(parsedColor)
-            val glowAlpha = (110 * pulseScale).toInt().coerceIn(0, 255)
+            val glowAlpha = (115 * pulseScale).toInt().coerceIn(0, 255)
             val glowMidAlpha = (45 * pulseScale).toInt().coerceIn(0, 255)
 
             glowPaint.shader = RadialGradient(
@@ -401,15 +402,15 @@ class AuraOverlayService : Service() {
                     Color.argb(glowMidAlpha, r, g, b),
                     Color.TRANSPARENT
                 ),
-                floatArrayOf(0.55f, 0.82f, 1.0f),
+                floatArrayOf(0.60f, 0.85f, 1.0f),
                 Shader.TileMode.CLAMP
             )
             canvas.drawCircle(cx, cy, glowRadius, glowPaint)
 
-            // 2. Soft Drop Shadow
-            canvas.drawCircle(cx + (2f * density), cy + (3f * density), coreRadius, shadowPaint)
+            // 2. Soft Drop Shadow (Offset 4dp, 4dp matching Flutter)
+            canvas.drawCircle(cx + (3.5f * density), cy + (4f * density), coreRadius, shadowPaint)
 
-            // 3. Core Orb Body
+            // 3. Core Orb Body (56dp diameter matching Flutter orbSize)
             canvas.drawCircle(cx, cy, coreRadius, corePaint)
 
             // 4. Subtle Clean White Border Ring (matching Flutter FloatingOrb 2dp border)

@@ -127,22 +127,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.dispose();
   }
 
+  Future<void> _autoPersistAiSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('LLM_BASE_URL', _baseUrlController.text.trim());
+    await prefs.setString('LLM_MODEL', _modelController.text.trim());
+    await prefs.setString('LLM_PROVIDER_PRESET', _selectedProviderPreset);
+    if (_apiKeyController.text.trim().isNotEmpty) {
+      await SecretStore().writeApiKey(_apiKeyController.text.trim());
+    }
+  }
+
   List<String> _getQuickModelSuggestions() {
     if (_selectedProviderPreset.startsWith('Google Gemini')) {
       return ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
     } else if (_selectedProviderPreset == 'NVIDIA NIM') {
       return [
         'meta/llama-3.3-70b-instruct',
+        'deepseek-ai/deepseek-r1',
+        'deepseek-ai/deepseek-v3',
         'nvidia/nemotron-4-340b-instruct',
         'mistralai/mixtral-8x7b-instruct',
-        'deepseek-ai/deepseek-r1',
       ];
     } else if (_selectedProviderPreset == 'Groq Cloud') {
-      return ['llama-3.3-70b-versatile', 'llama3-70b-8192', 'mixtral-8x7b-32768'];
+      return ['llama-3.3-70b-versatile', 'deepseek-r1-distill-llama-70b', 'llama3-70b-8192', 'mixtral-8x7b-32768'];
     } else if (_selectedProviderPreset == 'OpenRouter') {
-      return ['google/gemini-2.0-flash-001', 'anthropic/claude-3.5-haiku', 'meta-llama/llama-3.3-70b-instruct'];
+      return ['google/gemini-2.0-flash-001', 'deepseek/deepseek-r1', 'anthropic/claude-3.5-haiku', 'meta-llama/llama-3.3-70b-instruct'];
     } else if (_selectedProviderPreset == 'Local LLM (Ollama / LM Studio)') {
-      return ['llama3.2', 'qwen2.5:3b', 'mistral'];
+      return ['llama3.2', 'deepseek-r1:8b', 'qwen2.5:3b', 'mistral'];
     }
     return ['meta/llama-3.3-70b-instruct', 'gemini-2.0-flash', 'llama3.2'];
   }
@@ -773,6 +784,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           _modelController.text = 'llama3.2';
                         }
                       });
+                      _autoPersistAiSettings();
                     },
                   ),
                   const SizedBox(height: 16),
@@ -781,6 +793,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 6),
                   TextField(
                     controller: _baseUrlController,
+                    onChanged: (_) => _autoPersistAiSettings(),
                     style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
                     decoration: InputDecoration(
                       filled: true,
@@ -797,13 +810,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 6),
                   TextField(
                     controller: _modelController,
+                    onChanged: (_) => _autoPersistAiSettings(),
                     style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: elevatedBg,
                       border: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
                       enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
-                      hintText: 'e.g. meta/llama-3.3-70b-instruct or nvidia/nemotron-4-340b-instruct',
+                      hintText: 'e.g. meta/llama-3.3-70b-instruct or deepseek-ai/deepseek-r1',
                       hintStyle: TextStyle(color: textMuted),
                     ),
                   ),
@@ -830,6 +844,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         onSelected: (_) {
                           setState(() => _modelController.text = m);
+                          _autoPersistAiSettings();
                         },
                       );
                     }).toList(),
@@ -841,6 +856,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   TextField(
                     controller: _apiKeyController,
                     obscureText: _obscureKey,
+                    onChanged: (_) => _autoPersistAiSettings(),
                     style: AuraTypography.bodyPrimary.copyWith(color: textPrimary),
                     decoration: InputDecoration(
                       filled: true,
@@ -1098,31 +1114,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           debugPrint('Reset: cancelAll notifications error: $e');
                         }
 
-                        // 1. Wipe all SQLite tables safely
+                        // 1. Wipe all SQLite tables cleanly with Drift typed updates
                         try {
                           final db = ref.read(databaseProvider);
-                          await db.customStatement('PRAGMA foreign_keys = OFF;');
-                          final tables = [
-                            'reminders_schedule',
-                            'notes',
-                            'shared_contents',
-                            'notification_logs',
-                            'ai_actions_logs',
-                            'offline_queues',
-                            'daily_logs',
-                            'sync_queues',
-                            'items',
-                            'workspace_sections',
-                            'workspaces',
-                          ];
-                          for (final table in tables) {
-                            try {
-                              await db.customStatement('DELETE FROM $table;');
-                            } catch (e) {
-                              debugPrint('Reset: error deleting $table: $e');
-                            }
-                          }
-                          await db.customStatement('PRAGMA foreign_keys = ON;');
+                          await db.wipeAllData();
                         } catch (e) {
                           debugPrint('Reset: db wipe error: $e');
                         }
@@ -1147,8 +1142,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           // Secure storage unavailable
                         }
 
-                        // 4. Invalidate live providers
+                        // 4. Invalidate all live data streams & DAOs so in-memory UI caches empty immediately
                         try {
+                          ref.invalidate(allActiveItemsProvider);
+                          ref.invalidate(urgentItemsProvider);
+                          ref.invalidate(todayFocusItemsProvider);
+                          ref.invalidate(alarmsListProvider);
+                          ref.invalidate(workspacesListProvider);
+                          ref.invalidate(notesListProvider);
+                          ref.invalidate(archivedWorkspacesProvider);
+                          ref.invalidate(itemDaoProvider);
+                          ref.invalidate(workspaceDaoProvider);
+
                           await ref.read(themeAccentProvider.notifier).resetToDefault();
                           await ref.read(themeModeProvider.notifier).resetToDefault();
                           ref.read(userNameProvider.notifier).reset();

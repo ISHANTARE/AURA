@@ -48,13 +48,13 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AuraColors.bgElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      decoration: BoxDecoration(
+        color: AuraColors.elevatedOf(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         border: Border(
-          top: BorderSide(color: AuraColors.border, width: 2),
-          left: BorderSide(color: AuraColors.border, width: 2),
-          right: BorderSide(color: AuraColors.border, width: 2),
+          top: BorderSide(color: AuraColors.borderOf(context), width: 2),
+          left: BorderSide(color: AuraColors.borderOf(context), width: 2),
+          right: BorderSide(color: AuraColors.borderOf(context), width: 2),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -68,7 +68,7 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AuraColors.textDisabled,
+                color: AuraColors.isDarkMode(context) ? AuraColors.borderMuted : AuraColors.lightBorderMuted,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -93,7 +93,7 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
 
           Text(
             widget.taskTitle,
-            style: AuraTypography.cardTitle.copyWith(color: AuraColors.textPrimary),
+            style: AuraTypography.cardTitle.copyWith(color: AuraColors.textPrimaryOf(context)),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -144,12 +144,12 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? Theme.of(context).colorScheme.primary
-                        : AuraColors.bgCard,
+                        : AuraColors.cardOf(context),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isSelected
                           ? Theme.of(context).colorScheme.primary
-                          : AuraColors.borderMuted,
+                          : AuraColors.borderOf(context),
                       width: 1,
                     ),
                   ),
@@ -161,7 +161,7 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
                             ? LucideIcons.calendar
                             : LucideIcons.clock,
                         size: 14,
-                        color: isSelected ? Colors.white : AuraColors.textSecondary,
+                        color: isSelected ? Colors.white : AuraColors.textSecondaryOf(context),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -169,7 +169,7 @@ class _SnoozeBottomSheetState extends ConsumerState<SnoozeBottomSheet> {
                             ? '${_customDateTime!.month}/${_customDateTime!.day} ${_customDateTime!.hour}:${_customDateTime!.minute.toString().padLeft(2, '0')}'
                             : preset.label,
                         style: AuraTypography.bodySmall.copyWith(
-                          color: isSelected ? Colors.white : AuraColors.textPrimary,
+                          color: isSelected ? Colors.white : AuraColors.textPrimaryOf(context),
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),

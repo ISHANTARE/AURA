@@ -24,8 +24,8 @@ class TaskStatsBento extends StatelessWidget {
     return Container(
       height: 80,
       decoration: BoxDecoration(
-        color: AuraColors.bgCard,
-        border: Border.all(color: AuraColors.border, width: 2),
+        color: AuraColors.cardOf(context),
+        border: Border.all(color: AuraColors.borderOf(context), width: 2),
       ),
       child: Row(
         children: [
@@ -44,14 +44,14 @@ class TaskStatsBento extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('STATUS', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                    Text('STATUS', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondaryOf(context))),
                     const SizedBox(height: 4),
                     Text(
                       status.toUpperCase(),
                       style: AuraTypography.badgeText.copyWith(
                         color: status == 'done'
                             ? AuraColors.accentGreen
-                            : (status == 'in_progress' ? AuraColors.accentLime : AuraColors.textPrimary),
+                            : (status == 'in_progress' ? AuraColors.accentLime : AuraColors.textPrimaryOf(context)),
                       ),
                     ),
                   ],
@@ -59,7 +59,7 @@ class TaskStatsBento extends StatelessWidget {
               ),
             ),
           ),
-          Container(width: 2, color: AuraColors.border),
+          Container(width: 2, color: AuraColors.borderOf(context)),
 
           // PRIORITY cell
           Expanded(
@@ -76,7 +76,7 @@ class TaskStatsBento extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('PRIORITY', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                    Text('PRIORITY', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondaryOf(context))),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -85,7 +85,7 @@ class TaskStatsBento extends StatelessWidget {
                           style: AuraTypography.badgeText.copyWith(
                             color: priority == 'high'
                                 ? AuraColors.priorityHigh
-                                : (priority == 'medium' ? AuraColors.priorityMedium : AuraColors.textPrimary),
+                                : (priority == 'medium' ? AuraColors.priorityMedium : AuraColors.textPrimaryOf(context)),
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -96,7 +96,7 @@ class TaskStatsBento extends StatelessWidget {
                           size: 12,
                           color: priority == 'high'
                               ? AuraColors.priorityHigh
-                              : (priority == 'medium' ? AuraColors.priorityMedium : AuraColors.textSecondary),
+                              : (priority == 'medium' ? AuraColors.priorityMedium : AuraColors.textSecondaryOf(context)),
                         ),
                       ],
                     ),
@@ -105,7 +105,7 @@ class TaskStatsBento extends StatelessWidget {
               ),
             ),
           ),
-          Container(width: 2, color: AuraColors.border),
+          Container(width: 2, color: AuraColors.borderOf(context)),
 
           // SOURCE cell (Info only)
           Expanded(
@@ -115,7 +115,7 @@ class TaskStatsBento extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('SOURCE', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondary)),
+                  Text('SOURCE', style: AuraTypography.bentoMetricLabel.copyWith(color: AuraColors.textSecondaryOf(context))),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -127,7 +127,7 @@ class TaskStatsBento extends StatelessWidget {
                         color: AuraColors.accentLime,
                       ),
                       const SizedBox(width: 4),
-                      Text(source.toUpperCase(), style: AuraTypography.badgeText.copyWith(color: AuraColors.textPrimary)),
+                      Text(source.toUpperCase(), style: AuraTypography.badgeText.copyWith(color: AuraColors.textPrimaryOf(context))),
                     ],
                   ),
                 ],

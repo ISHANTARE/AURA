@@ -369,13 +369,13 @@ class NextUpCell extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: AuraSpacing.sm - 2, vertical: 1),
                   decoration: BoxDecoration(
-                    color: AuraColors.bgBase,
-                    border: Border.all(color: AuraColors.border, width: 1.5),
+                    color: AuraColors.bgBaseOf(context),
+                    border: Border.all(color: AuraColors.borderOf(context), width: 1.5),
                   ),
                   child: Text(
                     '${items.length}',
                     style: AuraTypography.label.copyWith(
-                      color: AuraColors.textPrimary,
+                      color: AuraColors.textPrimaryOf(context),
                       letterSpacing: 0,
                     ),
                   ),
@@ -383,13 +383,13 @@ class NextUpCell extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AuraSpacing.sm),
-          Container(height: 1, color: AuraColors.borderMuted),
+          Container(height: 1, color: AuraColors.isDarkMode(context) ? AuraColors.borderMuted : AuraColors.lightBorderMuted),
           const SizedBox(height: AuraSpacing.sm),
 
           if (items.isEmpty)
             Expanded(
               child: Center(
-                child: Text('Nothing scheduled.', style: AuraTypography.body),
+                child: Text('Nothing scheduled.', style: AuraTypography.body.copyWith(color: AuraColors.textSecondaryOf(context))),
               ),
             )
           else
@@ -413,7 +413,7 @@ class _NextUpItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isEvent = item['isEvent'] as bool? ?? false;
     final indicatorColor =
-        isEvent ? AuraColors.accentBlue : AuraColors.textPrimary;
+        isEvent ? AuraColors.accentBlue : AuraColors.textPrimaryOf(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AuraSpacing.xs),
@@ -432,13 +432,13 @@ class _NextUpItem extends StatelessWidget {
               children: [
                 Text(
                   item['title'] as String? ?? '',
-                  style: AuraTypography.bodyPrimary,
+                  style: AuraTypography.bodyPrimary.copyWith(color: AuraColors.textPrimaryOf(context)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   item['subtitle'] as String? ?? '',
-                  style: AuraTypography.overline,
+                  style: AuraTypography.overline.copyWith(color: AuraColors.textSecondaryOf(context)),
                 ),
               ],
             ),

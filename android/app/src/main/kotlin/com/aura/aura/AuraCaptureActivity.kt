@@ -1,8 +1,13 @@
 package com.aura.aura
 
+import android.content.Context
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterActivityLaunchConfigs
+import io.flutter.embedding.android.RenderMode
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterEngineCache
+import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 
 class AuraCaptureActivity : FlutterActivity() {
@@ -13,9 +18,31 @@ class AuraCaptureActivity : FlutterActivity() {
 
     private var captureChannel: MethodChannel? = null
 
-    override fun getCachedEngineId(): String = MainActivity.CAPTURE_ENGINE_ID
+    override fun getCachedEngineId(): String? = null
 
     override fun shouldDestroyEngineWithHost(): Boolean = false
+
+    override fun getBackgroundMode(): FlutterActivityLaunchConfigs.BackgroundMode {
+        return FlutterActivityLaunchConfigs.BackgroundMode.transparent
+    }
+
+    override fun getRenderMode(): RenderMode {
+        return RenderMode.texture
+    }
+
+    override fun provideFlutterEngine(context: Context): FlutterEngine {
+        val cached = FlutterEngineCache.getInstance().get(MainActivity.CAPTURE_ENGINE_ID)
+        if (cached != null) {
+            return cached
+        }
+        val engine = FlutterEngine(context.applicationContext).apply {
+            navigationChannel.setInitialRoute("/capture-overlay")
+            dartExecutor.executeDartEntrypoint(DartExecutor.DartEntrypoint.createDefault())
+            FlutterEngineCache.getInstance().put(MainActivity.CAPTURE_ENGINE_ID, this)
+        }
+        AuraChannelRegistrar.registerWith(this, engine)
+        return engine
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,4 +76,3 @@ class AuraCaptureActivity : FlutterActivity() {
         }
     }
 }
-

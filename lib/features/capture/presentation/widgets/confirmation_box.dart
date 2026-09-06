@@ -514,7 +514,7 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 color: isSelected
                                     ? Theme.of(ctx).colorScheme.primary
-                                    : AuraColors.textPrimary,
+                                    : AuraColors.textPrimaryOf(ctx),
                               ),
                             ),
                             trailing: isSelected
@@ -528,7 +528,7 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                             },
                           );
                         }),
-                        const Divider(color: AuraColors.borderMuted, height: 1),
+                        Divider(color: AuraColors.isDarkMode(ctx) ? AuraColors.borderMuted : AuraColors.lightBorderMuted, height: 1),
                         ListTile(
                           dense: true,
                           leading: const Icon(LucideIcons.plusCircle, size: 18, color: AuraColors.accentLime),
@@ -637,7 +637,7 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                   ],
                 ),
                 const SizedBox(height: AuraSpacing.sm),
-                const Divider(color: AuraColors.borderMuted, height: 1),
+                Divider(color: AuraColors.isDarkMode(ctx) ? AuraColors.borderMuted : AuraColors.lightBorderMuted, height: 1),
                 const SizedBox(height: AuraSpacing.xs),
                 ...options.map((opt) {
                   final label = opt['label'] as String;
@@ -654,13 +654,13 @@ class _ConfirmationBoxState extends ConsumerState<ConfirmationBox> {
                     leading: Icon(
                       unit == 'none' ? LucideIcons.bellOff : LucideIcons.bell,
                       size: 18,
-                      color: isCurrent ? AuraColors.accentLime : AuraColors.textSecondary,
+                      color: isCurrent ? AuraColors.accentLime : AuraColors.textSecondaryOf(ctx),
                     ),
                     title: Text(
                       label,
                       style: AuraTypography.bodyPrimary.copyWith(
                         fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                        color: isCurrent ? AuraColors.accentLime : AuraColors.textPrimary,
+                        color: isCurrent ? AuraColors.accentLime : AuraColors.textPrimaryOf(ctx),
                       ),
                     ),
                     trailing: isCurrent
