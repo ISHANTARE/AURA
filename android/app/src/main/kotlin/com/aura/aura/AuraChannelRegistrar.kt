@@ -267,7 +267,7 @@ object AuraChannelRegistrar {
                         }
                     }
                     try {
-                        context.registerReceiver(
+                        context.applicationContext.registerReceiver(
                             dndReceiver,
                             IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
                         )
@@ -278,7 +278,7 @@ object AuraChannelRegistrar {
 
                 override fun onCancel(arguments: Any?) {
                     dndReceiver?.let {
-                        try { context.unregisterReceiver(it) } catch (_: Exception) {}
+                        try { context.applicationContext.unregisterReceiver(it) } catch (_: Exception) {}
                     }
                     dndReceiver = null
                 }
