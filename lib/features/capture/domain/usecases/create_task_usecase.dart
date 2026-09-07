@@ -11,13 +11,17 @@ class CreateTaskUseCase {
   final AppDatabase _db;
   final ItemDao _itemDao;
   final WorkspaceDao _workspaceDao;
-  final ReminderSchedulingService? _scheduling;
+  final ReminderSchedulingService _scheduling;
   static const Uuid _uuid = Uuid();
 
-  CreateTaskUseCase(this._db, {ReminderSchedulingService? scheduling})
-      : _itemDao = ItemDao(_db),
-        _workspaceDao = WorkspaceDao(_db),
-        _scheduling = scheduling;
+  CreateTaskUseCase(
+    this._db, {
+    ItemDao? itemDao,
+    WorkspaceDao? workspaceDao,
+    ReminderSchedulingService? scheduling,
+  })  : _itemDao = itemDao ?? _db.itemDao,
+        _workspaceDao = workspaceDao ?? _db.workspaceDao,
+        _scheduling = scheduling ?? ReminderSchedulingService(db: _db);
 
   /// Executes a database transaction to save the confirmed item/task,
   /// creating a workspace if needed, logging to ai_actions_log and — for any
@@ -52,8 +56,10 @@ class CreateTaskUseCase {
       // 2. Insert Item (v2 entity) — events keep their full timing metadata.
       final itemId = _uuid.v4();
       final isNote = intent.intentType == 'add_note';
-      final category =
-          isNote ? 'reminder' : (intent.intentType == 'create_alarm' ? 'alarm' : 'reminder');
+      final hasTiming = isTimedIntent(intent);
+      final category = isNote
+          ? 'reminder'
+          : (intent.intentType == 'create_alarm' && hasTiming ? 'alarm' : 'reminder');
       final kind = isNote ? 'note' : (intent.intentType == 'create_event' ? 'event' : 'task');
 
       await _itemDao.insertItem(
@@ -119,8 +125,7 @@ class CreateTaskUseCase {
       try {
         final item = await _itemDao.getById(itemId);
         if (item != null) {
-          final service = _scheduling ?? ReminderSchedulingService(db: _db);
-          final outcome = await service.syncForItem(
+          final outcome = await _scheduling.syncForItem(
             item,
             extractedReminders:
                 intent.reminders.isNotEmpty ? intent.reminders : null,
@@ -139,7 +144,6 @@ class CreateTaskUseCase {
   }
 
   static bool isTimedIntent(IntentResult intent) {
-    if (intent.intentType == 'create_alarm') return true;
     return intent.deadline != null ||
         intent.eventStart != null ||
         intent.reminders.isNotEmpty;

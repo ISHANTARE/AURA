@@ -94,8 +94,26 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
 
         final isCompleted = item.status == 'completed';
 
-        return Scaffold(
-          backgroundColor: bg,
+        return PopScope(
+          canPop: true,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) {
+              final newNotes = _notesController.text.trim();
+              final notesChanged = newNotes != (item.notes ?? '').trim();
+              final newTitle = _titleController.text.trim();
+              final titleChanged = _isEditingTitle && newTitle.isNotEmpty && newTitle != item.title;
+
+              if (notesChanged || titleChanged) {
+                await UpdateTaskDetailUseCase(itemDao).execute(
+                  itemId: item.id,
+                  notes: notesChanged ? newNotes : null,
+                  title: titleChanged ? newTitle : null,
+                );
+              }
+            }
+          },
+          child: Scaffold(
+            backgroundColor: bg,
           appBar: AppBar(
             backgroundColor: bg,
             elevation: 0,
@@ -184,9 +202,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen>
               ),
             ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
   }
 }
 
@@ -764,8 +783,25 @@ class _NoteDetailViewState extends ConsumerState<_NoteDetailView> {
     final textPrimary = AuraColors.textPrimaryOf(context);
     final textMuted = AuraColors.textMutedOf(context);
 
-    return Scaffold(
-      backgroundColor: bg,
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          final newTitle = _titleController.text.trim().isEmpty
+              ? 'Untitled Note'
+              : _titleController.text.trim();
+          final newNotes = _contentController.text.trim();
+          if (newTitle != widget.item.title || newNotes != (widget.item.notes ?? '')) {
+            await UpdateTaskDetailUseCase(itemDao).execute(
+              itemId: widget.item.id,
+              title: newTitle,
+              notes: newNotes,
+            );
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: bg,
         elevation: 0,
@@ -884,6 +920,7 @@ class _NoteDetailViewState extends ConsumerState<_NoteDetailView> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

@@ -53,7 +53,7 @@ class ReplayDndNotificationsUseCase {
 
     // Secondary fallback: pending items due within the last 12 hours.
     final twelveHoursAgo = nowMs - (12 * 3600 * 1000);
-    final activeItems = await _db.itemDao.watchAllActive().first;
+    final activeItems = await _db.itemDao.getAllActive();
     final missedDndItems = activeItems.where((t) {
       if (t.status == 'completed') return false;
       final time = t.fireAt ?? t.deadline;

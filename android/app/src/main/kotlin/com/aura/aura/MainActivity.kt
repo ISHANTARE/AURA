@@ -48,6 +48,12 @@ class MainActivity : FlutterActivity() {
         captureEngine?.let { AuraChannelRegistrar.registerWith(this, it) }
     }
 
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        AuraChannelRegistrar.unregisterWith(flutterEngine)
+        captureEngine?.let { AuraChannelRegistrar.unregisterWith(it) }
+        super.cleanUpFlutterEngine(flutterEngine)
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // Ringtone picker result callback
     // ──────────────────────────────────────────────────────────────────────────

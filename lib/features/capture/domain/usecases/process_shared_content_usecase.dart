@@ -2,7 +2,6 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../database/app_database.dart';
-import '../../../../database/daos/shared_content_dao.dart';
 import '../../../../platform/share_channel.dart';
 import '../../data/datasources/link_reader_data_source.dart';
 import '../../data/datasources/ocr_data_source.dart';

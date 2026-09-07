@@ -66,7 +66,7 @@
                 <data android:mimeType="image/*" />
                 <data android:mimeType="audio/*" />
                 <data android:mimeType="video/*" />
-                <data android:mimeType="application/*" />
+                <data android:mimeType="application/pdf" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
@@ -75,7 +75,7 @@
                 <data android:mimeType="image/*" />
                 <data android:mimeType="audio/*" />
                 <data android:mimeType="video/*" />
-                <data android:mimeType="application/*" />
+                <data android:mimeType="application/pdf" />
             </intent-filter>
         </activity>
 

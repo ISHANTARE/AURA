@@ -12,6 +12,7 @@ import '../../domain/usecases/create_task_usecase.dart';
 import '../../domain/usecases/execute_ai_action_usecase.dart';
 import '../../domain/usecases/queue_offline_transcript_usecase.dart';
 import '../../domain/usecases/workspace_router_usecase.dart';
+import '../../../reminders/domain/services/reminder_scheduling_service.dart';
 
 /// SharedPreferences key holding an optional BCP-47 voice-locale override
 /// (Settings → Voice). Null/unset ⇒ follow the device's default locale.
@@ -33,7 +34,8 @@ final workspaceRouterUseCaseProvider = Provider<WorkspaceRouterUseCase>((ref) {
 
 final createTaskUseCaseProvider = Provider<CreateTaskUseCase>((ref) {
   final db = ref.watch(databaseProvider);
-  return CreateTaskUseCase(db);
+  final scheduling = ref.watch(reminderSchedulingServiceProvider);
+  return CreateTaskUseCase(db, scheduling: scheduling);
 });
 
 final queueOfflineTranscriptUseCaseProvider =

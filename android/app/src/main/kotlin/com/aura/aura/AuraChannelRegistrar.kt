@@ -40,6 +40,14 @@ object AuraChannelRegistrar {
         registerDndChannels(context, engine)
     }
 
+    /**
+     * Unregister and clean up platform channels associated with [engine].
+     */
+    fun unregisterWith(engine: FlutterEngine) {
+        val engineId = engine.hashCode().toString()
+        speechChannels.remove(engineId)?.destroy()
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // aura/overlay — single handler; includes ringtone picker when Activity
     // is available so MainActivity never double-registers this channel.
@@ -81,11 +89,11 @@ object AuraChannelRegistrar {
                     }
 
                     "stopOverlay" -> {
-                        val intent = Intent(context, AuraOverlayService::class.java).apply {
-                            action = "STOP_ORB"
-                        }
                         try {
-                            context.startService(intent)
+                            if (AuraOverlayService.isRunning) {
+                                val intent = Intent(context, AuraOverlayService::class.java)
+                                context.stopService(intent)
+                            }
                         } catch (e: Exception) {
                             Log.e("AuraChannelRegistrar", "stopOverlay failed: ${e.message}", e)
                         }

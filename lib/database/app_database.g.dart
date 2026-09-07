@@ -5774,12 +5774,29 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $OfflineQueuesTable offlineQueues = $OfflineQueuesTable(this);
   late final $DailyLogsTable dailyLogs = $DailyLogsTable(this);
   late final $SyncQueuesTable syncQueues = $SyncQueuesTable(this);
+  late final Index itemsWorkspaceIdIdx = Index('items_workspace_id_idx',
+      'CREATE INDEX items_workspace_id_idx ON items (workspace_id, deleted_at)');
+  late final Index itemsCategoryIdx = Index('items_category_idx',
+      'CREATE INDEX items_category_idx ON items (category, deleted_at)');
+  late final Index itemsKindIdx = Index('items_kind_idx',
+      'CREATE INDEX items_kind_idx ON items (kind, deleted_at)');
+  late final Index itemsStatusPriorityIdx = Index('items_status_priority_idx',
+      'CREATE INDEX items_status_priority_idx ON items (status, priority, deleted_at)');
+  late final Index itemsFireAtIdx = Index(
+      'items_fire_at_idx', 'CREATE INDEX items_fire_at_idx ON items (fire_at)');
+  late final Index itemsDeadlineIdx = Index('items_deadline_idx',
+      'CREATE INDEX items_deadline_idx ON items (deadline)');
+  late final Index itemsParentIdIdx = Index('items_parent_id_idx',
+      'CREATE INDEX items_parent_id_idx ON items (parent_id)');
   late final ItemDao itemDao = ItemDao(this as AppDatabase);
   late final WorkspaceDao workspaceDao = WorkspaceDao(this as AppDatabase);
   late final NotificationDao notificationDao =
       NotificationDao(this as AppDatabase);
   late final OfflineQueueDao offlineQueueDao =
       OfflineQueueDao(this as AppDatabase);
+  late final DailyLogDao dailyLogDao = DailyLogDao(this as AppDatabase);
+  late final SharedContentDao sharedContentDao =
+      SharedContentDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5795,7 +5812,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         aiActionsLogs,
         offlineQueues,
         dailyLogs,
-        syncQueues
+        syncQueues,
+        itemsWorkspaceIdIdx,
+        itemsCategoryIdx,
+        itemsKindIdx,
+        itemsStatusPriorityIdx,
+        itemsFireAtIdx,
+        itemsDeadlineIdx,
+        itemsParentIdIdx
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(

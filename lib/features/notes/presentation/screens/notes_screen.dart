@@ -13,6 +13,7 @@ import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../reminders/domain/services/reminder_scheduling_service.dart';
 
 import '../providers/note_sort_provider.dart';
 
@@ -173,6 +174,11 @@ class NotesScreen extends ConsumerWidget {
                                 color: textMuted, size: 18),
                             onPressed: () async {
                               HapticFeedback.mediumImpact();
+                              try {
+                                await ref
+                                    .read(reminderSchedulingServiceProvider)
+                                    .cancelForItem(note.id);
+                              } catch (_) {}
                               await itemDao.softDelete(note.id);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(

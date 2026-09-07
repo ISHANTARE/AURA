@@ -11,6 +11,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../tasks/presentation/widgets/manual_task_sheet.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../reminders/domain/services/reminder_scheduling_service.dart';
 import '../providers/workspace_providers.dart';
 
 /// Workspace Detail Screen — AURA v2 Redesigned 3-Tab Workspace View
@@ -371,6 +372,11 @@ class _WorkspaceSharedList extends ConsumerWidget {
                         icon: Icon(LucideIcons.trash2, size: 18, color: textMuted),
                         onPressed: () async {
                           final itemDao = ref.read(itemDaoProvider);
+                          try {
+                            await ref
+                                .read(reminderSchedulingServiceProvider)
+                                .cancelForItem(item.id);
+                          } catch (_) {}
                           await itemDao.softDelete(item.id);
                         },
                       ),

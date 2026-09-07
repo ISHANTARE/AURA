@@ -21,6 +21,8 @@ import 'daos/item_dao.dart';
 import 'daos/workspace_dao.dart';
 import 'daos/notification_dao.dart';
 import 'daos/offline_queue_dao.dart';
+import 'daos/daily_log_dao.dart';
+import 'daos/shared_content_dao.dart';
 
 export 'tables/workspaces_table.dart';
 export 'tables/workspace_sections_table.dart';
@@ -38,8 +40,15 @@ export 'daos/item_dao.dart';
 export 'daos/workspace_dao.dart';
 export 'daos/notification_dao.dart';
 export 'daos/offline_queue_dao.dart';
+export 'daos/daily_log_dao.dart';
+export 'daos/shared_content_dao.dart';
 
 part 'app_database.g.dart';
+
+bool _isAlreadyExistsError(Object error) {
+  final msg = error.toString().toLowerCase();
+  return msg.contains('already exists') || msg.contains('duplicate column');
+}
 
 /// AURA v2 Single SQLite Database
 ///
@@ -64,6 +73,8 @@ part 'app_database.g.dart';
     WorkspaceDao,
     NotificationDao,
     OfflineQueueDao,
+    DailyLogDao,
+    SharedContentDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -71,7 +82,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -81,14 +92,17 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             // Idempotently create any tables missing from schema v1.
-            // Failures are logged — a real failure (disk full) must not be
-            // indistinguishable from "table already exists".
+            // Only 'already exists' errors are ignored; genuine I/O errors rethrow.
             for (final table in allTables) {
               try {
                 await m.createTable(table);
               } catch (e) {
-                debugPrint('Migration v$from→v2: '
-                    'createTable(${table.actualTableName}) skipped/failed: $e');
+                if (_isAlreadyExistsError(e)) {
+                  debugPrint('Migration v$from→v2: '
+                      'createTable(${table.actualTableName}) skipped (already exists).');
+                } else {
+                  rethrow;
+                }
               }
             }
           }
@@ -97,8 +111,11 @@ class AppDatabase extends _$AppDatabase {
             try {
               await m.addColumn(items, items.parentId);
             } catch (e) {
-              debugPrint('Migration v$from→v3: addColumn(parent_id) '
-                  'skipped/failed (may already exist): $e');
+              if (_isAlreadyExistsError(e)) {
+                debugPrint('Migration v$from→v3: addColumn(parent_id) skipped (already exists).');
+              } else {
+                rethrow;
+              }
             }
           }
           if (from < 4) {
@@ -106,8 +123,34 @@ class AppDatabase extends _$AppDatabase {
             try {
               await m.addColumn(items, items.soundUri);
             } catch (e) {
-              debugPrint('Migration v$from→v4: addColumn(sound_uri) '
-                  'skipped/failed (may already exist): $e');
+              if (_isAlreadyExistsError(e)) {
+                debugPrint('Migration v$from→v4: addColumn(sound_uri) skipped (already exists).');
+              } else {
+                rethrow;
+              }
+            }
+          }
+          if (from < 5) {
+            // Add secondary indexes for Items table query performance
+            final indexStatements = [
+              'CREATE INDEX IF NOT EXISTS items_workspace_id_idx ON items (workspace_id, deleted_at);',
+              'CREATE INDEX IF NOT EXISTS items_category_idx ON items (category, deleted_at);',
+              'CREATE INDEX IF NOT EXISTS items_kind_idx ON items (kind, deleted_at);',
+              'CREATE INDEX IF NOT EXISTS items_status_priority_idx ON items (status, priority, deleted_at);',
+              'CREATE INDEX IF NOT EXISTS items_fire_at_idx ON items (fire_at);',
+              'CREATE INDEX IF NOT EXISTS items_deadline_idx ON items (deadline);',
+              'CREATE INDEX IF NOT EXISTS items_parent_id_idx ON items (parent_id);',
+            ];
+            for (final sql in indexStatements) {
+              try {
+                await customStatement(sql);
+              } catch (e) {
+                if (_isAlreadyExistsError(e)) {
+                  debugPrint('Migration v$from→v5: index already exists.');
+                } else {
+                  rethrow;
+                }
+              }
             }
           }
         },
@@ -132,8 +175,10 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('PRAGMA foreign_keys = ON;');
     }
     try {
-      await customStatement('VACUUM;');
-    } catch (_) {}
+      await customStatement('VACUUM;').timeout(const Duration(seconds: 3));
+    } catch (e) {
+      debugPrint('wipeAllData: VACUUM skipped or timed out: $e');
+    }
   }
 }
 

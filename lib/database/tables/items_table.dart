@@ -5,6 +5,13 @@ import 'workspace_sections_table.dart';
 /// Unified Items Table (Alarms & Reminders [Generic / Task / Event])
 /// AURA v2 Canonical Data Model
 @DataClassName('Item')
+@TableIndex(name: 'items_workspace_id_idx', columns: {#workspaceId, #deletedAt})
+@TableIndex(name: 'items_category_idx', columns: {#category, #deletedAt})
+@TableIndex(name: 'items_kind_idx', columns: {#kind, #deletedAt})
+@TableIndex(name: 'items_status_priority_idx', columns: {#status, #priority, #deletedAt})
+@TableIndex(name: 'items_fire_at_idx', columns: {#fireAt})
+@TableIndex(name: 'items_deadline_idx', columns: {#deadline})
+@TableIndex(name: 'items_parent_id_idx', columns: {#parentId})
 class Items extends Table {
   TextColumn get id => text()();
   TextColumn get workspaceId => text().nullable().references(Workspaces, #id)();

@@ -77,6 +77,19 @@ class AuraSpeechChannel(private val context: Context) : RecognitionListener {
         )
     }
 
+    fun destroy() {
+        try {
+            recognizer?.destroy()
+        } catch (e: Exception) {
+            // Ignore error during cleanup
+        }
+        recognizer = null
+        partialSink = null
+        audioLevelSink = null
+        stateSink = null
+        errorSink = null
+    }
+
     private fun startListening(localeId: String?) {
         recognizer?.destroy()
         recognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {

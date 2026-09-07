@@ -2,7 +2,6 @@ import 'package:drift/drift.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../database/app_database.dart';
-import '../../../../database/daos/daily_log_dao.dart';
 import '../../../reminders/domain/services/recurrence_resolver.dart';
 
 /// Recurring Task Reset Use Case — Sprint 10 (F-12)
@@ -23,7 +22,7 @@ class RecurringTaskResetUseCase {
 
   RecurringTaskResetUseCase({required AppDatabase db, DailyLogDao? dailyLogDao})
       : _db = db,
-        _dailyLogDao = dailyLogDao ?? DailyLogDao(db);
+        _dailyLogDao = dailyLogDao ?? db.dailyLogDao;
 
   Future<void> execute() async {
     final prefs = await SharedPreferences.getInstance();
@@ -59,7 +58,7 @@ class RecurringTaskResetUseCase {
 
       final wasCompleted = item.status == 'completed';
 
-      // Write daily log for yesterday
+      // Write daily log for yesterday with insertOrReplace to avoid PK collisions
       await _dailyLogDao.insertLog(
         DailyLogsCompanion(
           id: Value('${item.id}_$yesterdayLogDate'),
@@ -69,6 +68,7 @@ class RecurringTaskResetUseCase {
           doneAt: Value(wasCompleted ? nowMs : null),
           createdAt: Value(nowMs),
         ),
+        mode: InsertMode.insertOrReplace,
       );
 
       // Reset completed recurring items back to pending for today

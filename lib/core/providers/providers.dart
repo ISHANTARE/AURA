@@ -94,29 +94,30 @@ final workspacesListProvider = StreamProvider<List<Workspace>>((ref) {
 
 /// Stream provider for notes (items with kind == 'note' or category == 'note')
 final notesListProvider = StreamProvider<List<Item>>((ref) {
-  return ref.watch(itemDaoProvider).watchAllActive().map((allItems) {
-    return allItems
-        .where((i) =>
-            i.category != 'alarm' &&
-            (i.kind == 'note' || i.category == 'note'))
-        .toList();
-  });
+  return ref.watch(itemDaoProvider).watchNotes();
 });
 
 // ── User Preferences Providers ────────────────────────────────────────────────
 
 class UserNameNotifier extends StateNotifier<String> {
-  UserNameNotifier() : super('there') {
+  static String? _cachedName;
+
+  UserNameNotifier() : super(_cachedName ?? 'there') {
     _loadName();
   }
 
   Future<void> _loadName() async {
     final prefs = await SharedPreferences.getInstance();
-    state = prefs.getString('USER_NAME') ?? 'there';
+    final name = prefs.getString('USER_NAME') ?? 'there';
+    _cachedName = name;
+    if (mounted && state != name) {
+      state = name;
+    }
   }
 
   Future<void> setName(String newName) async {
     state = newName;
+    _cachedName = newName;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('USER_NAME', newName);
   }
@@ -125,6 +126,7 @@ class UserNameNotifier extends StateNotifier<String> {
   Future<void> reset() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('USER_NAME');
+    _cachedName = 'there';
     state = 'there';
   }
 }
@@ -156,27 +158,11 @@ class QuickStats {
 final quickStatsProvider = StreamProvider<QuickStats>((ref) {
   ref.watch(dayRefreshProvider);
   final itemDao = ref.watch(itemDaoProvider);
-  return itemDao.watchAllActive().map((allItems) {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    int pending = 0;
-    int completed = 0;
-    int overdue = 0;
-
-    for (final item in allItems) {
-      if (item.status == 'completed') {
-        completed++;
-      } else if (item.status == 'pending') {
-        final deadline = item.deadline ?? item.fireAt;
-        if (deadline != null && deadline < now) {
-          overdue++;
-        } else {
-          pending++;
-        }
-      }
-    }
-
-    return QuickStats(pending: pending, completed: completed, overdue: overdue);
-  });
+  return itemDao.watchQuickStatsSummary().map((summary) => QuickStats(
+        pending: summary.pending,
+        completed: summary.completed,
+        overdue: summary.overdue,
+      ));
 });
 
 // ── Reminder Usecase Providers ────────────────────────────────────────────────

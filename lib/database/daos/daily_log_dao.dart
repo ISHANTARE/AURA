@@ -3,18 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/providers.dart';
 
-class DailyLogDao {
-  final AppDatabase db;
-  DailyLogDao(this.db);
+part 'daily_log_dao.g.dart';
+
+@DriftAccessor(tables: [DailyLogs])
+class DailyLogDao extends DatabaseAccessor<AppDatabase> with _$DailyLogDaoMixin {
+  DailyLogDao(super.db);
 
   Future<void> insertLog(DailyLogsCompanion log, {InsertMode mode = InsertMode.insertOrReplace}) =>
-      db.into(db.dailyLogs).insert(log, mode: mode);
+      into(dailyLogs).insert(log, mode: mode);
 
   Future<List<DailyLog>> getLogsForItem(String itemId) =>
-      (db.select(db.dailyLogs)..where((d) => d.itemId.equals(itemId))).get();
+      (select(dailyLogs)..where((d) => d.itemId.equals(itemId))).get();
 
   Future<List<DailyLog>> getLogsForDate(int logDate) =>
-      (db.select(db.dailyLogs)..where((d) => d.logDate.equals(logDate))).get();
+      (select(dailyLogs)..where((d) => d.logDate.equals(logDate))).get();
 }
 
 final dailyLogDaoProvider = Provider<DailyLogDao>(

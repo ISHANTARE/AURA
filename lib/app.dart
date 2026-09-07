@@ -77,15 +77,21 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
   Future<void> _onAppActive() async {
     // Each startup job runs isolated: one failing step must never starve the
     // remaining ones (a thrown exact-alarm exception used to kill them all).
+    // Process any actions triggered in background notifications first.
     await _guarded('background-actions', _processPendingBackgroundActions);
-    await _guarded('briefing-scheduler',
-        () => ref.read(briefingSchedulerProvider).onAppActive());
-    await _guarded(
-        'recurring-reset', () => ref.read(recurringTaskResetProvider).execute());
-    await _guarded(
-        'nudges', () => ref.read(nudgeEngineProvider).evaluateAndNudge());
-    await _guarded('overdue-check',
-        () => ref.read(overdueReminderUseCaseProvider).execute());
+
+    // Concurrently evaluate independent startup background tasks to prevent
+    // sequential blocking jank on app resume.
+    await Future.wait([
+      _guarded('briefing-scheduler',
+          () => ref.read(briefingSchedulerProvider).onAppActive()),
+      _guarded('recurring-reset',
+          () => ref.read(recurringTaskResetProvider).execute()),
+      _guarded(
+          'nudges', () => ref.read(nudgeEngineProvider).evaluateAndNudge()),
+      _guarded('overdue-check',
+          () => ref.read(overdueReminderUseCaseProvider).execute()),
+    ]);
 
     // Heal DB ↔ OS schedule drift (fired marks, recurring advances, reboot
     // recovery). Cheap when everything is already in sync.
@@ -123,7 +129,15 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
 
       final action = parts[0];
       final payload = parts.sublist(1).join(':');
-      final itemId = payload.replaceAll('item:', '');
+      final rawItemId = payload.startsWith('item:') ? payload.substring(5) : payload;
+      final itemId = rawItemId.trim();
+
+      // Validate ID format: safe alphanumeric / UUID format (no SQL injection or arbitrary chars)
+      final idPattern = RegExp(r'^[a-zA-Z0-9_\-]{1,64}$');
+      if (!idPattern.hasMatch(itemId)) {
+        debugPrint('Discarding invalid pending background action item ID: $itemId');
+        return;
+      }
 
       final itemDao = ref.read(itemDaoProvider);
       final snoozeUseCase = ref.read(snoozeReminderUseCaseProvider);

@@ -60,7 +60,7 @@ abstract final class RecurrenceResolver {
     final weekdays = parseWeekdays(recurrenceRule);
     if (weekdays != null) {
       if (weekdays.isEmpty) return null;
-      for (var offset = 0; offset <= 7; offset++) {
+      for (var offset = 0; offset <= 14; offset++) {
         final day = DateTime(after.year, after.month, after.day + offset);
         final candidate = DateTime(
           day.year,

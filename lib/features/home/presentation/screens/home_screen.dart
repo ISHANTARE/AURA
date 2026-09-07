@@ -39,8 +39,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       duration: const Duration(milliseconds: 600),
     );
 
-    for (int i = 0; i < 4; i++) {
-      final start = (i * 0.12).clamp(0.0, 1.0);
+    for (int i = 0; i < 5; i++) {
+      final start = (i * 0.10).clamp(0.0, 1.0);
       final end = (start + 0.50).clamp(0.0, 1.0);
       _cellAnims.add(
         CurvedAnimation(
@@ -94,8 +94,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────────────────
-            _buildHeader(greeting, dateStr),
+            // ── Header (Stagger Animation Cell 0) ───────────────────────
+            _StaggerCell(
+              animation: _cellAnims[0],
+              child: _buildHeader(greeting, dateStr),
+            ),
 
             // ── Cockpit Content ─────────────────────────────────────────
             Expanded(
@@ -109,7 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
                       // 1. Top Quick Stats Row (Always Today's data)
                       _StaggerCell(
-                        animation: _cellAnims[0],
+                        animation: _cellAnims[1],
                         child: const QuickStatsRow(),
                       ),
 
@@ -117,7 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
                       // 2. Row 1: URGENT (58%) + ORB (42%)
                       _StaggerCell(
-                        animation: _cellAnims[1],
+                        animation: _cellAnims[2],
                         child: SizedBox(
                           height: 148,
                           child: Row(
@@ -145,7 +148,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
                       // 3. Day Navigation Control (< -> Date -> >) + [Pending | Done] Box
                       _StaggerCell(
-                        animation: _cellAnims[2],
+                        animation: _cellAnims[3],
                         child: const AuraDateNavigator(),
                       ),
 
@@ -153,7 +156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
                       // 4. Day-Specific Agenda / Task List
                       _StaggerCell(
-                        animation: _cellAnims[3],
+                        animation: _cellAnims[4],
                         child: const DayAgendaView(),
                       ),
 

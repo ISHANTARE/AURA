@@ -26,7 +26,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentPage = 0;
 
   // Selected workspaces for Screen 3
-  final Set<String> _selectedWorkspaces = {'College', 'Academics'};
+  final Set<String> _selectedWorkspaces = {'Personal', 'Work'};
 
   @override
   void dispose() {
@@ -341,7 +341,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   // Slide 3: First Workspaces
   Widget _buildWorkspacesSlide() {
-    const suggestions = ['College', 'Academics', 'Internship', 'Personal', 'Health', 'Placements'];
+    const suggestions = ['Personal', 'Work', 'Health', 'Finance', 'Projects', 'Studies'];
 
     return Padding(
       padding: const EdgeInsets.all(AuraSpacing.xl),

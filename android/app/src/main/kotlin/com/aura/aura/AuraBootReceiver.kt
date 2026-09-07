@@ -14,6 +14,10 @@ class AuraBootReceiver : BroadcastReceiver() {
             val isOrbEnabled = prefs.getBoolean("orb_enabled", false)
 
             if (isOrbEnabled) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !android.provider.Settings.canDrawOverlays(context)) {
+                    android.util.Log.w("AuraBootReceiver", "Overlay permission not granted; skipping auto-start on boot")
+                    return
+                }
                 val serviceIntent = Intent(context, AuraOverlayService::class.java).apply {
                     this.action = "START_ORB"
                 }

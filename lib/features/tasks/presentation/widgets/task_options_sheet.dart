@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../reminders/domain/services/reminder_scheduling_service.dart';
 
 /// Task Options Bottom Sheet (Share / Duplicate / Move / Delete)
 class TaskOptionsSheet extends ConsumerWidget {
@@ -43,11 +45,16 @@ class TaskOptionsSheet extends ConsumerWidget {
           top: BorderSide(
               color: AuraColors.borderOf(context), width: AuraSpacing.borderWidth),
         ),
+        borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(16)),
       ),
-      padding: const EdgeInsets.all(AuraSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AuraSpacing.md,
+        vertical: AuraSpacing.md,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header
           Row(
@@ -55,8 +62,8 @@ class TaskOptionsSheet extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  taskTitle,
-                  style: AuraTypography.screenHeader.copyWith(color: AuraColors.textPrimaryOf(context)),
+                  taskTitle.toUpperCase(),
+                  style: AuraTypography.screenHeader,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -79,14 +86,18 @@ class TaskOptionsSheet extends ConsumerWidget {
             onTap: () async {
               HapticFeedback.lightImpact();
               Navigator.of(context).pop();
-              await Clipboard.setData(ClipboardData(text: 'AURA Task: $taskTitle'));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Task copied to clipboard!'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
+              try {
+                await Share.share('AURA Task: $taskTitle', subject: taskTitle);
+              } catch (_) {
+                await Clipboard.setData(ClipboardData(text: 'AURA Task: $taskTitle'));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Task copied to clipboard!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
               }
             },
           ),
@@ -133,7 +144,7 @@ class TaskOptionsSheet extends ConsumerWidget {
             titleColor: AuraColors.accentRed,
             onTap: () {
               Navigator.of(context).pop();
-              _showDeleteConfirmationDialog(context, itemDao);
+              _showDeleteConfirmationDialog(context, itemDao, ref);
             },
           ),
 
@@ -161,8 +172,15 @@ class TaskOptionsSheet extends ConsumerWidget {
           children: workspaces
               .map(
                 (ws) => ListTile(
+                  leading: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: hexToColor(ws.colorHex),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                   title: Text(ws.name, style: AuraTypography.cardTitle),
-                  subtitle: Text(ws.colorHex, style: AuraTypography.bodySmall),
                   onTap: () async {
                     HapticFeedback.lightImpact();
                     await itemDao.updateWorkspace(taskId, ws.id);
@@ -184,7 +202,11 @@ class TaskOptionsSheet extends ConsumerWidget {
     );
   }
 
-  void _showDeleteConfirmationDialog(BuildContext context, ItemDao itemDao) {
+  void _showDeleteConfirmationDialog(
+    BuildContext context,
+    ItemDao itemDao,
+    WidgetRef ref,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -210,6 +232,9 @@ class TaskOptionsSheet extends ConsumerWidget {
             ),
             onPressed: () async {
               HapticFeedback.mediumImpact();
+              try {
+                await ref.read(reminderSchedulingServiceProvider).cancelForItem(taskId);
+              } catch (_) {}
               await itemDao.softDelete(taskId);
               if (ctx.mounted) {
                 Navigator.of(ctx).pop();

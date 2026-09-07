@@ -216,47 +216,75 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
     return newId;
   }
 
+  /// Watch notes (items where category != 'alarm' and (kind == 'note' or category == 'note'))
+  Stream<List<Item>> watchNotes() =>
+      (select(items)
+        ..where((t) =>
+            t.deletedAt.isNull() &
+            t.category.isNotValue('alarm') &
+            (t.kind.equals('note') | t.category.equals('note')))
+        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+      .watch();
+
+  /// Watch lightweight stats summary for active items (pending, completed, overdue)
+  Stream<({int pending, int completed, int overdue})> watchQuickStatsSummary() {
+    return (selectOnly(items)
+          ..addColumns([items.id, items.status, items.deadline, items.fireAt])
+          ..where(items.deletedAt.isNull()))
+        .watch()
+        .map((rows) {
+          final now = DateTime.now().millisecondsSinceEpoch;
+          int pending = 0;
+          int completed = 0;
+          int overdue = 0;
+
+          for (final row in rows) {
+            final status = row.read(items.status);
+            if (status == 'completed') {
+              completed++;
+            } else if (status == 'pending') {
+              final deadline = row.read(items.deadline) ?? row.read(items.fireAt);
+              if (deadline != null && deadline < now) {
+                overdue++;
+              } else {
+                pending++;
+              }
+            }
+          }
+          return (pending: pending, completed: completed, overdue: overdue);
+        });
+  }
+
   /// Hard delete item by ID, cleaning up any associated reminders, shared content, and physical media files
   Future<int> hardDelete(String id) async {
     final item = await getById(id);
+    final filesToDelete = <String>[];
+
     if (item != null) {
-      // 1. Delete associated physical file if referenced in location
+      // 1. Collect associated physical file if referenced in location
       if (item.location != null && item.location!.isNotEmpty) {
-        try {
-          final file = File(item.location!);
-          if (await file.exists()) {
-            await file.delete();
-          }
-        } catch (_) {}
+        filesToDelete.add(item.location!);
       }
 
-      // 2. Delete associated physical file if referenced in notes attachment tag
+      // 2. Collect associated physical file if referenced in notes attachment tag
       if (item.notes != null && item.notes!.isNotEmpty) {
         final match = RegExp(r'\[Attachment:\s*([^\]]+)\]').firstMatch(item.notes!);
         if (match != null) {
           final path = match.group(1)?.trim();
           if (path != null && path.isNotEmpty) {
-            try {
-              final file = File(path);
-              if (await file.exists()) {
-                await file.delete();
-              }
-            } catch (_) {}
+            filesToDelete.add(path);
           }
         }
       }
+    }
 
-      // 3. Delete shared contents entry and any linked raw file
+    final deletedCount = await transaction(() async {
+      // 3. Delete shared contents entry and collect any linked raw file
       try {
         final sharedRecords = await (db.select(db.sharedContents)..where((s) => s.itemId.equals(id))).get();
         for (final record in sharedRecords) {
           if (record.rawPath != null && record.rawPath!.isNotEmpty) {
-            try {
-              final file = File(record.rawPath!);
-              if (await file.exists()) {
-                await file.delete();
-              }
-            } catch (_) {}
+            filesToDelete.add(record.rawPath!);
           }
         }
         await (db.delete(db.sharedContents)..where((s) => s.itemId.equals(id))).go();
@@ -264,8 +292,21 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
 
       // 4. Delete sub-reminders
       await (delete(remindersSchedule)..where((r) => r.itemId.equals(id))).go();
+
+      // 5. Delete item itself
+      return (delete(items)..where((t) => t.id.equals(id))).go();
+    });
+
+    // 6. Safely delete physical files from disk only after the DB transaction succeeds
+    for (final path in filesToDelete) {
+      try {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (_) {}
     }
 
-    return (delete(items)..where((t) => t.id.equals(id))).go();
+    return deletedCount;
   }
 }

@@ -40,7 +40,9 @@ class WorkspaceDao extends DatabaseAccessor<AppDatabase> with _$WorkspaceDaoMixi
     return (select(items)
           ..where((t) => t.workspaceId.equals(workspaceId))
           ..where((t) => t.status.isNotIn(const ['completed', 'cancelled']))
-          ..where((t) => t.deadline.isSmallerThanValue(now) | t.fireAt.isSmallerThanValue(now))
+          ..where((t) =>
+              (t.deadline.isNotNull() & t.deadline.isSmallerThanValue(now)) |
+              (t.deadline.isNull() & t.fireAt.isNotNull() & t.fireAt.isSmallerThanValue(now)))
           ..where((t) => t.deletedAt.isNull()))
         .watch()
         .map((list) => list.length);
