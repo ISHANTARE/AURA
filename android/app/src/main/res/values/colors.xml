@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AURA Deep OLED Black Theme Color -->
+    <color name="splash_bg">#0D0D11</color>
+    <color name="aura_primary">#7B6FF0</color>
+</resources>
