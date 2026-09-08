@@ -251,19 +251,34 @@ class _AlarmsScreenState extends ConsumerState<AlarmsScreen>
                                     color: textMuted, size: 20),
                                 onPressed: () async {
                                   HapticFeedback.mediumImpact();
-                                  // Cancel every notification variant first, then
-                                  // soft-delete the row.
-                                  await ref
-                                      .read(reminderSchedulingServiceProvider)
-                                      .cancelForItem(alarm.id);
-                                  await itemDao.softDelete(alarm.id);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Alarm deleted'),
-                                        duration: Duration(seconds: 2),
-                                      ),
-                                    );
+                                  try {
+                                    await ref
+                                        .read(reminderSchedulingServiceProvider)
+                                        .cancelForItem(alarm.id);
+                                  } catch (e) {
+                                    debugPrint('cancelForItem skipped with warning: $e');
+                                  }
+                                  try {
+                                    await itemDao.softDelete(alarm.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Alarm deleted'),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    debugPrint('softDelete error: $e');
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Failed to delete alarm: $e'),
+                                          backgroundColor: AuraColors.accentRed,
+                                          duration: const Duration(seconds: 3),
+                                        ),
+                                      );
+                                    }
                                   }
                                 },
                               ),

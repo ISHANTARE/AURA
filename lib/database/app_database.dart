@@ -155,6 +155,7 @@ class AppDatabase extends _$AppDatabase {
           }
         },
         beforeOpen: (details) async {
+          await customStatement('PRAGMA busy_timeout = 10000');
           await customStatement('PRAGMA foreign_keys = ON');
           await customStatement('PRAGMA journal_mode = WAL');
           await customStatement('PRAGMA cache_size = 2000');
@@ -187,6 +188,13 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dir = await getApplicationDocumentsDirectory();
     final file = File(p.join(dir.path, 'aura.db'));
-    return NativeDatabase.createInBackground(file);
+    return NativeDatabase.createInBackground(
+      file,
+      setup: (rawDb) {
+        rawDb.execute('PRAGMA journal_mode = WAL;');
+        rawDb.execute('PRAGMA busy_timeout = 10000;');
+        rawDb.execute('PRAGMA synchronous = NORMAL;');
+      },
+    );
   });
 }

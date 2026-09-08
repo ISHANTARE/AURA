@@ -551,36 +551,46 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                     updatedAt: Value(nowEpoch),
                   );
 
-                  await itemDao.upsertItem(companion);
+                  try {
+                    await itemDao.upsertItem(companion);
 
-                  // Schedule through the single scheduling path — recurring
-                  // weekday alarms become native weekly OS repeats that fire
-                  // even when the app process is dead.
-                  final savedItem = await itemDao.getById(alarmId);
-                  if (savedItem != null) {
-                    final outcome = await ref
-                        .read(reminderSchedulingServiceProvider)
-                        .syncForItem(savedItem, soundUri: _selectedSoundUri);
-                    if (outcome.usedInexactFallback && mounted) {
+                    // Schedule through the single scheduling path — recurring
+                    // weekday alarms become native weekly OS repeats that fire
+                    // even when the app process is dead.
+                    final savedItem = await itemDao.getById(alarmId);
+                    if (savedItem != null) {
+                      final outcome = await ref
+                          .read(reminderSchedulingServiceProvider)
+                          .syncForItem(savedItem, soundUri: _selectedSoundUri);
+                      if (outcome.usedInexactFallback && mounted) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                              content: Text(
+                                  'Exact alarms unavailable — this alarm may ring a few minutes late.')),
+                        );
+                      }
+                    }
+
+                    if (widget.onSaved != null) {
+                      widget.onSaved!();
+                    } else if (widget.isCaptureFlow) {
+                      if (context.mounted) {
+                        VoiceCaptureOverlay.closeOverlay(context);
+                      }
+                      ref.read(captureProvider.notifier).reset();
+                    } else {
+                      if (context.mounted) Navigator.pop(context);
+                    }
+                  } catch (e) {
+                    debugPrint('Error saving alarm: $e');
+                    if (mounted) {
                       messenger.showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Exact alarms unavailable — this alarm may ring a few minutes late.')),
+                        SnackBar(
+                          content: Text('Failed to save alarm: $e'),
+                          backgroundColor: AuraColors.accentRed,
+                        ),
                       );
                     }
-                  }
-
-                  if (widget.onSaved != null) {
-                    widget.onSaved!();
-                  }
-
-                  if (widget.isCaptureFlow) {
-                    ref.read(captureProvider.notifier).reset();
-                    if (context.mounted) {
-                      VoiceCaptureOverlay.closeOverlay(context);
-                    }
-                  } else {
-                    if (context.mounted) Navigator.pop(context);
                   }
                 },
                 child: Text(isEditing ? 'SAVE CHANGES' : 'SET ALARM'),

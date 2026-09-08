@@ -41,6 +41,15 @@ class ItemDao extends DatabaseAccessor<AppDatabase> with _$ItemDaoMixin {
         ..orderBy([(t) => OrderingTerm.asc(t.fireAt)]))
       .watch();
 
+  /// Watch alarms (items where category == 'alarm' or kind == 'alarm')
+  Stream<List<Item>> watchAlarms() =>
+      (select(items)
+        ..where((t) =>
+            (t.category.equals('alarm') | t.kind.equals('alarm')) &
+            t.deletedAt.isNull())
+        ..orderBy([(t) => OrderingTerm.asc(t.fireAt)]))
+      .watch();
+
   /// Watch items by Kind ('generic' | 'task' | 'event')
   Stream<List<Item>> watchByKind(String kind) =>
       (select(items)

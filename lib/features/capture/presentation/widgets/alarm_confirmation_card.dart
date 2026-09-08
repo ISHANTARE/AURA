@@ -20,8 +20,8 @@ class AlarmConfirmationCard extends ConsumerWidget {
       initialTitle: (intent.title != null && intent.title!.isNotEmpty) ? intent.title! : 'Alarm',
       isCaptureFlow: true,
       onSaved: () {
-        ref.read(captureProvider.notifier).reset();
         VoiceCaptureOverlay.closeOverlay(context);
+        ref.read(captureProvider.notifier).reset();
       },
     );
   }

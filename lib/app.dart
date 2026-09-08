@@ -44,6 +44,13 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // If running inside the pre-warmed background capture engine,
+      // skip heavy main-app sweeps to prevent duplicate DB contention.
+      final initialRoute = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+      if (initialRoute == '/capture-overlay') {
+        return;
+      }
+
       // Start DND service
       ref.read(dndServiceProvider);
 
@@ -68,6 +75,10 @@ class _AuraAppState extends ConsumerState<AuraApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      final initialRoute = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+      if (initialRoute == '/capture-overlay') {
+        return;
+      }
       // Roll "today" windows over if we were suspended across midnight.
       _notifyDayRefresh();
       _onAppActive();

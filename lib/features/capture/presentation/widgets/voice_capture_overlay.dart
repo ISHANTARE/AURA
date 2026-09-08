@@ -24,10 +24,19 @@ class VoiceCaptureOverlay extends ConsumerStatefulWidget {
     try {
       const MethodChannel('aura/capture_activity').invokeMethod('close');
     } catch (_) {}
-    if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
-    } else {
-      SystemNavigator.pop();
+    if (context.mounted) {
+      final rootNav = Navigator.of(context, rootNavigator: true);
+      if (rootNav.canPop()) {
+        rootNav.pop();
+      } else if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        try {
+          GoRouter.of(context).pop();
+        } catch (_) {
+          SystemNavigator.pop();
+        }
+      }
     }
   }
 

@@ -71,7 +71,7 @@ final todayFocusItemsProvider = StreamProvider<List<Item>>((ref) {
 
 /// Stream provider for alarms, sorted chronologically by time of day (e.g. 6 AM → 7:30 AM → 2 PM)
 final alarmsListProvider = StreamProvider<List<Item>>((ref) {
-  return ref.watch(itemDaoProvider).watchByCategory('alarm').map((alarms) {
+  return ref.watch(itemDaoProvider).watchAlarms().map((alarms) {
     final sorted = List<Item>.from(alarms);
     sorted.sort((a, b) {
       final aDt = a.fireAt != null ? DateTime.fromMillisecondsSinceEpoch(a.fireAt!) : null;
