@@ -1172,6 +1172,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 32),
+            Center(
+              child: Text(
+                'AURA v2.1.1',
+                style: AuraTypography.caption.copyWith(
+                  color: textSecondary,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
