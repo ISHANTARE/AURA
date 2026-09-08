@@ -1,3 +1,9 @@
+<!--
+  Author      : Ishan Tare | github.com/ISHANTARE
+  Fingerprint : D7F72999BC4D94AB63560D408D69D34E
+  © 2026 Ishan Tare. All rights reserved.
+-->
+
 # AURA Security Threat Model & Key Lifecycle Architecture
 
 **Document Version:** 1.0  

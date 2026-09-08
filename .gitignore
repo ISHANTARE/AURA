@@ -57,3 +57,23 @@ app.*.map.json
 *.db-journal
 *.db-wal
 *.db-shm
+
+# Python scratch scripts
+*.py
+*.pyc
+*.pyo
+
+# Scratch / temp files
+*.txt
+!README*.txt
+
+# OS generated
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IntelliJ module files (belt + suspenders)
+*.iml
+*.ipr
+*.iws

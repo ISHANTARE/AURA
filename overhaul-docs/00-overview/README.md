@@ -1,3 +1,20 @@
+<!--
+  AURA — AI-Unified Reality Assistant
+  Master Rebuild Documentation
+
+  Author      : Ishan Tare
+  GitHub      : github.com/ISHANTARE
+  Email       : ishan.tare2005@gmail.com
+  Created     : 2026
+  Fingerprint : D7F72999BC4D94AB63560D408D69D34E
+  Motto       : "Common Sense is Uncommon."
+
+  © 2026 Ishan Tare. All rights reserved. Proprietary & Confidential.
+  This document and all referenced files are the intellectual property of
+  Ishan Tare. Redistribution or reproduction without written permission is
+  strictly prohibited.
+-->
+
 # AURA Rebuild Documentation — Master Index
 
 > **This is the single source of truth for reconstructing the AURA application from scratch.**  
