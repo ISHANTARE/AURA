@@ -93,7 +93,7 @@ class _WorkspaceConfirmationCardState
                 onTap: () async {
                   HapticFeedback.selectionClick();
                   await ref.read(captureProvider.notifier).cancelCapture();
-                  if (context.mounted) VoiceCaptureOverlay.closeOverlay(context);
+                  if (context.mounted) await VoiceCaptureOverlay.closeOverlay(context);
                 },
                 child: const Icon(LucideIcons.x, size: 20, color: AuraColors.textSecondary),
               ),

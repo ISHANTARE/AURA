@@ -36,6 +36,12 @@ class _FloatingCaptureOverlayScreenState
       }
       return null;
     });
+
+    // Start capture immediately after handler is registered so we don't
+    // race with the onResume-triggered restartCapture from the native side.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(captureProvider.notifier).startCapture();
+    });
   }
 
   @override
@@ -51,7 +57,7 @@ class _FloatingCaptureOverlayScreenState
               onTap: () async {
                 await ref.read(captureProvider.notifier).cancelCapture();
                 if (context.mounted) {
-                  VoiceCaptureOverlay.closeOverlay(context);
+                  await VoiceCaptureOverlay.closeOverlay(context);
                 }
               },
               child: Container(
@@ -59,10 +65,11 @@ class _FloatingCaptureOverlayScreenState
               ),
             ),
           ),
-          // Direct embedded VoiceCaptureOverlay at bottom
+          // Direct embedded VoiceCaptureOverlay at bottom — autoStart:false
+          // because FloatingCaptureOverlayScreen manages the start lifecycle.
           const Align(
             alignment: Alignment.bottomCenter,
-            child: VoiceCaptureOverlay(),
+            child: VoiceCaptureOverlay(autoStart: false),
           ),
         ],
       ),

@@ -16,15 +16,33 @@ import 'waveform_widget.dart';
 /// Compact bottom overlay modal (~35% height) for voice capture.
 /// Matches UX wireframe `02_voice_capture.md` exactly.
 class VoiceCaptureOverlay extends ConsumerStatefulWidget {
-  const VoiceCaptureOverlay({super.key});
+  /// When [autoStart] is true (default), `startCapture()` is called
+  /// automatically from initState.  Set to false when the parent screen
+  /// (e.g. FloatingCaptureOverlayScreen) manages the start lifecycle
+  /// to avoid a double-start race with AuraCaptureActivity.onResume.
+  const VoiceCaptureOverlay({super.key, this.autoStart = true});
+
+  final bool autoStart;
 
   /// Helper to dismiss/close the overlay cleanly regardless of whether
   /// it is presented inside a modal bottom sheet or in FloatingCaptureOverlayScreen Activity.
-  static void closeOverlay(BuildContext context) {
+  ///
+  /// Prefers finishing the native AuraCaptureActivity via its MethodChannel.
+  /// Falls back to navigator pop for the modal-bottom-sheet case.
+  static Future<void> closeOverlay(BuildContext context) async {
+    // Try to close the native AuraCaptureActivity first.
+    // If this succeeds, the Activity and its Flutter engine instance are gone —
+    // no need to pop any navigator route.
+    bool closedNatively = false;
     try {
-      const MethodChannel('aura/capture_activity').invokeMethod('close');
-    } catch (_) {}
-    if (context.mounted) {
+      await const MethodChannel('aura/capture_activity').invokeMethod<bool>('close');
+      closedNatively = true;
+    } catch (_) {
+      // Running inside a modal bottom sheet (not the Activity), or channel not
+      // available — fall through to navigator-based dismissal.
+    }
+
+    if (!closedNatively && context.mounted) {
       final rootNav = Navigator.of(context, rootNavigator: true);
       if (rootNav.canPop()) {
         rootNav.pop();
@@ -75,10 +93,12 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // Auto-start capture on overlay launch
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(captureProvider.notifier).startCapture();
-    });
+    // Auto-start capture on overlay launch (only when not managed externally)
+    if (widget.autoStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(captureProvider.notifier).startCapture();
+      });
+    }
   }
 
   @override
@@ -158,9 +178,9 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           ref.read(captureProvider.notifier).reset();
-                          VoiceCaptureOverlay.closeOverlay(context);
+                          await VoiceCaptureOverlay.closeOverlay(context);
                         },
                         child: const Text('DONE', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
@@ -258,7 +278,7 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
             HapticFeedback.lightImpact();
             await ref.read(captureProvider.notifier).cancelCapture();
             if (mounted) {
-              VoiceCaptureOverlay.closeOverlay(context);
+              await VoiceCaptureOverlay.closeOverlay(context);
             }
           },
           child: Container(
@@ -412,9 +432,9 @@ class _VoiceCaptureOverlayState extends ConsumerState<VoiceCaptureOverlay>
                 minimumSize: const Size(0, 44),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
-              onPressed: () {
-                VoiceCaptureOverlay.closeOverlay(context);
-                context.go(Routes.settings);
+              onPressed: () async {
+                await VoiceCaptureOverlay.closeOverlay(context);
+                if (mounted) context.go(Routes.settings);
               },
               child: Text(
                 'Open AI Settings',

@@ -575,7 +575,7 @@ class _EditAlarmModalState extends ConsumerState<EditAlarmModal> {
                       widget.onSaved!();
                     } else if (widget.isCaptureFlow) {
                       if (context.mounted) {
-                        VoiceCaptureOverlay.closeOverlay(context);
+                        await VoiceCaptureOverlay.closeOverlay(context);
                       }
                       ref.read(captureProvider.notifier).reset();
                     } else {
