@@ -75,7 +75,7 @@ class OrbMenuActivity : Activity() {
 
         card.addView(createMenuItem("Voice Capture") {
             startActivity(Intent(this, AuraCaptureActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             })
         })
 

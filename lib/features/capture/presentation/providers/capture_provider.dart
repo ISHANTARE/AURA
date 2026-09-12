@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/providers/providers.dart';
@@ -240,7 +241,12 @@ class CaptureNotifier extends StateNotifier<CaptureState> {
 
     // Device is online: send transcript to the configured LLM provider
     try {
-      final existingWorkspaces = await _db.workspaceDao.getAll();
+      List<Workspace> existingWorkspaces = [];
+      try {
+        existingWorkspaces = await _db.workspaceDao.getAll();
+      } catch (dbErr) {
+        debugPrint('captureProvider: warning fetching workspaces: $dbErr');
+      }
       final workspaceNames = existingWorkspaces.map((w) => w.name).toList();
 
       final outcome = await _llmDataSource.extractIntentWithMeta(

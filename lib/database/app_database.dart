@@ -155,10 +155,9 @@ class AppDatabase extends _$AppDatabase {
           }
         },
         beforeOpen: (details) async {
-          await customStatement('PRAGMA busy_timeout = 10000');
-          await customStatement('PRAGMA foreign_keys = ON');
-          await customStatement('PRAGMA journal_mode = WAL');
-          await customStatement('PRAGMA cache_size = 2000');
+          await customStatement('PRAGMA busy_timeout = 10000;');
+          await customStatement('PRAGMA foreign_keys = ON;');
+          await customStatement('PRAGMA cache_size = 2000;');
         },
       );
 
@@ -191,9 +190,22 @@ LazyDatabase _openConnection() {
     return NativeDatabase.createInBackground(
       file,
       setup: (rawDb) {
-        rawDb.execute('PRAGMA journal_mode = WAL;');
+        // ALWAYS set busy_timeout FIRST so any lock contention waits up to 10s instead of instantly failing
         rawDb.execute('PRAGMA busy_timeout = 10000;');
+        try {
+          final result = rawDb.select('PRAGMA journal_mode;');
+          final mode = result.isNotEmpty && result.first.isNotEmpty
+              ? result.first.values.first?.toString().toLowerCase()
+              : null;
+          // Only switch to WAL mode if not already active; prevents acquiring exclusive lock unnecessarily
+          if (mode != 'wal') {
+            rawDb.execute('PRAGMA journal_mode = WAL;');
+          }
+        } catch (e) {
+          debugPrint('setup: PRAGMA journal_mode check error: $e');
+        }
         rawDb.execute('PRAGMA synchronous = NORMAL;');
+        rawDb.execute('PRAGMA foreign_keys = ON;');
       },
     );
   });
